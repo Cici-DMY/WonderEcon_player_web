@@ -538,7 +538,11 @@ EWMTaskFlow.init({
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (!data.success || !data.url) throw new Error(data.error || 'Settlement generation failed');
-        window.location.href = data.url;
+        var url = data.url;
+        if (!/^https?:\/\//.test(url)) {
+          url = (API_BASE || '') + (url[0] === '/' ? url : '/' + url);
+        }
+        window.location.href = url;
       })
       .catch(function(err) {
         console.error('[EndAnimation]', err);
