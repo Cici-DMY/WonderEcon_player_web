@@ -1,0 +1,280 @@
+.ewm-task-panel {
+  position: fixed;
+  left: 14px;
+  top: 230px;
+  bottom: 74px;
+  width: 214px;
+  padding: 12px;
+  border: 1px solid rgba(105,137,166,.28);
+  border-radius: 18px;
+  background: rgba(255,255,255,.68);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 4px 24px rgba(20,60,100,.10);
+  overflow-y: auto;
+  max-height: calc(100vh - 304px);
+  overscroll-behavior: contain;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  z-index: 800;
+}
+.ewm-task-panel.collapsed {
+  bottom: auto;
+  max-height: 178px;
+}
+.ewm-task-panel.collapsed .ewm-task-expanded {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+
+.ewm-task-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ewm-task-panel-kicker {
+  color: #0fa9c8;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+}
+
+.ewm-task-title {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.32;
+  font-weight: 900;
+  color: #17436d;
+}
+
+.ewm-task-toggle {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(105,137,166,.24);
+  border-radius: 9px;
+  background: rgba(255,255,255,.70);
+  color: #17436d;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 14px;
+  display: grid;
+  place-items: center;
+}
+
+.ewm-task-summary {
+  margin-top: 9px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px 10px;
+  padding: 9px 10px;
+  border: 1px solid rgba(105,137,166,.20);
+  border-radius: 12px;
+  background: rgba(247,252,255,.62);
+  font-size: 12px;
+}
+.ewm-task-summary .ewm-ts-label {
+  color: #667b90;
+}
+.ewm-task-summary .ewm-ts-value {
+  font-weight: 900;
+  text-align: left;
+  color: #17436d;
+}
+
+.ewm-task-expanded {
+  max-height: calc(100vh - 300px);
+  opacity: 1;
+  transform: translateY(0);
+  overflow: visible;
+  transition: max-height .25s ease, opacity .2s ease, transform .22s ease;
+}
+
+.ewm-task-steps {
+  position: relative;
+  margin-top: 12px;
+  display: grid;
+  gap: 9px;
+}
+.ewm-task-steps::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(32,185,129,.55), rgba(47,128,237,.48), rgba(105,137,166,.18));
+}
+
+.ewm-task-step {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 8px 8px 8px 0;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  background: transparent;
+  color: #17436d;
+  text-align: left;
+  font-size: 12px;
+  font-family: inherit;
+}
+.ewm-task-step.done {
+  border-color: rgba(32,185,129,.28);
+  background: rgba(236,253,245,.56);
+}
+.ewm-task-step.active {
+  border-color: rgba(47,128,237,.38);
+  background: rgba(235,247,255,.82);
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(47,128,237,.08), 0 12px 24px rgba(47,128,237,.10);
+  animation: ewmActiveTaskBreath 2.4s ease-in-out infinite;
+}
+.ewm-task-step.locked {
+  opacity: .50;
+  cursor: not-allowed;
+}
+.ewm-task-step.unavailable {
+  opacity: .56;
+  cursor: not-allowed;
+  background: rgba(240, 244, 248, .58);
+  color: #8b9bad;
+}
+.ewm-task-step:disabled {
+  color: inherit;
+}
+.ewm-task-step.done:disabled {
+  cursor: default;
+}
+
+.ewm-task-step-icon {
+  position: relative;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(105,137,166,.22);
+  border-radius: 50%;
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.62);
+  font-size: 13px;
+}
+.ewm-task-step.done .ewm-task-step-icon {
+  border-color: rgba(32,185,129,.55);
+  background: rgba(236,253,245,.95);
+}
+.ewm-task-step.active .ewm-task-step-icon {
+  border-color: rgba(47,128,237,.72);
+  background: rgba(235,247,255,.98);
+  box-shadow: 0 0 0 5px rgba(47,128,237,.13);
+}
+
+.ewm-task-step-title {
+  display: block;
+  font-weight: 900;
+  line-height: 1.32;
+}
+.ewm-task-step-sub {
+  display: block;
+  margin-top: 2px;
+  color: #65788c;
+  font-size: 10px;
+  line-height: 1.35;
+}
+.ewm-task-step-state {
+  display: inline-block;
+  margin-top: 5px;
+  color: #667b90;
+  font-size: 10px;
+  font-weight: 900;
+}
+.ewm-task-step.done .ewm-task-step-state { color: #148458; }
+.ewm-task-step.active .ewm-task-step-state { color: #1a5bb5; }
+
+@keyframes ewmActiveTaskBreath {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(47,128,237,.08), 0 12px 24px rgba(47,128,237,.10); }
+  50% { box-shadow: 0 0 0 3px rgba(47,128,237,.18), 0 14px 28px rgba(47,128,237,.16); }
+}
+
+.ewm-task-hint {
+  margin-top: 11px;
+  padding: 9px 10px;
+  border-left: 3px solid #f0b84f;
+  border-radius: 9px;
+  background: rgba(255,246,224,.72);
+  color: #704d18;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ewm-settlement-entry {
+  display: none;
+  margin-top: 12px;
+  padding: 11px;
+  border: 1px solid rgba(47,128,237,.20);
+  border-radius: 13px;
+  background: linear-gradient(135deg, rgba(239,248,255,.90), rgba(255,255,255,.74));
+  box-shadow: 0 10px 22px rgba(36,95,160,.12);
+}
+.ewm-settlement-entry.visible {
+  display: block;
+}
+.ewm-settlement-title {
+  color: #17436d;
+  font-size: 12px;
+  font-weight: 950;
+}
+.ewm-settlement-copy {
+  margin-top: 5px;
+  color: #5d7287;
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+.ewm-settlement-btn {
+  width: 100%;
+  margin-top: 9px;
+  border: 0;
+  border-radius: 11px;
+  padding: 9px 10px;
+  color: #fff;
+  background: linear-gradient(135deg, #2f80ed, #16b7c8);
+  box-shadow: 0 10px 20px rgba(47,128,237,.22);
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+.ewm-settlement-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(47,128,237,.28);
+  filter: saturate(1.05);
+}
+.ewm-settlement-btn:disabled {
+  cursor: wait;
+  opacity: .72;
+}
+
+@media (max-width: 900px) {
+  .ewm-task-panel {
+    top: 238px;
+    left: 10px;
+    bottom: 72px;
+    width: 210px;
+  }
+  .ewm-task-panel.collapsed {
+    bottom: auto;
+  }
+}
+@media (max-width: 480px) {
+  .ewm-task-panel {
+    width: 190px;
+  }
+}

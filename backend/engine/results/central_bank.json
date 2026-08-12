@@ -1,0 +1,761 @@
+{
+  "initialization": {
+    "deposit_1yr": 0.0225,
+    "loan_1yr": 0.0531,
+    "loan_5yr_plus": 0.0594,
+    "deposit_upper_mult": 1.0,
+    "deposit_lower_mult": 0.0,
+    "loan_lower_mult": 0.9,
+    "loan_upper_mult": 999.0,
+    "last_injected": false,
+    "last_injection_pct": 0.0
+  },
+  "ticks": [
+    {
+      "tick": 0,
+      "tick_start": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": false,
+        "last_injection_pct": 0.0
+      },
+      "events": [
+        {
+          "reason": "Baseline interest rates initialized",
+          "fields": {
+            "deposit_1yr": {
+              "before": 0.0225,
+              "after": 0.0225,
+              "changed": false
+            },
+            "loan_1yr": {
+              "before": 0.0531,
+              "after": 0.0531,
+              "changed": false
+            },
+            "loan_5yr_plus": {
+              "before": 0.0594,
+              "after": 0.0594,
+              "changed": false
+            },
+            "deposit_upper_mult": {
+              "before": 1.0,
+              "after": 1.0,
+              "changed": false
+            },
+            "deposit_lower_mult": {
+              "before": 0.0,
+              "after": 0.0,
+              "changed": false
+            },
+            "loan_lower_mult": {
+              "before": 0.9,
+              "after": 0.9,
+              "changed": false
+            },
+            "loan_upper_mult": {
+              "before": 999.0,
+              "after": 999.0,
+              "changed": false
+            }
+          }
+        },
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": false,
+              "after": true,
+              "changed": true
+            },
+            "last_injection_pct": {
+              "before": 0.0,
+              "after": -0.02,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    },
+    {
+      "tick": 1,
+      "tick_start": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      },
+      "events": [
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": true,
+              "changed": false
+            },
+            "last_injection_pct": {
+              "before": -0.02,
+              "after": -0.02,
+              "changed": false
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    },
+    {
+      "tick": 2,
+      "tick_start": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      },
+      "events": [
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": true,
+              "changed": false
+            },
+            "last_injection_pct": {
+              "before": -0.02,
+              "after": -0.02,
+              "changed": false
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    },
+    {
+      "tick": 3,
+      "tick_start": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      },
+      "events": [
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": true,
+              "changed": false
+            },
+            "last_injection_pct": {
+              "before": -0.02,
+              "after": 0.02,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": 0.02
+      }
+    },
+    {
+      "tick": 4,
+      "tick_start": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": 0.02
+      },
+      "events": [
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": true,
+              "changed": false
+            },
+            "last_injection_pct": {
+              "before": 0.02,
+              "after": -0.02,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    },
+    {
+      "tick": 5,
+      "tick_start": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      },
+      "events": [
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": true,
+              "changed": false
+            },
+            "last_injection_pct": {
+              "before": -0.02,
+              "after": -0.02,
+              "changed": false
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    },
+    {
+      "tick": 6,
+      "tick_start": {
+        "deposit_1yr": 0.0225,
+        "loan_1yr": 0.0531,
+        "loan_5yr_plus": 0.0594,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      },
+      "events": [
+        {
+          "reason": "External intervention: interest rate hike",
+          "fields": {
+            "deposit_1yr": {
+              "before": 0.0225,
+              "after": 0.025,
+              "changed": true
+            },
+            "loan_1yr": {
+              "before": 0.0531,
+              "after": 0.0556,
+              "changed": true
+            },
+            "loan_5yr_plus": {
+              "before": 0.0594,
+              "after": 0.0614,
+              "changed": true
+            },
+            "deposit_upper_mult": {
+              "before": 1.0,
+              "after": 1.0,
+              "changed": false
+            },
+            "deposit_lower_mult": {
+              "before": 0.0,
+              "after": 0.0,
+              "changed": false
+            },
+            "loan_lower_mult": {
+              "before": 0.9,
+              "after": 0.9,
+              "changed": false
+            },
+            "loan_upper_mult": {
+              "before": 999.0,
+              "after": 999.0,
+              "changed": false
+            }
+          }
+        },
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": true,
+              "changed": false
+            },
+            "last_injection_pct": {
+              "before": -0.02,
+              "after": -0.02,
+              "changed": false
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.025,
+        "loan_1yr": 0.0556,
+        "loan_5yr_plus": 0.0614,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    },
+    {
+      "tick": 7,
+      "tick_start": {
+        "deposit_1yr": 0.025,
+        "loan_1yr": 0.0556,
+        "loan_5yr_plus": 0.0614,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      },
+      "events": [
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": true,
+              "changed": false
+            },
+            "last_injection_pct": {
+              "before": -0.02,
+              "after": -0.02,
+              "changed": false
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.025,
+        "loan_1yr": 0.0556,
+        "loan_5yr_plus": 0.0614,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    },
+    {
+      "tick": 8,
+      "tick_start": {
+        "deposit_1yr": 0.025,
+        "loan_1yr": 0.0556,
+        "loan_5yr_plus": 0.0614,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      },
+      "events": [
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": true,
+              "changed": false
+            },
+            "last_injection_pct": {
+              "before": -0.02,
+              "after": -0.02,
+              "changed": false
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.025,
+        "loan_1yr": 0.0556,
+        "loan_5yr_plus": 0.0614,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    },
+    {
+      "tick": 9,
+      "tick_start": {
+        "deposit_1yr": 0.025,
+        "loan_1yr": 0.0556,
+        "loan_5yr_plus": 0.0614,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      },
+      "events": [
+        {
+          "reason": "External intervention: interest rate hike",
+          "fields": {
+            "deposit_1yr": {
+              "before": 0.025,
+              "after": 0.0275,
+              "changed": true
+            },
+            "loan_1yr": {
+              "before": 0.0556,
+              "after": 0.0581,
+              "changed": true
+            },
+            "loan_5yr_plus": {
+              "before": 0.0614,
+              "after": 0.064,
+              "changed": true
+            },
+            "deposit_upper_mult": {
+              "before": 1.0,
+              "after": 1.0,
+              "changed": false
+            },
+            "deposit_lower_mult": {
+              "before": 0.0,
+              "after": 0.0,
+              "changed": false
+            },
+            "loan_lower_mult": {
+              "before": 0.9,
+              "after": 0.9,
+              "changed": false
+            },
+            "loan_upper_mult": {
+              "before": 999.0,
+              "after": 999.0,
+              "changed": false
+            }
+          }
+        },
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": true,
+              "changed": false
+            },
+            "last_injection_pct": {
+              "before": -0.02,
+              "after": -0.02,
+              "changed": false
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.0275,
+        "loan_1yr": 0.0581,
+        "loan_5yr_plus": 0.064,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    },
+    {
+      "tick": 10,
+      "tick_start": {
+        "deposit_1yr": 0.0275,
+        "loan_1yr": 0.0581,
+        "loan_5yr_plus": 0.064,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      },
+      "events": [
+        {
+          "reason": "External intervention: interest rate hike",
+          "fields": {
+            "deposit_1yr": {
+              "before": 0.0275,
+              "after": 0.03,
+              "changed": true
+            },
+            "loan_1yr": {
+              "before": 0.0581,
+              "after": 0.0606,
+              "changed": true
+            },
+            "loan_5yr_plus": {
+              "before": 0.064,
+              "after": 0.066,
+              "changed": true
+            },
+            "deposit_upper_mult": {
+              "before": 1.0,
+              "after": 1.0,
+              "changed": false
+            },
+            "deposit_lower_mult": {
+              "before": 0.0,
+              "after": 0.0,
+              "changed": false
+            },
+            "loan_lower_mult": {
+              "before": 0.9,
+              "after": 0.9,
+              "changed": false
+            },
+            "loan_upper_mult": {
+              "before": 999.0,
+              "after": 999.0,
+              "changed": false
+            }
+          }
+        },
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": true,
+              "changed": false
+            },
+            "last_injection_pct": {
+              "before": -0.02,
+              "after": -0.02,
+              "changed": false
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.03,
+        "loan_1yr": 0.0606,
+        "loan_5yr_plus": 0.066,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    },
+    {
+      "tick": 11,
+      "tick_start": {
+        "deposit_1yr": 0.03,
+        "loan_1yr": 0.0606,
+        "loan_5yr_plus": 0.066,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      },
+      "events": [
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": true,
+              "after": false,
+              "changed": true
+            },
+            "last_injection_pct": {
+              "before": -0.02,
+              "after": 0.0,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.03,
+        "loan_1yr": 0.0606,
+        "loan_5yr_plus": 0.066,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": false,
+        "last_injection_pct": 0.0
+      }
+    },
+    {
+      "tick": 12,
+      "tick_start": {
+        "deposit_1yr": 0.03,
+        "loan_1yr": 0.0606,
+        "loan_5yr_plus": 0.066,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": false,
+        "last_injection_pct": 0.0
+      },
+      "events": [
+        {
+          "reason": "External intervention: interest rate hike",
+          "fields": {
+            "deposit_1yr": {
+              "before": 0.03,
+              "after": 0.0325,
+              "changed": true
+            },
+            "loan_1yr": {
+              "before": 0.0606,
+              "after": 0.0631,
+              "changed": true
+            },
+            "loan_5yr_plus": {
+              "before": 0.066,
+              "after": 0.068,
+              "changed": true
+            },
+            "deposit_upper_mult": {
+              "before": 1.0,
+              "after": 1.0,
+              "changed": false
+            },
+            "deposit_lower_mult": {
+              "before": 0.0,
+              "after": 0.0,
+              "changed": false
+            },
+            "loan_lower_mult": {
+              "before": 0.9,
+              "after": 0.9,
+              "changed": false
+            },
+            "loan_upper_mult": {
+              "before": 999.0,
+              "after": 999.0,
+              "changed": false
+            }
+          }
+        },
+        {
+          "reason": "Central bank injection/withdrawal decision",
+          "fields": {
+            "last_injected": {
+              "before": false,
+              "after": true,
+              "changed": true
+            },
+            "last_injection_pct": {
+              "before": 0.0,
+              "after": -0.02,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "deposit_1yr": 0.0325,
+        "loan_1yr": 0.0631,
+        "loan_5yr_plus": 0.068,
+        "deposit_upper_mult": 1.0,
+        "deposit_lower_mult": 0.0,
+        "loan_lower_mult": 0.9,
+        "loan_upper_mult": 999.0,
+        "last_injected": true,
+        "last_injection_pct": -0.02
+      }
+    }
+  ]
+}

@@ -1,0 +1,518 @@
+{
+  "initialization": {
+    "personal_income_tax_rate": 0.1,
+    "corporate_income_tax_rate": 0.25,
+    "corporate_vat_rate": 0.1,
+    "current_total_tax": 239907.19883063735,
+    "last_distribution_pct": 1.1
+  },
+  "ticks": [
+    {
+      "tick": 0,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 239907.19883063735,
+        "last_distribution_pct": 1.1
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.1,
+              "after": 1.02,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 239907.198831,
+              "after": 239907.198831,
+              "changed": false
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 239907.19883063735,
+        "last_distribution_pct": 1.02
+      }
+    },
+    {
+      "tick": 1,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 239907.19883063735,
+        "last_distribution_pct": 1.02
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.02,
+              "after": 1.02,
+              "changed": false
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 239907.198831,
+              "after": 210018.558523,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 210018.55852288968,
+        "last_distribution_pct": 1.02
+      }
+    },
+    {
+      "tick": 2,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 210018.55852288968,
+        "last_distribution_pct": 1.02
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.02,
+              "after": 1.04,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 210018.558523,
+              "after": 230264.428574,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 230264.42857385759,
+        "last_distribution_pct": 1.04
+      }
+    },
+    {
+      "tick": 3,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 230264.42857385759,
+        "last_distribution_pct": 1.04
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.04,
+              "after": 1.06,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 230264.428574,
+              "after": 220987.043188,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 220987.0431882047,
+        "last_distribution_pct": 1.06
+      }
+    },
+    {
+      "tick": 4,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 220987.0431882047,
+        "last_distribution_pct": 1.06
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.06,
+              "after": 1.04,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 220987.043188,
+              "after": 224314.464829,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 224314.46482942504,
+        "last_distribution_pct": 1.04
+      }
+    },
+    {
+      "tick": 5,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 224314.46482942504,
+        "last_distribution_pct": 1.04
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.04,
+              "after": 1.02,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 224314.464829,
+              "after": 223157.636694,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 223157.63669430139,
+        "last_distribution_pct": 1.02
+      }
+    },
+    {
+      "tick": 6,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 223157.63669430139,
+        "last_distribution_pct": 1.02
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.02,
+              "after": 1.04,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 223157.636694,
+              "after": 228796.909225,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 228796.90922483825,
+        "last_distribution_pct": 1.04
+      }
+    },
+    {
+      "tick": 7,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 228796.90922483825,
+        "last_distribution_pct": 1.04
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.04,
+              "after": 1.04,
+              "changed": false
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 228796.909225,
+              "after": 208538.498656,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 208538.49865624413,
+        "last_distribution_pct": 1.04
+      }
+    },
+    {
+      "tick": 8,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 208538.49865624413,
+        "last_distribution_pct": 1.04
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.04,
+              "after": 1.02,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 208538.498656,
+              "after": 210081.820782,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 210081.82078190605,
+        "last_distribution_pct": 1.02
+      }
+    },
+    {
+      "tick": 9,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 210081.82078190605,
+        "last_distribution_pct": 1.02
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.02,
+              "after": 1.04,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 210081.820782,
+              "after": 208522.570496,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 208522.57049598199,
+        "last_distribution_pct": 1.04
+      }
+    },
+    {
+      "tick": 10,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 208522.57049598199,
+        "last_distribution_pct": 1.04
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.04,
+              "after": 1.06,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 208522.570496,
+              "after": 195894.454778,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 195894.45477844725,
+        "last_distribution_pct": 1.06
+      }
+    },
+    {
+      "tick": 11,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 195894.45477844725,
+        "last_distribution_pct": 1.06
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.06,
+              "after": 1.05,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 195894.454778,
+              "after": 193278.62208,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 193278.6220800443,
+        "last_distribution_pct": 1.05
+      }
+    },
+    {
+      "tick": 12,
+      "tick_start": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 193278.6220800443,
+        "last_distribution_pct": 1.05
+      },
+      "events": [
+        {
+          "reason": "Government welfare distribution decision",
+          "fields": {
+            "last_distribution_pct": {
+              "before": 1.05,
+              "after": 1.08,
+              "changed": true
+            }
+          }
+        },
+        {
+          "reason": "Environment settlement: total tax revenue updated",
+          "fields": {
+            "current_total_tax": {
+              "before": 193278.62208,
+              "after": 191786.286075,
+              "changed": true
+            }
+          }
+        }
+      ],
+      "tick_end": {
+        "personal_income_tax_rate": 0.1,
+        "corporate_income_tax_rate": 0.25,
+        "corporate_vat_rate": 0.1,
+        "current_total_tax": 191786.28607501741,
+        "last_distribution_pct": 1.08
+      }
+    }
+  ]
+}

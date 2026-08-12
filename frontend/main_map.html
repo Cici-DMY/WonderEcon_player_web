@@ -1,0 +1,741 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Island City - Scene Viewer</title>
+<script src="/config.js"></script>
+<link rel="stylesheet" href="player_world_city.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #3180a3; }
+
+.viewport {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+}
+.viewport:active { cursor: grabbing; }
+
+.scene {
+  position: absolute;
+  width: 6400px;
+  height: 3600px;
+  background: #3180a3 url('assets/background.png') no-repeat center center;
+  background-size: 100% 100%;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.item {
+  position: absolute;
+  user-select: none;
+  pointer-events: none;
+}
+.item.building {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.name-tooltip {
+  position: absolute;
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  margin-top: -8px;
+  z-index: 9000;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.name-tooltip.show { opacity: 1; }
+
+.item.foundation {
+  background: #888;
+  border-radius: 2px;
+}
+.item.foundation.marble { background: #e8e3da; }
+.item.foundation.center { background: #D8D2C6; }
+.item.foundation.enterprise { background: #C4D3D4; }
+.item.foundation.commercial { background: #E4C49B; }
+.item.foundation.residential-a { background: url('assets/grass.png'); background-size: 50px 50px; background-repeat: repeat; }
+.item.foundation.residential-b { background: #C7D8D8; }
+.item.foundation.residential-c { background: #DED4B8; }
+.item.foundation.residential-d { background: #B1DB93; }
+.item.foundation.roadline { background: #ffffff; border-radius: 0; }
+.item.foundation.roadline-y { background: #ffffff; border-radius: 0; }
+
+
+.zoom-info {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  font-size: 12px;
+  color: #fff;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: sans-serif;
+  z-index: 100;
+}
+</style>
+</head>
+<body>
+
+<div class="viewport" id="viewport">
+  <div class="scene" id="scene"></div>
+  <section class="hud-layer" id="economic-info-hud" aria-label="Economic information overlay"></section>
+</div>
+<div class="popover" id="entityPopover"></div>
+<div class="name-tooltip" id="nameTooltip"></div>
+<div id="profileCardContainer"></div>
+<div id="taskFlowContainer"></div>
+<div class="zoom-info" id="zoomInfo">100%</div>
+
+<button class="home-return-btn" type="button" onclick="window.location.href='entry_mode_ui.html'">&#8592; Exit</button>
+<button class="guide-trigger" type="button" id="guide-trigger" aria-label="Open task hints">Task Hints</button>
+<div class="guide-spotlight" id="guide-spotlight" aria-hidden="true"></div>
+<section class="guide-bubble" id="guide-bubble" aria-live="polite">
+  <div class="guide-kicker">Guide</div>
+  <div class="guide-title" id="guide-title">Task Hints</div>
+  <div class="guide-copy" id="guide-copy">Follow the hints to complete the current economic decision.</div>
+  <div class="guide-actions">
+    <button class="guide-skip" type="button" id="guide-skip">Skip guide</button>
+    <button class="guide-primary" type="button" id="guide-primary">Got it</button>
+  </div>
+</section>
+
+<script src="modules/profile_card/profile_card.js"></script>
+<script src="modules/task_flow/task_flow.js"></script>
+<script>
+window.EWMWalkConfig = {
+  routeBasePath: "modules/walk-function/routes",
+  transparencyBasePath: "modules/walk-function/transparency",
+  spriteBasePath: "modules/person"
+};
+</script>
+<script src="modules/walk-function/js/matcher.js"></script>
+<script src="modules/walk-function/js/routes.js"></script>
+<script src="modules/walk-function/js/transparency.js"></script>
+<script src="modules/walk-function/js/sizing.js"></script>
+<script src="modules/walk-function/js/walk.js"></script>
+<script src="modules/walk-function/js/walk_bridge.js"></script>
+<script src="modules/economic_info_bars/economic_info_bars.js"></script>
+<script src="modules/popover/popover.js"></script>
+
+<script>
+const viewport = document.getElementById('viewport');
+const scene = document.getElementById('scene');
+const zoomInfo = document.getElementById('zoomInfo');
+const nameTooltip = document.getElementById('nameTooltip');
+
+const BUILDING_NAMES = {
+  'commercial_bank_1': 'bank_01',
+  'commercial_bank_2': 'bank_02',
+  'central_bank': 'central_bank',
+  'government': 'government',
+  'labor_market': 'labor_market',
+  'supermarket': 'supermarket',
+  'necessity_1': 'necessity_01',
+  'necessity_2': 'necessity_02',
+  'necessity_3': 'necessity_03',
+  'necessity_4': 'necessity_04',
+  'necessity_5': 'necessity_05',
+  'necessity_6': 'necessity_06',
+  'necessity_7': 'necessity_07',
+  'necessity_8': 'necessity_08',
+  'necessity_9': 'necessity_09',
+  'necessity_10': 'necessity_10',
+  'luxury_shop_1': 'luxury_01',
+  'luxury_shop_2': 'luxury_02',
+  'stock_exchange': 'stock_exchange',
+};
+
+const WEALTH_LAYERS = {
+  'layer-6': { level: 5, labor: ['house09'], nonlabor: ['house_1_1', 'house_1_2'] },
+  'layer-7': { level: 4, labor: ['house07'], nonlabor: ['house04'] },
+  'layer-10': { level: 3, labor: ['house05'], nonlabor: ['house06'] },
+  'layer-9': { level: 2, labor: ['house02'], nonlabor: ['house03'] },
+  'layer-11': { level: 1, labor: ['house01'], nonlabor: ['house10'] },
+};
+
+function getHouseType(src, layerId) {
+  const wl = WEALTH_LAYERS[layerId];
+  if (!wl) return null;
+  if (!src) return null;
+
+  if (layerId === 'layer-6') {
+    if (src.includes('house_1_1') || src.includes('house_1_2')) return 'nonlabor';
+    if (src.includes('house09')) return 'labor';
+  } else {
+    for (const pattern of wl.labor) {
+      if (src.includes(pattern)) return 'labor';
+    }
+    for (const pattern of wl.nonlabor) {
+      if (src.includes(pattern)) return 'nonlabor';
+    }
+  }
+  return null;
+}
+
+let scale = 0.5;
+let panX = 0, panY = 0;
+let panning = false, panStartX = 0, panStartY = 0, panOrigX = 0, panOrigY = 0;
+let dragged = false;
+
+(function initView() {
+  const rect = viewport.getBoundingClientRect();
+  const minScale = Math.max(rect.width / 6400, rect.height / 3600) * 1.01;
+  scale = minScale * 1.01;
+  clampPan();
+  updateTransform();
+})();
+
+viewport.addEventListener('mousedown', function(e) {
+  e.preventDefault();
+  panning = true;
+  dragged = false;
+  panStartX = e.clientX;
+  panStartY = e.clientY;
+  panOrigX = panX;
+  panOrigY = panY;
+});
+
+document.addEventListener('mousemove', function(e) {
+  if (!panning) return;
+  const dx = e.clientX - panStartX;
+  const dy = e.clientY - panStartY;
+  if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragged = true;
+  panX = panOrigX + dx;
+  panY = panOrigY + dy;
+  clampPan();
+  updateTransform();
+});
+
+document.addEventListener('mouseup', function() {
+  panning = false;
+});
+
+viewport.addEventListener('wheel', function(e) {
+  if (e.target.closest('.hud-layer, .news-panel, .popover, .world-status')) return;
+  e.preventDefault();
+  const rect = viewport.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const oldScale = scale;
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  const minScale = Math.max(rect.width / 6400, rect.height / 3600) * 1.01;
+  scale = Math.min(3, Math.max(minScale, scale * delta));
+  panX = mx - (mx - panX) * (scale / oldScale);
+  panY = my - (my - panY) * (scale / oldScale);
+  clampPan();
+  updateTransform();
+}, {passive: false});
+
+function clampPan() {
+  const rect = viewport.getBoundingClientRect();
+  const vw = rect.width, vh = rect.height;
+  const sw = 6400 * scale, sh = 3600 * scale;
+  if (sw <= vw) { panX = (vw - sw) / 2; }
+  else { panX = Math.min(0, Math.max(vw - sw, panX)); }
+  if (sh <= vh) { panY = (vh - sh) / 2; }
+  else { panY = Math.min(0, Math.max(vh - sh, panY)); }
+}
+
+function updateTransform() {
+  scene.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+  zoomInfo.textContent = Math.round(scale * 100) + '%';
+}
+
+
+function loadScene(data, layers) {
+  scene.innerHTML = '';
+
+  const visibleLayers = new Set();
+  if (layers.length > 0) {
+    layers.forEach(l => { if (l.visible) visibleLayers.add(l.id); });
+  }
+
+  const entries = Object.keys(data).map(id => ({id, info: data[id]}));
+  entries.sort((a, b) => (parseInt(a.info.zIndex) || 10) - (parseInt(b.info.zIndex) || 10));
+
+  const houseCounters = {};
+  const nameCounters = {};
+
+  entries.forEach(({id, info}) => {
+    if (layers.length > 0 && !visibleLayers.has(info.layer || 'layer-1')) return;
+
+    const el = document.createElement('div');
+    let cls = 'item';
+    if (info.type === 'foundation') {
+      cls += ' foundation';
+      if (info.foundationStyle && info.foundationStyle !== 'dark') cls += ' ' + info.foundationStyle;
+    }
+
+    let buildingId = null;
+    if (BUILDING_NAMES[info.name]) {
+      if (!nameCounters[info.name]) nameCounters[info.name] = 0;
+      nameCounters[info.name]++;
+      if (info.name === 'necessity_3' && nameCounters[info.name] === 2) {
+        buildingId = 'necessity_06';
+      } else {
+        buildingId = BUILDING_NAMES[info.name];
+      }
+    }
+
+    if (!buildingId) {
+      const layerId = info.layer || 'layer-1';
+      const houseType = getHouseType(info.src, layerId);
+      if (houseType) {
+        const wl = WEALTH_LAYERS[layerId];
+        const key = `${wl.level}_${houseType}`;
+        if (!houseCounters[key]) houseCounters[key] = 0;
+        houseCounters[key]++;
+        const num = String(houseCounters[key]).padStart(2, '0');
+        buildingId = `house_${wl.level}_${houseType}_${num}`;
+        el.dataset.houseType = houseType;
+        el.dataset.houseNumber = num;
+        el.dataset.houseIndex = num;
+        el.dataset.wealthLevel = String(wl.level);
+        el.dataset.wealthLabel = 'Wealth ' + wl.level;
+        el.dataset.identityType = houseType === 'labor' ? 'Labor Force' : 'Non-Labor Force';
+        el.dataset.houseName = 'Wealth' + wl.level + '-' + el.dataset.identityType + 'Residence-' + num;
+        el.dataset.houseDisplayName = el.dataset.houseName;
+      }
+    }
+
+    if (buildingId) {
+      cls += ' building';
+      el.dataset.buildingId = buildingId;
+    }
+
+    el.dataset.layoutKey = id;
+    el.dataset.layer = info.layer || '';
+    el.dataset.src = info.src || '';
+    el.dataset.name = info.name || '';
+
+    el.className = cls;
+
+    if (info.type === 'foundation') {
+      el.style.width = info.width || '5%';
+      el.style.height = info.height || '2.5%';
+    } else {
+      el.style.width = info.width || '3%';
+      el.innerHTML = '<img src="' + info.src + '">';
+    }
+
+    el.style.left = info.left;
+    el.style.top = info.top;
+    el.style.zIndex = info.zIndex || '10';
+    if (info.opacity && info.opacity !== '1') el.style.opacity = info.opacity;
+
+    const r = parseFloat(info.rotate) || 0;
+    const sx = parseFloat(info.skewX) || 0;
+    const sy = parseFloat(info.skewY) || 0;
+    if (r || sx || sy) {
+      el.style.transform = `rotate(${r}deg) skewX(${sx}deg) skewY(${sy}deg)`;
+    }
+
+    scene.appendChild(el);
+  });
+}
+
+(async function autoLoad() {
+  const resp = await fetch('./city_layout.json');
+  const json = await resp.json();
+  const data = json.items || json;
+  loadScene(data, json.layers || []);
+})();
+
+let tooltipTimer = null;
+scene.addEventListener('click', function(e) {
+  if (dragged) return;
+  const item = e.target.closest('.building');
+  if (!item) {
+    nameTooltip.classList.remove('show');
+    return;
+  }
+  const bid = item.dataset.buildingId;
+  if (!bid) return;
+
+  nameTooltip.textContent = bid;
+  const rect = item.getBoundingClientRect();
+  nameTooltip.style.left = (rect.left + rect.width / 2) + 'px';
+  nameTooltip.style.top = rect.top + 'px';
+  nameTooltip.classList.add('show');
+
+  clearTimeout(tooltipTimer);
+  tooltipTimer = setTimeout(() => nameTooltip.classList.remove('show'), 3000);
+
+  EWMPopover.handleClick(item);
+});
+
+EWMPopover.init({
+  popoverId: 'entityPopover',
+  sceneId: 'scene',
+  onFinishGuide: function() {
+    if (window.EWMGuide) window.EWMGuide.finishGuide();
+  },
+  onAfterOpen: function() {
+    if (window.EWMGuide) {
+      var step = sessionStorage.getItem('EWMGuideState');
+      if (step === 'active_task' || step === 'building_entry') {
+        window.setTimeout(function() { window.EWMGuide.advanceGuide(step, 'building_entry'); }, 80);
+      }
+    }
+  }
+});
+
+(function() {
+  try {
+    var raw = sessionStorage.getItem('EWMInitialState');
+    if (!raw) return;
+    var s = JSON.parse(raw);
+    if (!s || typeof s !== 'object') return;
+    var ps = s.player || {};
+    var env = s.environment || {};
+    var dr = s.depositRate || env.depositRate || '2.50%';
+    var lr = s.loanRate || env.loanRate || '5.56%';
+    var mr = s.mortgageRate || env.mortgageRate || 'Pending';
+    var et = s.eventType || s.economyPhase || env.rateEvent || '';
+    EWMPopover.updateWorldState({
+      entities: [
+        { id: 'player', metrics: [['Identity', ps.identity||'Labor Force'],['Wealth Tier', String(ps.wealthLevel||'3')],['Risk Preference', ps.riskPreference||'balanced'],['Initial Assets','Pending'],['Cash Flow','Pending']] },
+        { id: 'bank-0', metrics: [['Deposit Rate', dr],['Loan Rate', lr],['Mortgage Rate', mr],['Risk Preference','Conservative']] },
+        { id: 'central-bank', metrics: [['Policy Action', et||'Rate hike 25bp'],['Benchmark Deposit', dr],['Benchmark Loan', lr],['Mortgage Rate', mr]] }
+      ],
+      player: ps
+    });
+  } catch(e) { console.warn('[bridge]', e); }
+})();
+
+EWMPopover.config.getTaskId = function() {
+  try {
+    var s = JSON.parse(sessionStorage.getItem('EWMInitialState') || 'null');
+    return (s && s.player && s.player.initialTaskId) || null;
+  } catch(e) { return null; }
+};
+
+window.EWMPlayerUI = { updateWorldState: EWMPopover.updateWorldState };
+
+var _ecoController = EWMEconomicInfoBars.init({
+  mount: document.getElementById('economic-info-hud'),
+  onEnvironmentOpen: function() {
+    if (window.EWMGuide) window.EWMGuide.advanceGuide('news', 'task_panel');
+  }
+});
+
+var _initState = (function() {
+  try {
+    var r = sessionStorage.getItem('EWMInitialState');
+    return r ? JSON.parse(r) : null;
+  } catch(e) { return null; }
+})();
+var _ps = (_initState && _initState.player) || {};
+var _isLabor = _ps.is_labor_force !== undefined ? _ps.is_labor_force : (_ps.group === 'labor');
+var _wealth = Number(_ps.wealthLevel || _ps.wealth_level) || 3;
+var _personId = (function() {
+  if (_isLabor) return 'walk_' + Math.min(5, Math.max(1, _wealth));
+  return 'walk_' + Math.min(10, Math.max(6, _wealth + 5));
+})();
+
+EWMProfileCard.init({ container: 'profileCardContainer', player: (function() {
+  var ps = _ps;
+  var wl = ps.wealthLevel != null ? ps.wealthLevel : (ps.wealth_level != null ? ps.wealth_level : (ps.initial_wealth_level != null ? ps.initial_wealth_level : _wealth));
+  var betaVal = ps.beta != null ? ps.beta : null;
+  var lambdaVal = ps.lambda != null ? ps.lambda : (ps.loss_aversion != null ? ps.loss_aversion : null);
+  var totalAssets = ps.current_total_assets != null ? ps.current_total_assets : (ps.last_total_assets != null ? ps.last_total_assets : null);
+  var availFunds = ps.total_available_funds != null ? ps.total_available_funds : (ps.current_remaining_assets != null ? ps.current_remaining_assets : null);
+  var deposit = ps.last_deposit_amount != null ? ps.last_deposit_amount : null;
+  var stockN = ps.shares_held_necessity != null ? ps.shares_held_necessity : null;
+  var stockL = ps.shares_held_luxury != null ? ps.shares_held_luxury : null;
+  var loan = ps.last_loan_amount != null ? ps.last_loan_amount : (ps.current_loan_amount != null ? ps.current_loan_amount : null);
+  var isEmployed = ps.is_employed != null ? ps.is_employed : ps.isEmployed;
+  return {
+    name: ps.roleName || ps.name || ps.identity || (_isLabor ? 'Labor Force' : 'Non-Labor Force'),
+    role: ps.roleName || ps.name || ps.identity || (_isLabor ? 'Labor Force' : 'Non-Labor Force'),
+    identity: ps.identity || (_isLabor ? 'Labor Force' : 'Non-Labor Force'),
+    wealthLevel: wl,
+    riskPreference: ps.riskPreference || ps.risk_preference || 'balanced',
+    beta: betaVal,
+    lambda: lambdaVal,
+    cash: availFunds,
+    deposit: deposit,
+    stockNecessity: stockN,
+    stockLuxury: stockL,
+    loan: loan,
+    totalAssets: totalAssets,
+    employmentStatus: isEmployed ? 'Employed' : (_isLabor ? 'Unemployed' : 'Non-Labor'),
+    currentEmployer: ps.employer_id != null ? 'Enterprise Firm ' + ps.employer_id : 'None',
+    currentWage: ps.last_wage != null ? (Number(ps.last_wage).toLocaleString('en-US') + ' CNY') : 'N/A',
+    governmentSubsidy: ps.current_subsidy != null ? (Number(ps.current_subsidy).toFixed(0) + ' CNY') : 'N/A'
+  };
+})() });
+
+EWMWalkBridge.init({
+  personId: _personId,
+  wealthTier: _wealth,
+  labor: _isLabor,
+  speedMultiplier: 3,
+  sceneEl: scene,
+  viewportEl: viewport,
+  onArrive: function(step, match) {
+    console.log('[Walk] arrived at', step.id, match.routeFile);
+    var entityMap = {
+      'deposit_decision': 'bank-0',
+      'loan_decision': 'bank-0',
+      'labor_decision': 'labor-market',
+      'stock_decision': 'stock-market',
+      'consumption_decision': 'supermarket'
+    };
+    var entityId = entityMap[step.id];
+    if (entityId) {
+      EWMPopover.openForTask(entityId);
+    }
+  },
+  onLaborEnterpriseArrive: function(match) {
+    console.log('[Walk] labor enterprise arrived', match.routeFile);
+    var enterpriseType = _wealth >= 4 ? 'luxury' : 'necessity';
+    EWMPopover.enterEnterprise(enterpriseType);
+  }
+});
+
+EWMTaskFlow.init({
+  container: 'taskFlowContainer',
+  player: { identity: _isLabor ? 'Labor Force' : 'Non-Labor Force', wealthLevel: _wealth },
+  onWalk: function(step) {
+    if (window.EWMGuide) window.EWMGuide.advanceGuide('active_task', 'building_entry');
+    EWMWalkBridge.triggerWalk(step, function(finishedStep) {
+      console.log('[Walk] reached destination for', finishedStep.id);
+    });
+  },
+  onLaborEnterpriseWalk: function() {
+    EWMWalkBridge.triggerLaborEnterpriseWalk(function() {
+      console.log('[Walk] reached enterprise');
+    });
+  },
+  onSettlement: function(btn) {
+    if (!btn || btn.disabled) return;
+    var originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Generating settlement...';
+    fetch(API_BASE + '/api/end_animation', { method: 'POST' })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (!data.success || !data.url) throw new Error(data.error || 'Settlement generation failed');
+        window.location.href = data.url;
+      })
+      .catch(function(err) {
+        console.error('[EndAnimation]', err);
+        btn.disabled = false;
+        btn.textContent = originalText;
+        alert('Settlement entry unavailable: ' + err.message);
+      });
+  },
+  getEntity: function(id) {
+    var names = {
+      'bank-0': 'Commercial Bank',
+      'labor-market': 'Talent Market',
+      'supermarket': 'Supermarket',
+      'stock-market': 'Stock Exchange'
+    };
+    return { id: id, name: names[id] || id };
+  }
+});
+
+var _sceneResult = EWMTaskFlow.consumeSceneResult();
+if (_sceneResult) {
+  EWMProfileCard.refreshFromServer();
+}
+
+// ============================================================
+// Guide System
+// ============================================================
+(function() {
+  var GUIDE_STORAGE_KEY = 'EWMGuideState';
+  var GUIDE_STEPS = ['news', 'task_panel', 'active_task', 'building_entry', 'settlement', 'done'];
+
+  var guideSpotlight = document.getElementById('guide-spotlight');
+  var guideBubble = document.getElementById('guide-bubble');
+  var guideTitle = document.getElementById('guide-title');
+  var guideCopy = document.getElementById('guide-copy');
+  var guidePrimary = document.getElementById('guide-primary');
+  var guideSkip = document.getElementById('guide-skip');
+  var guideTrigger = document.getElementById('guide-trigger');
+  var popoverEl = document.getElementById('entityPopover');
+
+  var guideStep = sessionStorage.getItem(GUIDE_STORAGE_KEY) || '';
+  var targetEl = null;
+
+  function getGuideConfig(step) {
+    var configs = {
+      news: { title: 'Check economic environment', copy: 'Check this month\'s economic environment first. News will affect your decisions.', button: 'View details' },
+      task_panel: { title: 'View task flow', copy: 'This is this month\'s task flow. The blue highlighted one is the current task.', button: 'Next' },
+      active_task: { title: 'Click current task', copy: 'Click the current task and the player will automatically go to the corresponding building.', button: 'Got it' },
+      building_entry: { title: 'Enter building', copy: 'Enter the building interior. You will return to the city after completing the decision.', button: 'Got it' },
+      settlement: { title: 'All tasks complete', copy: 'All decisions are done! Click the settlement button below to view your results.', button: 'Got it' }
+    };
+    return configs[step] || configs.news;
+  }
+
+  function getGuideTarget(step) {
+    if (step === 'news') return document.getElementById('environment-ticker');
+    if (step === 'task_panel') return document.getElementById('ewm-task-panel') || document.getElementById('taskFlowContainer');
+    if (step === 'active_task') return document.querySelector('button.task-step.active') || document.getElementById('taskFlowContainer');
+    if (step === 'building_entry') return popoverEl ? popoverEl.querySelector('.popover-enter-btn') : null;
+    if (step === 'settlement') return document.querySelector('.settlement-entry.visible .settlement-btn') || document.querySelector('.settlement-entry.visible');
+    return null;
+  }
+
+  function clearGuideTarget() {
+    if (targetEl) targetEl.classList.remove('guide-target-active');
+    targetEl = null;
+    if (guideSpotlight) guideSpotlight.classList.remove('visible');
+  }
+
+  function positionGuide(el) {
+    if (!el || !guideBubble || !guideSpotlight) return false;
+    var rect = el.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+    var pad = 12;
+    guideSpotlight.style.left = (rect.left - pad) + 'px';
+    guideSpotlight.style.top = (rect.top - pad) + 'px';
+    guideSpotlight.style.width = (rect.width + pad * 2) + 'px';
+    guideSpotlight.style.height = (rect.height + pad * 2) + 'px';
+    guideSpotlight.style.borderRadius = Math.min(24, Math.max(14, rect.height / 3)) + 'px';
+    guideSpotlight.classList.add('visible');
+
+    var bubbleWidth = 286;
+    var bubbleHeight = guideBubble.offsetHeight || 132;
+    var left, top;
+    var step = guideStep;
+    if (step === 'task_panel' || step === 'active_task') {
+      left = rect.right + 14;
+      top = rect.top;
+      if (left + bubbleWidth > window.innerWidth - 14) { left = rect.left - bubbleWidth - 14; }
+      if (top + bubbleHeight > window.innerHeight - 14) { top = window.innerHeight - bubbleHeight - 14; }
+    } else {
+      left = rect.left;
+      top = rect.bottom + 12;
+      if (top + bubbleHeight > window.innerHeight - 14) { top = rect.top - bubbleHeight - 12; }
+      if (top < 14) { top = rect.top; left = rect.right + 14; }
+    }
+    if (left + bubbleWidth > window.innerWidth - 14) left = window.innerWidth - bubbleWidth - 14;
+    if (left < 14) left = 14;
+    if (top < 14) top = 14;
+    guideBubble.style.left = left + 'px';
+    guideBubble.style.top = top + 'px';
+    return true;
+  }
+
+  function setGuideStep(step) {
+    guideStep = step;
+    sessionStorage.setItem(GUIDE_STORAGE_KEY, step);
+  }
+
+  function closeGuide() {
+    clearGuideTarget();
+    if (guideBubble) guideBubble.classList.remove('visible');
+  }
+
+  function finishGuide() {
+    setGuideStep('done');
+    closeGuide();
+  }
+
+  function renderGuide(step) {
+    step = step || guideStep || 'news';
+    if (step === 'done') { closeGuide(); return; }
+    var el = getGuideTarget(step);
+    if (!el) { closeGuide(); return; }
+    clearGuideTarget();
+    var config = getGuideConfig(step);
+    guideTitle.textContent = config.title;
+    guideCopy.textContent = config.copy;
+    guidePrimary.textContent = config.button;
+    guideBubble.classList.add('visible');
+    targetEl = el;
+    el.classList.add('guide-target-active');
+    if (step === 'active_task' || step === 'task_panel' || step === 'settlement') {
+      var panel = document.getElementById('ewm-task-panel');
+      if (panel && panel.classList.contains('collapsed')) panel.classList.remove('collapsed');
+    }
+    if (step === 'active_task' && el.scrollIntoView) { el.scrollIntoView({ block: 'nearest' }); }
+    if (step === 'settlement' && el.scrollIntoView) { el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    window.requestAnimationFrame(function() { positionGuide(targetEl); });
+  }
+
+  function startGuide(options) {
+    options = options || {};
+    var stored = sessionStorage.getItem(GUIDE_STORAGE_KEY);
+    var step;
+    if (options.restart) {
+      step = 'news';
+    } else if (options.manual) {
+      var settlementEl = document.querySelector('.settlement-entry.visible');
+      if (popoverEl && popoverEl.classList.contains('visible') && popoverEl.querySelector('.popover-enter-btn')) step = 'building_entry';
+      else if (settlementEl) step = 'settlement';
+      else if (document.querySelector('.task-step.active')) step = 'active_task';
+      else step = 'task_panel';
+    } else if (stored && stored !== 'done') {
+      step = stored;
+    } else {
+      step = 'news';
+    }
+    setGuideStep(step);
+    window.requestAnimationFrame(function() { renderGuide(step); });
+  }
+
+  function advanceGuide(fromStep, toStep) {
+    if (guideStep !== fromStep && sessionStorage.getItem(GUIDE_STORAGE_KEY) !== fromStep) return;
+    setGuideStep(toStep);
+    window.setTimeout(function() { renderGuide(toStep); }, 120);
+  }
+
+  function handleGuidePrimary() {
+    var step = guideStep || sessionStorage.getItem(GUIDE_STORAGE_KEY);
+    if (step === 'news') { if (window._ecoController) window._ecoController.openEnvironmentPanel(); advanceGuide('news', 'task_panel'); return; }
+    if (step === 'task_panel') { advanceGuide('task_panel', 'active_task'); return; }
+    closeGuide();
+  }
+
+  // Event listeners
+  if (guideTrigger) guideTrigger.addEventListener('click', function(e) { e.stopPropagation(); var activeStep = document.querySelector('button.task-step.active'); if (activeStep) activeStep.scrollIntoView({ block: 'nearest' }); startGuide({ manual: true }); });
+  if (guidePrimary) guidePrimary.addEventListener('click', function(e) { e.stopPropagation(); handleGuidePrimary(); });
+  if (guideSkip) guideSkip.addEventListener('click', function(e) { e.stopPropagation(); finishGuide(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeGuide(); });
+  window.addEventListener('resize', function() { if (guideStep && guideStep !== 'done') renderGuide(guideStep); });
+
+  // Expose for popover/task integration
+  window.EWMGuide = {
+    advanceGuide: advanceGuide,
+    finishGuide: finishGuide,
+    renderGuide: renderGuide,
+    startGuide: startGuide,
+    closeGuide: closeGuide
+  };
+
+  // Auto-start guide on first visit
+  var stored = sessionStorage.getItem(GUIDE_STORAGE_KEY);
+  if (!stored) {
+    window.setTimeout(function() { startGuide({ restart: true }); }, 500);
+  } else if (stored !== 'done') {
+    window.setTimeout(function() { renderGuide(stored); }, 500);
+  }
+})();
+</script>
+</body>
+</html>

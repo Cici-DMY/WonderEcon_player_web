@@ -1,0 +1,90 @@
+"""贷款场景 — 5个API路由"""
+import sys
+import os
+import json
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+
+_CODE_DIR = os.path.join(os.path.dirname(__file__), "..", "engine")
+sys.path.insert(0, os.path.join(_CODE_DIR, "loan"))
+from loan_briefing import build_loan_briefing  # noqa: E402
+from apply_loan_decision import apply_loan_decision  # noqa: E402
+from loan_amount_dialogue import build_loan_amount_dialogue  # noqa: E402
+from apply_loan_amount import apply_loan_amount  # noqa: E402
+from loan_market_clearing import run_player_loan_market  # noqa: E402
+from config import PLAYER_PATH, ENV_PATH, RESULTS_DIR, text_to_bubbles, read_body  # noqa: E402
+
+router = APIRouter()
+
+
+@router.post("/api/loan_briefing")
+async def loan_briefing():
+    try:
+        if not os.path.isfile(PLAYER_PATH):
+            return JSONResponse(status_code=400, content={"success": False, "error": "player.json not found."})
+        with open(PLAYER_PATH, "r", encoding="utf-8") as f:
+            player = json.load(f)
+        available_tasks = player.get("available_tasks", [])
+        eligible = "loan" in available_tasks
+        briefing_text = build_loan_briefing(PLAYER_PATH, ENV_PATH)
+        bubbles = text_to_bubbles(briefing_text)
+        return {
+            "success": True,
+            "matched_agent_id": player["matched_agent_id"],
+            "matched_risk": player.get("matched_risk"),
+            "briefing_bubbles": bubbles,
+            "eligible": eligible,
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+
+@router.post("/api/apply_loan_decision")
+async def apply_loan_decision_route(request: Request):
+    try:
+        body = await read_body(request)
+        rate_level = int(body["rate_level"])
+        decide_loan = bool(body["decide_loan"])
+        seed = body.get("seed", None)
+        player = apply_loan_decision(
+            rate_level=rate_level, decide_loan=decide_loan,
+            player_path=PLAYER_PATH, env_path=ENV_PATH, seed=seed,
+        )
+        result = player.get("loan_decision", {})
+        return {"success": True, "decision": result}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+
+@router.post("/api/loan_amount_dialogue")
+async def loan_amount_dialogue():
+    try:
+        dialogue_text = build_loan_amount_dialogue(PLAYER_PATH, ENV_PATH)
+        bubbles = text_to_bubbles(dialogue_text)
+        return {"success": True, "bubbles": bubbles}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+
+@router.post("/api/apply_loan_amount")
+async def apply_loan_amount_route(request: Request):
+    try:
+        body = await read_body(request)
+        level = int(body["level"])
+        seed = body.get("seed", None)
+        player = apply_loan_amount(level=level, player_path=PLAYER_PATH, seed=seed)
+        result = player.get("loan_amount_decision", {})
+        return {"success": True, "decision": result}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+
+@router.post("/api/loan_market_clearing")
+async def loan_market_clearing(request: Request):
+    try:
+        body = await read_body(request)
+        seed = body.get("seed", None)
+        out = run_player_loan_market(player_path=PLAYER_PATH, results_dir=RESULTS_DIR, seed=seed)
+        return {"success": True, "narrative": out["narrative"], "result": out.get("result", {})}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})

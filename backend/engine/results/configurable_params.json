@@ -1,0 +1,339 @@
+{
+  "simulation_parameters": {
+    "NUM_HOUSEHOLDS": 140,
+    "NUM_FIRMS": 12,
+    "NUM_COMMERCIAL_BANKS": 2,
+    "NUM_TICKS": 13,
+    "INITIAL_STOCK_PRICE": 10.0,
+    "TOTAL_SHARES": 100000
+  },
+  "risk_preference_mapping": {
+    "RISK_PREFERENCES": [
+      "conservative",
+      "steady",
+      "balanced",
+      "growth",
+      "aggressive"
+    ],
+    "LOSS_AVERSION_MAP": {
+      "conservative": 1.8,
+      "steady": 1.6,
+      "balanced": 1.4,
+      "growth": 1.2,
+      "aggressive": 1.0
+    }
+  },
+  "tax_rates": {
+    "PERSONAL_INCOME_TAX_RATE": 0.1,
+    "CORPORATE_INCOME_TAX_RATE": 0.25,
+    "CORPORATE_VAT_RATE": 0.1
+  },
+  "interest_rate_schedule": {
+    "0": {
+      "deposit_1yr": 0.0225,
+      "loan_1yr": 0.0531,
+      "loan_5yr_plus": 0.0594,
+      "mortgage_multiplier": 0.7,
+      "deposit_upper_limit_mult": 1.0,
+      "deposit_lower_limit_mult": 0.0,
+      "loan_lower_limit_mult": 0.9,
+      "loan_upper_limit_mult": 999.0
+    },
+    "6": {
+      "deposit_1yr": 0.025,
+      "loan_1yr": 0.0556,
+      "loan_5yr_plus": 0.0614,
+      "mortgage_multiplier": 0.85,
+      "deposit_upper_limit_mult": 1.0,
+      "deposit_lower_limit_mult": 0.0,
+      "loan_lower_limit_mult": 0.9,
+      "loan_upper_limit_mult": 999.0
+    },
+    "9": {
+      "deposit_1yr": 0.0275,
+      "loan_1yr": 0.0581,
+      "loan_5yr_plus": 0.064,
+      "mortgage_multiplier": 0.85,
+      "deposit_upper_limit_mult": 1.0,
+      "deposit_lower_limit_mult": 0.0,
+      "loan_lower_limit_mult": 0.9,
+      "loan_upper_limit_mult": 999.0
+    },
+    "10": {
+      "deposit_1yr": 0.03,
+      "loan_1yr": 0.0606,
+      "loan_5yr_plus": 0.066,
+      "mortgage_multiplier": 0.85,
+      "deposit_upper_limit_mult": 1.0,
+      "deposit_lower_limit_mult": 0.0,
+      "loan_lower_limit_mult": 0.9,
+      "loan_upper_limit_mult": 999.0
+    },
+    "12": {
+      "deposit_1yr": 0.0325,
+      "loan_1yr": 0.0631,
+      "loan_5yr_plus": 0.068,
+      "mortgage_multiplier": 0.85,
+      "deposit_upper_limit_mult": 1.0,
+      "deposit_lower_limit_mult": 0.0,
+      "loan_lower_limit_mult": 0.9,
+      "loan_upper_limit_mult": 999.0
+    }
+  },
+  "economic_backgrounds": {
+    "0": "The economy is partially overheating with booming real estate and strong investment demand.",
+    "1": "The economy is running at a high level; inflation is emerging.",
+    "2": "Demand is plateauing at high levels.",
+    "3": "Consumer prices are accelerating upward.",
+    "4": "Inflationary pressure is intensifying.",
+    "5": "The economy is in a state of full-scale overheating and high inflation.",
+    "6": "Inflation is worsening significantly.",
+    "7": "The economy is entering early stagflation: prices are surging, but demand is starting to be damaged.",
+    "8": "High inflation persists.",
+    "9": "The economy is decelerating, but inflation remains elevated.",
+    "10": "Stagflation is deepening; demand contraction is becoming evident.",
+    "11": "Inflation appears to be peaking; the real economy is weakening.",
+    "12": "Demand is contracting across the board."
+  },
+  "macro_news": {
+    "0": "Tick 1 of 13. No policy changes this period. The central bank maintains the current benchmark interest rates.\n\n\"New fears over speed of China's growth\": China's economic expansion accelerated markedly, shifting market attention away from whether the recovery was durable and toward whether growth was becoming excessively rapid. The growth outlook was revised upward, but concerns over overheating, policy tightening, and asset price risks also intensified.\n\n\"China on 'Treadmill to Hell' Amid Bubble, Chanos Says\": The property bubble emerged as a central variable in macroeconomic assessments. Rising asset prices were no longer viewed as an isolated phenomenon, but as part of a broader macroeconomic risk framework. The key concern was that a future correction could weigh on overall growth through weaker investment, tighter credit conditions, and a deterioration in market sentiment.\n\n\"China Adjusts Policy but Avoids Rate Increase\": Policy had begun to shift from broad-based support toward marginal tightening, but the pace remained cautious. Restrictions on property and credit were being strengthened, while stronger interest-rate tools had not yet been deployed. Policy was still in the gradual phase of withdrawing from exceptionally loose settings.\n\n\"Instant Analysis - China GDP growth quickens\": First-quarter growth accelerated significantly, with economic momentum exceeding earlier expectations. Stronger growth reinforced concerns about inflation, asset bubbles, and the likelihood of further policy tightening. Growth itself had become an important basis for recalibrating macroeconomic policy.\n\n\"China's Economy Soars, But Rebound Comes With Risks\": The economic rebound was exceptionally strong, but risks were accumulating at the same time. Investment recovered rapidly and the property market heated up noticeably, leaving policymakers under growing pressure to rebalance between sustaining growth and containing overheating.",
+    "1": "Tick 2 of 13. No policy changes. Inflation indicators are rising steadily.\n\n\"China's April Manufacturing Expands at Faster Pace\": Manufacturing activity continued to strengthen, with the pace of expansion in the real economy exceeding earlier expectations. Rather than clearly cooling, the economy showed further signs of momentum, reinforcing concerns about overheating and increasing the case for additional policy tightening.\n\n\"China's Hainan hopes to avoid property crash\": Property market risks intensified further, and in some regions both housing prices and investment sentiment were already displaying clear bubble-like characteristics. Real estate was increasingly discussed within a broader macroeconomic framework, with the central concern being that excessively rapid price gains could eventually undermine investment, bank asset quality, and overall economic growth.\n\n\"China's Inflation Picks Up\": Inflationary pressures continued to build, with rising prices emerging alongside a heated property market. Economic expansion remained strong, making it more difficult for policy to turn accommodative. Prices and asset valuations were beginning to serve as the dual constraints on macroeconomic management.\n\n\"China Growth Accelerates, Poll Shows\": Growth momentum remained strong, with the property boom continuing to support aggregate demand. The economy showed no clear sign of a sharp loss of momentum, and market attention shifted further from the strength of the recovery itself toward the quality of growth and whether rapid expansion could be sustained under a tighter policy environment.\n\n\"Lex: China property\": Real estate and overall economic expansion had become more tightly linked. Strong growth strengthened expectations of further tightening, while continued heating in the property market amplified concerns over overheating and the need for policy restraint. The macroeconomic environment was beginning to shift from high growth toward risk management under high growth conditions.",
+    "2": "Tick 3 of 13. No policy changes. Real estate investment continues to surge.\n\n\"China policy outlook murky after mixed bag of data\": The economy remained on a relatively strong growth path, but industrial activity and investment began to slow at the margin, suggesting a retreat from the earlier overheated phase. Inflation continued to rise and price pressures had not eased, pushing policy into a more cautious observational phase in which there was neither a turn toward easing nor support for renewed stimulus.\n\n\"China's May Consumer Prices Rise 3.1%, Reuters Says\": Consumer prices continued to move upward, with inflation rising beyond the range implied by the annual policy target. Price pressures were now coexisting with strong growth, shifting the central macroeconomic challenge from simply consolidating the recovery to rebalancing among growth, inflation, and tightening policy.\n\n\"China Property Prices Rise More-Than-Estimated 12.4%\": The property market continued to heat up, and existing controls had not yet produced a meaningful slowdown in prices. Asset appreciation and credit expansion were reinforcing one another, elevating real estate risk from a sector-specific issue to a key constraint on macroeconomic stability and future policy direction.\n\n\"China's Property Sales Fell in May\": Property sales began to weaken, indicating that earlier tightening measures were starting to affect transaction volumes, even though prices remained elevated. The market was shifting from a phase of one-sided heating to one of declining volumes but resilient prices, and the risk focus was moving from continued bubble expansion to the drag that adjustment could impose on investment and demand.\n\n\"Calling the China bubble\": Bubble-related concerns had become central to market discussion of the Chinese economy. The risk no longer lay only in housing prices themselves, but in the possibility that continued divergence from fundamentals could eventually weigh on overall growth through weaker investment, tighter credit conditions, and deteriorating sentiment.",
+    "3": "Tick 4 of 13. No policy changes. CPI growth is accelerating month-on-month.\n\n\"Instant view: China Q2 GDP growth, June inflation slow\": Growth slowed further in the second quarter, with the pace easing from the first quarter as the effects of withdrawing earlier fiscal and monetary stimulus became more visible in the aggregate data. Expansion remained strong in absolute terms, but the economy had clearly entered a cooling phase from previously rapid growth.\n\n\"China central bank sees economy slowing\": The slowdown was increasingly framed as the result of policy adjustment rather than a sudden collapse in demand. Property tightening, constraints on local government financing platforms, and anti-inflation measures were collectively pushing growth lower, making the macroeconomic environment look more like deliberate cooling than involuntary weakening.\n\n\"China Growth Weakens in Car Sales, Services Industry\": Indicators tied to domestic demand began to show clearer signs of moderation. Slower car sales and weaker service-sector conditions suggested that the economy was cooling further from its earlier strength, and that both consumption and services were beginning to feel the effects of earlier tightening.\n\n\"China's HSBC Services Index Slides to 15-Month Low\": Service-sector activity weakened noticeably, with the sentiment indicator falling to a relatively low level. This suggested that the slowdown was no longer confined to industry and investment, but was spreading into a broader set of domestic demand sectors. Growth momentum remained positive, but both its breadth and intensity were narrowing.\n\n\"China Commodity Demand 'Volatile,' Credit Suisse Says\": As investment and credit growth slowed and property tightening intensified, demand for commodities became more volatile. The economy was no longer characterized by uninterrupted acceleration, but had entered a phase in which policy was restraining earlier growth drivers and markets were reassessing the underlying strength of demand.",
+    "4": "Tick 5 of 13. No policy changes. Food prices are driving headline inflation.\n\n\"China central bank sees economy slowing\": The slowdown was explicitly understood as policy-induced rather than the result of an abrupt collapse in domestic demand. Tightening in real estate, restrictions on local government financing, and anti-inflation measures were jointly pushing growth down from elevated levels, giving the economy a more clearly policy-led cooling profile.\n\n\"China Growth Weakens in Car Sales, Services Industry\": Slower automobile sales and weaker service-sector sentiment showed that the cooling process had spread from industry and investment into a broader range of domestic demand sectors. Growth remained positive, but both its scope and pace were narrowing, and consumption-related segments were increasingly absorbing the effects of earlier policy tightening.\n\n\"China's HSBC Services Index Slides to 15-Month Low\": Service-sector sentiment fell to a relatively low level, indicating a continued decline in economic momentum. The slowdown was no longer merely an aggregate adjustment, but was increasingly visible in the broader weakening of business activity and domestic demand conditions.\n\n\"Slowdown but no meltdown for China's economy in July\": Industrial growth, investment, and retail activity all continued to moderate, but household consumption still showed a degree of resilience, and the economy did not appear to be entering a sharp downturn. The more accurate characterization was high-level deceleration rather than demand collapse, reinforcing the view of a soft landing.\n\n\"China shows further signs of slowing\": Signs of moderation deepened further, with industrial activity continuing to cool while inflation moved higher again, making the policy environment more complicated. Slower growth alongside renewed price pressure meant that macroeconomic policy could not easily pivot toward easing and still had to balance support for growth against inflation control.",
+    "5": "Tick 6 of 13. No policy changes. Markets expect imminent tightening measures.\n\n\"Chinese economy wins manufacturing boost\": Manufacturing conditions showed signs of renewed stabilization, with production activity strengthening again after a period of sequential slowing. The economy did not continue drifting onto a weaker path, which materially eased hard-landing concerns and reaffirmed the resilience of growth.\n\n\"Chinese manufacturing snaps out of slowdown\": The broader slowdown was still in place, but manufacturing had already recovered from the cooling phase seen in previous months. Earlier tightening measures targeting credit and real estate had not pushed the economy into a clear contraction. The macroeconomic picture was therefore closer to stabilization after a high-level cooling phase than to a continued loss of momentum.\n\n\"China Inflation Date Change Triggers Speculation of Rate Rise\": Inflationary pressure returned to the center of market attention. With rising prices coinciding with relatively strong economic resilience, the policy environment tilted back toward tightening. Expectations of an interest-rate increase began to strengthen noticeably, prompting markets to reassess the likelihood of further monetary restraint.\n\n\"China 2010 Economic Growth Will Be Faster Than Year Ago, Stats Bureau's Ma Says\": The full-year growth outlook was revised upward again, and improvements in the quality and structure of economic expansion were increasingly incorporated into official language. The defining feature of the macroeconomic environment was no longer insufficient growth, but rather how to manage price pressure, liquidity constraints, and the prospect of further policy tightening in the context of still-strong expansion.\n\n\"China shows further signs of slowing\": Signs of moderation had not disappeared entirely, as industrial activity and demand were still operating within a slowing range. However, the coexistence of weaker growth momentum and rising inflation made the macroeconomic environment more complex. Slower growth did not automatically create room for easing; instead, mounting price pressure made policy choices more constrained.",
+    "6": "Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.\n\n\"China Inflation Date Change Triggers Speculation of Rate Rise\": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.\n\n\"Chinese growth persists amid monetary fears\": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.\n\n\"China rate move turns focus on rising prices\": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.\n\n\"China growth, inflation spur concern\": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.",
+    "7": "Tick 8 of 13. 1 month has passed since the first rate hike. Markets are still digesting the impact. Demand is starting to cool.\n\n\"China surprises with first rate rise since 2007\": China's decision to raise interest rates marked a clear shift in monetary policy from the post-crisis accommodative stance toward more explicit tightening. The policy focus was moving away from supporting growth and toward containing inflation expectations and excess liquidity, with interest rates once again becoming a central macroeconomic instrument. The move also reinforced expectations of a continued tightening cycle.\n\n\"China's Central Bank Is Still Worried About Inflation\": Inflationary pressure and asset-price risk remained at the center of policy concern. Even after the initial rate increase, policymakers continued to signal vigilance toward rising prices and overheating, pointing to the likelihood of further tightening and underscoring that the direction of macroeconomic management was undergoing a more systematic shift.\n\n\"China readies price controls to tackle food inflation\": Rising food prices had become a major driver of inflation, and price pressure was beginning to affect household welfare more directly. In addition to monetary tools, policymakers introduced administrative measures such as price controls and anti-speculation actions to stabilize markets, reflecting both the urgency of the inflation problem and the widening policy toolkit being deployed to address it.\n\n\"China Steps Up Ownership Curbs for Foreign Homebuyers\": Real estate tightening continued to intensify, with further restrictions imposed on the demand side. The policy objective was to curb investment-driven and speculative home purchases and to limit the risk that excessively rapid house-price appreciation could destabilize the financial system and the broader economy. Property remained one of the most important perceived sources of risk.",
+    "8": "Tick 9 of 13. 2 months since the first rate hike. High inflation continues despite monetary tightening.\n\n\"China May Intensify Inflation Fight as Prices Surge\": Inflationary pressure intensified further during this period, and price increases had evolved from a temporary disturbance into the primary constraint on macroeconomic policy. The policy focus continued to shift away from supporting growth and toward containing inflation, while market expectations of further rate hikes and stronger credit tightening rose materially.\n\n\"China rate rise talk builds as loans and inflation rise\": The simultaneous rise in credit expansion and inflation reinforced widespread expectations that monetary policy would continue to tighten. Even though another rate increase had not yet occurred within this window, the policy signal was already clear: both interest-rate tools and quantitative measures were viewed as likely instruments for the next phase of tightening.\n\n\"EXCLUSIVE-China extends selective RRR hike for 3 months\": Reserve requirement tools were used more forcefully in this period, with targeted tightening for selected banks being extended and broadened. This reflected regulatory concern that the pace of lending remained too strong. Compared with uniform tightening, this approach placed greater emphasis on restraining risk within the banking system and curbing overly rapid credit growth, showing that policy tightening was becoming a sustained process rather than a one-off action.\n\n\"China consumers signal deepest inflation concern since 1999 in PBOC survey\": Household sensitivity to rising prices increased markedly, showing that inflation expectations were spreading more broadly across society. Inflation was no longer merely a statistical macroeconomic issue; it was beginning to affect consumer expectations, policy credibility, and the anticipated pace of future macroeconomic adjustment. Price stability therefore moved even higher in the policy hierarchy.",
+    "9": "Tick 10 of 13. SECOND RATE HIKE (announced ~1 month ago, effective this tick): 1-year deposit rate: 2.50% -> 2.75%. 1-year loan rate: 5.56% -> 5.81%. 5-year+ loan rate: 6.14% -> 6.40%. Effective mortgage rate: 5.22% -> 5.44%. This is the second rate hike, ~2 months after the first.\n\n\"China fights inflation with Christmas rate rise\": China raised interest rates again, indicating that policy tightening had moved beyond expectation management and into a more sustained implementation phase. Monetary policy was now more clearly oriented toward restraining inflation and withdrawing excess liquidity, suggesting that price stability had taken precedence even while growth remained relatively resilient.\n\n\"China Risks 'Rush' to Tighten in 2011 After Inflation Tops 5%\": Price pressures showed little sign of easing, leading markets to expect that the pace of tightening could accelerate further. The core implication was that the earlier, more moderate approach to policy adjustment might no longer be sufficient to stabilize inflation expectations, leaving policymakers under greater pressure to choose more decisively between strong growth and rising prices.\n\n\"China's sizzling end to 2010 calls for tighter policy\": Economic momentum remained strong at the end of the year, and earlier tightening had not produced a meaningful cooling in growth. This reduced the case for maintaining accommodative settings. Macroeconomic judgment therefore shifted toward the view that there was no immediate risk of a sharp downturn and that policy would continue to focus on restraining credit, withdrawing liquidity, and preventing further buildup in price and asset-market risks.\n\n\"Asia to see soaring prices in 2011: Reuters poll\": Markets broadly expected China to remain under significant inflationary pressure in the period ahead. Even if growth moderated at the margin, this was not seen as enough to alter the direction of continued tightening. Inflation, rather than a growth slowdown, remained the dominant force shaping the timing and intensity of macroeconomic policy.",
+    "10": "Tick 11 of 13. THIRD RATE HIKE (announced ~1 week ago, effective this tick): 1-year deposit rate: 2.75% -> 3.00%. 1-year loan rate: 5.81% -> 6.06%. 5-year+ loan rate: 6.40% -> 6.60%. Effective mortgage rate: 5.44% -> 5.61%. This is the third rate hike in 4 months. Markets are under significant pressure.\n\n\"China's Manufacturing Growth Maintains Rate Pressure\": Manufacturing conditions remained relatively strong, indicating that earlier tightening had not materially weakened the economy and that there was still room for policy to tighten further. The macroeconomic narrative did not shift toward growth collapse; instead, it remained one of resilient growth alongside stronger inflation constraints, with markets continuing to treat further rate hikes as highly likely.\n\n\"China to stick to gradual tightening despite risk: Reuters poll\": Markets generally expected China to continue along a path of gradual tightening, with no change in policy direction despite short-term fluctuations. This suggested that policymakers still aimed to preserve overall growth stability while steadily reducing inflationary and credit-expansion pressures, making tightening an ongoing process rather than a one-time adjustment.\n\n\"Inflation Worries Spread as China Raises Interest Rates\": China raised interest rates again during this period, confirming that inflation control remained the foremost objective of macroeconomic management. The repeated use of rate tools sent a stronger tightening signal and indicated that price pressures were no longer viewed as a temporary disturbance, but as a core risk requiring persistent policy action.\n\n\"China inflation data adds to tightening case\": Inflation remained elevated, and price increases were no longer confined to a few highly volatile categories. Underlying price pressure was also beginning to build. This suggested that inflation was broadening from a localized issue into a more generalized one, strengthening the case for continued tightening and raising the policy priority assigned to price stability.",
+    "11": "Tick 12 of 13. 1 month since the third rate hike. The economy is showing clear signs of stress. Inflation appears to be peaking.\n\n\"China's Key Aim Is Taming Prices as Wen Eyes Social Unrest\": China made price stabilization the central priority of its annual economic agenda, signaling a policy ranking that was increasingly focused not only on growth, but also on living costs, expectations, and social stability. Inflation had become more than a macroeconomic concern; it was now also treated as a constraint with broader implications for confidence and stability.\n\n\"Wen says China set for five more fat years of growth\": The new development plan conveyed a clearer signal of structural adjustment. Officials remained confident about medium-term growth prospects, but policy language placed less emphasis on maintaining exceptionally high growth and more on achieving a more sustainable and balanced development path. This indicated that the macroeconomic framework was gradually shifting away from post-crisis stimulus toward growth-model adjustment and structural rebalancing.\n\n\"China inflation exceeds target\": Price pressure remained stubborn, and earlier tightening had not produced a meaningful easing in inflation. As a result, expectations of further tightening remained elevated. The broader implication was that inflation had become the main factor limiting policy space for easing and was pushing macroeconomic management toward price stability rather than renewed credit relaxation.\n\n\"China raises reserve requirements 50bp\": China continued to raise reserve requirements, showing that quantitative tools remained the primary means of withdrawing liquidity, restraining credit expansion, and stabilizing inflation expectations. The repeated tightening actions indicated that policymakers did not believe risks tied to prices and liquidity had been materially resolved.",
+    "12": "Tick 13 of 13 (final tick). FOURTH RATE HIKE (announced ~10 days ago, effective this tick): 1-year deposit rate: 3.00% -> 3.25%. 1-year loan rate: 6.06% -> 6.31%. 5-year+ loan rate: 6.60% -> 6.80%. Effective mortgage rate: 5.61% -> 5.78%. Four rate hikes in 6 months. Demand is collapsing across sectors.\n\n\"China Raises Rate Fourth Time Since October to Tame Inflation\": China raised interest rates again, confirming that monetary tightening was still advancing and that inflation control remained the foremost objective of macroeconomic policy. Strong growth had not prompted a reversal in policy direction; instead, the persistence of price pressure implied that liquidity and credit conditions would remain tight.\n\n\"Zhou Pledges More Tightening as China Raises Reserve Requirements\": China lifted reserve requirements again and signaled that further tightening could still follow. Quantitative tools continued to be used to absorb liquidity and restrain credit expansion, showing that policymakers did not regard inflation and asset-price risks as having been brought under effective control. The tightening bias was therefore not temporary, but still ongoing.\n\n\"China Posts First Quarterly Trade Deficit in Seven Years\": A temporary weakening in the trade balance did not alter the main macroeconomic narrative of the period. Its more important implication was that domestic demand and import-price dynamics were playing a larger role in shaping the economy. China was not primarily facing a shortage of aggregate demand at this stage, but rather stronger price constraints in an environment where domestic demand still retained support.\n\n\"Shanghai Shares Shrug Off Tightening\": With inflation still elevated and policy continuing to tighten, markets began to assess whether the current tightening cycle was approaching a near-term peak. Asset prices did not become disorderly in response to a single policy action, suggesting that markets still viewed underlying economic fundamentals as relatively resilient, even as attention increasingly turned to the remaining policy space and the risk of a gradual slowdown in growth."
+  },
+  "wealth_level_labels": {
+    "5": "top 20% (very wealthy)",
+    "4": "60%-80% (wealthy)",
+    "3": "40%-60% (middle class)",
+    "2": "20%-40% (lower-middle class)",
+    "1": "bottom 20% (low income)"
+  },
+  "firm_scale_labels": {
+    "5": "top tier (largest scale)",
+    "4": "second tier (large scale)",
+    "3": "mid tier (medium scale)",
+    "2": "fourth tier (smaller scale)",
+    "1": "bottom tier (smallest scale)"
+  },
+  "mortgage_constants": {
+    "MORTGAGE_BASE_MONTHLY_PAYMENT_PER_MILLION": 6143,
+    "MORTGAGE_RATE_SENSITIVITY_PER_MILLION": 55,
+    "MORTGAGE_BASE_RATE": 0.0416
+  },
+  "llm_config": {
+    "LLM_MODEL": "gpt-4o",
+    "LLM_TEMPERATURE": 0.7,
+    "MAX_CONCURRENT_LLM_CALLS": 100
+  },
+  "household_initialization_config": {
+    "wealth_levels": {
+      "5": {
+        "asset_base": 400000,
+        "mortgage": 0,
+        "beta_range": [
+          1.4,
+          2.0
+        ],
+        "unemp_prob": 0.02
+      },
+      "4": {
+        "asset_base": 250000,
+        "mortgage": 600000,
+        "beta_range": [
+          1.1,
+          1.6
+        ],
+        "unemp_prob": 0.05
+      },
+      "3": {
+        "asset_base": 150000,
+        "mortgage": 400000,
+        "beta_range": [
+          0.8,
+          1.3
+        ],
+        "unemp_prob": 0.1
+      },
+      "2": {
+        "asset_base": 80000,
+        "mortgage": 200000,
+        "beta_range": [
+          0.5,
+          1.0
+        ],
+        "unemp_prob": 0.15
+      },
+      "1": {
+        "asset_base": 30000,
+        "mortgage": 0,
+        "beta_range": [
+          0.1,
+          0.6
+        ],
+        "unemp_prob": 0.2
+      }
+    },
+    "deposit_ratio_by_risk": {
+      "conservative": 0.7,
+      "steady": 0.6,
+      "balanced": 0.55,
+      "growth": 0.45,
+      "aggressive": 0.35
+    },
+    "stock_ratio_by_risk": {
+      "conservative": 0.05,
+      "steady": 0.08,
+      "balanced": 0.12,
+      "growth": 0.16,
+      "aggressive": 0.2
+    },
+    "wealth_deposit_bonus_per_level": 0.03,
+    "stock_ratio_cap": 0.2
+  },
+  "firm_initialization_config": {
+    "scale_levels": {
+      "5": {
+        "asset_base": 600000,
+        "prod_per_worker": 15,
+        "wage_base": 15000,
+        "beta_range": [
+          1.7,
+          2.0
+        ]
+      },
+      "4": {
+        "asset_base": 400000,
+        "prod_per_worker": 13,
+        "wage_base": 11000,
+        "beta_range": [
+          1.5,
+          1.8
+        ]
+      },
+      "3": {
+        "asset_base": 250000,
+        "prod_per_worker": 10,
+        "wage_base": 8000,
+        "beta_range": [
+          1.3,
+          1.6
+        ]
+      },
+      "2": {
+        "asset_base": 120000,
+        "prod_per_worker": 7,
+        "wage_base": 5000,
+        "beta_range": [
+          1.1,
+          1.4
+        ]
+      },
+      "1": {
+        "asset_base": 50000,
+        "prod_per_worker": 5,
+        "wage_base": 3000,
+        "beta_range": [
+          1.0,
+          1.2
+        ]
+      }
+    },
+    "risk_distribution": [
+      "aggressive",
+      "growth",
+      "balanced",
+      "balanced",
+      "growth",
+      "steady",
+      "balanced",
+      "growth",
+      "conservative",
+      "steady"
+    ],
+    "non_listed_shares_ratio": 0.001,
+    "deposit_ratio": 0.4
+  },
+  "bank_initialization_config": {
+    "bank_0": {
+      "risk_preference": "conservative",
+      "initial_pool": 1200000
+    },
+    "bank_1": {
+      "risk_preference": "aggressive",
+      "initial_pool": 800000
+    },
+    "initial_loan_rate": 0.0531,
+    "initial_loan_volume": 0,
+    "initial_deposit_rate": 0.0225
+  },
+  "government_initialization_config": {
+    "initial_total_tax": 50000.0,
+    "initial_distribution_pct": 1.1,
+    "distribution_range": [
+      1.05,
+      1.15
+    ],
+    "household_share": 0.6,
+    "firm_share": 0.4
+  },
+  "central_bank_initialization_config": {
+    "initial_deposit_1yr": 0.0225,
+    "initial_loan_1yr": 0.0531,
+    "initial_loan_5yr_plus": 0.0594,
+    "injection_max_pct": 0.02
+  },
+  "economic_constraints": {
+    "household": {
+      "loan_max_pct_of_wage": 0.5,
+      "consumption_ratio_no_loan": [
+        0.1,
+        0.8
+      ],
+      "consumption_ratio_with_loan": [
+        0.8,
+        1.0
+      ],
+      "stock_ratio_no_loan": [
+        0.0,
+        0.5
+      ],
+      "only_wealth_1_2_can_loan": true
+    },
+    "firm": {
+      "loan_max_pct_of_available_funds": 0.2,
+      "production_ratio_no_loan": [
+        0.2,
+        0.6
+      ],
+      "production_ratio_loan_with_rnd": [
+        0.6,
+        0.8
+      ],
+      "production_ratio_loan_no_rnd": [
+        0.8,
+        1.0
+      ],
+      "max_price_markup_over_cost": 1.1,
+      "stock_ratio_no_loan": [
+        0.0,
+        0.5
+      ],
+      "listed_company_cannot_hold_stock": true,
+      "rnd_cost_pct": 0.2,
+      "rnd_production_boost": 1
+    },
+    "bank": {
+      "deposit_rate_ceiling_mult": "1.0x benchmark (2010 rule)",
+      "loan_rate_floor_mult": "0.9x benchmark"
+    }
+  }
+}

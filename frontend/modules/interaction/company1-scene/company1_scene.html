@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Company 1 Scene (coo)</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #111827; }
+body { display: flex; justify-content: center; align-items: center; }
+
+.scene {
+  position: relative;
+  width: min(95vw, calc(95vh * (1242 / 941)));
+  aspect-ratio: 1242 / 941;
+  background: #111827;
+}
+.scene .bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.item {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  transform-origin: center;
+}
+.item.selected { outline: 2px dashed #4a90d9; outline-offset: 2px; }
+.item:active { cursor: grabbing; }
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.size-panel {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: rgba(255,255,255,0.95);
+  border-radius: 10px;
+  padding: 12px 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: none;
+  align-items: center;
+  gap: 12px;
+  font-family: "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+}
+.size-panel.show { display: flex; }
+.size-panel label { color: #333; white-space: nowrap; }
+.size-panel input[type="range"] {
+  width: 200px;
+  accent-color: #4a90d9;
+}
+.size-panel .size-val {
+  min-width: 60px;
+  text-align: center;
+  color: #666;
+}
+
+.hint {
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #cbd5e1;
+  font-family: "Microsoft YaHei", sans-serif;
+  z-index: 9998;
+  background: rgba(15,23,42,0.6);
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.toolbar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  max-width: 60vw;
+  justify-content: flex-end;
+  font-family: "Microsoft YaHei", sans-serif;
+}
+.toolbar button {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  background: #475569;
+  color: #fff;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.toolbar button:hover { background: #334155; }
+.btn-plan { background: #f59e0b; color: #fff; }
+.btn-plan.active { background: #d97706; box-shadow: 0 0 0 3px rgba(245,158,11,0.4); }
+.btn-agent-select { background: #6366f1; color: #fff; }
+.btn-agent-select.selected { background: #4338ca; box-shadow: 0 0 0 3px rgba(99,102,241,0.4); }
+.btn-plan-confirm { background: #10b981; color: #fff; }
+.btn-plan-loop    { background: #8b5cf6; color: #fff; }
+.btn-plan-clear   { background: #6b7280; color: #fff; }
+
+.agents-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 500;
+}
+.agents-overlay .agent { pointer-events: auto; cursor: pointer; }
+.agents-overlay .agent.selected { filter: drop-shadow(0 0 6px #4a90d9); }
+.agent-frame { image-rendering: auto; }
+.route-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+.scene.plan-mode { cursor: crosshair !important; }
+.scene.plan-mode .item { cursor: crosshair !important; }
+
+.plan-hint {
+  position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.72); color: #fff; padding: 8px 18px;
+  border-radius: 20px; font-size: 13px; pointer-events: none;
+  z-index: 9999; white-space: nowrap; transition: opacity 0.2s;
+  font-family: "Microsoft YaHei", sans-serif;
+}
+.plan-hint.hidden { opacity: 0; }
+</style>
+</head>
+<body>
+
+<div class="size-panel" id="sizePanel">
+  <label id="sizeLabel">选中元素</label>
+  <input type="range" id="sizeSlider" data-default-max="2.5" min="0.2" max="2.5" step="0.01" value="1">
+  <span class="size-val" id="sizeVal">scale 1.00</span>
+</div>
+
+<div class="toolbar">
+  <button class="btn-plan" id="btnPlan" onclick="togglePlanMode()">规划路线</button>
+  <button class="btn-agent-select" id="btnAgent1" onclick="planSelectAgent(0)" style="display:none">员工A</button>
+  <button class="btn-agent-select" id="btnAgent2" onclick="planSelectAgent(1)" style="display:none">员工B</button>
+  <button class="btn-plan-confirm" id="btnPlanConfirm" onclick="confirmPlan(false)" style="display:none">✓ 单次执行</button>
+  <button class="btn-plan-loop"    id="btnPlanLoop"    onclick="confirmPlan(true)"  style="display:none">↺ 闭环行走</button>
+  <button class="btn-plan-clear"   id="btnPlanClear"   onclick="clearPlan()"        style="display:none">✕ 清除路线</button>
+  <button onclick="savePositions()">保存位置</button>
+  <button onclick="copySnapshotJSON()" style="background:#0ea5e9;color:#fff;">📋 复制快照 JSON</button>
+  <button onclick="resetPositions()">重置位置</button>
+</div>
+
+<div class="plan-hint hidden" id="planHint"></div>
+
+<div class="hint">点击图层选中后用底部滑动条改大小，拖拽改位置。</div>
+
+<div class="scene" id="scene">
+  <img class="bg" src="assets/cutout.png" alt="company 1 cutout">
+
+  <!-- 图层顺序 = z 序，源自 city-world-final 中 company-interior-layers v2 用户调好的布局 -->
+  <div class="item" data-id="coo-08" data-source="coo-08"
+       data-x="524.22" data-y="617.74" data-w="114" data-h="172" data-scale="2" data-rotation="0">
+    <img src="assets/coo-08.png">
+  </div>
+  <div class="item" data-id="coo-09" data-source="coo-09"
+       data-x="658.02" data-y="617.94" data-w="382" data-h="274" data-scale="0.37" data-rotation="-1">
+    <img src="assets/coo-09.png">
+  </div>
+  <div class="item" data-id="coo-01" data-source="coo-01"
+       data-x="152.27" data-y="328.72" data-w="222" data-h="170" data-scale="1.3" data-rotation="-5">
+    <img src="assets/coo-01.png">
+  </div>
+  <div class="item" data-id="coo-02" data-source="coo-02"
+       data-x="632.52" data-y="190.53" data-w="118" data-h="132" data-scale="1.61" data-rotation="0">
+    <img src="assets/coo-02.png">
+  </div>
+  <div class="item" data-id="coo-10" data-source="coo-10"
+       data-x="660.88" data-y="751.16" data-w="158" data-h="165" data-scale="1" data-rotation="-2">
+    <img src="assets/coo-10.png">
+  </div>
+  <div class="item" data-id="coo-07" data-source="coo-07"
+       data-x="811.16" data-y="404.29" data-w="124" data-h="171" data-scale="2" data-rotation="0">
+    <img src="assets/coo-07.png">
+  </div>
+  <div class="item" data-id="coo-11" data-source="coo-11"
+       data-x="980.24" data-y="497.03" data-w="206" data-h="206" data-scale="0.48" data-rotation="0">
+    <img src="assets/coo-11.png">
+  </div>
+  <div class="item" data-id="coo-03-2" data-source="coo-03"
+       data-x="310.29" data-y="458.78" data-w="135" data-h="153" data-scale="1.57" data-rotation="0">
+    <img src="assets/coo-03.png">
+  </div>
+  <div class="item" data-id="coo-05" data-source="coo-05"
+       data-x="522.82" data-y="321.27" data-w="103" data-h="186" data-scale="1.45" data-rotation="0">
+    <img src="assets/coo-05.png">
+  </div>
+  <div class="item" data-id="coo-06" data-source="coo-06" data-max-scale="5"
+       data-x="658.28" data-y="496.92" data-w="83" data-h="192" data-scale="2" data-rotation="0">
+    <img src="assets/coo-06.png">
+  </div>
+
+  <!-- 人物行走图层 -->
+  <svg class="agents-overlay" id="agents-overlay"
+       viewBox="0 0 1242 941" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg">
+    <g id="company-characters"></g>
+  </svg>
+  <svg class="agents-overlay" id="plan-overlay"
+       viewBox="0 0 1242 941" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg"
+       style="pointer-events:none; z-index:501;">
+    <g id="plan-preview-layer"></g>
+  </svg>
+</div>
+
+<script>
+const VIEW_W = 1242;
+const VIEW_H = 941;
+const STORAGE_KEY = "company1_scene_layout_v1";
+const ROUTES_KEY  = "company1_scene_routes";
+
+// === 嵌入式快照（点"📋 复制快照 JSON"把数据粘到这里两个 null 位置；保留 sentinel 注释） ===
+const EMBEDDED_LAYOUT = {
+  "coo-08": {
+    "x": 513.2080437319224,
+    "y": 608.3400741569898,
+    "w": 114,
+    "h": 172,
+    "scale": 2,
+    "rotation": 0
+  },
+  "coo-09": {
+    "x": 500.5351968638146,
+    "y": 193.44058391241313,
+    "w": 382,
+    "h": 274,
+    "scale": 0.37,
+    "rotation": -1
+  },
+  "coo-01": {
+    "x": 152.27,
+    "y": 328.72,
+    "w": 222,
+    "h": 170,
+    "scale": 1.3,
+    "rotation": -5
+  },
+  "coo-02": {
+    "x": 632.52,
+    "y": 190.53,
+    "w": 118,
+    "h": 132,
+    "scale": 1.61,
+    "rotation": 0
+  },
+  "coo-10": {
+    "x": 652.149733620321,
+    "y": 738.5198431123949,
+    "w": 158,
+    "h": 165,
+    "scale": 1,
+    "rotation": -2
+  },
+  "coo-07": {
+    "x": 793.5948773805825,
+    "y": 406.8117779856413,
+    "w": 124,
+    "h": 171,
+    "scale": 2,
+    "rotation": 0
+  },
+  "coo-11": {
+    "x": 1087.6291119822738,
+    "y": 488.49392591111337,
+    "w": 206,
+    "h": 206,
+    "scale": 0.48,
+    "rotation": 0
+  },
+  "coo-03-2": {
+    "x": 310.29,
+    "y": 458.78,
+    "w": 135,
+    "h": 153,
+    "scale": 1.57,
+    "rotation": 0
+  },
+  "coo-05": {
+    "x": 523.1157320606784,
+    "y": 273.22541618757185,
+    "w": 103,
+    "h": 186,
+    "scale": 2,
+    "rotation": 0
+  },
+  "coo-06": {
+    "x": 642.1359181328688,
+    "y": 366.7564644609012,
+    "w": 83,
+    "h": 192,
+    "scale": 3.15,
+    "rotation": 0
+  }
+};  //__EMBEDDED_LAYOUT_END
+const EMBEDDED_ROUTES = [
+  {
+    "name": "员工A",
+    "x": 437,
+    "y": 735,
+    "scale": 0.26,
+    "fixedRoute": [
+      [
+        865,
+        436
+      ],
+      [
+        437,
+        735
+      ]
+    ],
+    "linear": false,
+    "atEnd": false
+  },
+  {
+    "name": "员工B",
+    "x": 482.00172684980083,
+    "y": 398.7905223505556,
+    "scale": 0.31,
+    "fixedRoute": [
+      [
+        586,
+        323
+      ],
+      [
+        221,
+        589
+      ]
+    ],
+    "linear": false,
+    "atEnd": false
+  }
+];  //__EMBEDDED_ROUTES_END
+
+function applyLayer(el, x, y, w, h, scale, rot) {
+  const finalW = w * scale;
+  const finalH = h * scale;
+  el.style.left   = (x / VIEW_W * 100).toFixed(4) + "%";
+  el.style.top    = (y / VIEW_H * 100).toFixed(4) + "%";
+  el.style.width  = (finalW / VIEW_W * 100).toFixed(4) + "%";
+  el.style.height = (finalH / VIEW_H * 100).toFixed(4) + "%";
+  el.style.transform = rot ? `rotate(${rot}deg)` : "";
+  el.dataset.x = x;
+  el.dataset.y = y;
+  el.dataset.w = w;
+  el.dataset.h = h;
+  el.dataset.scale = scale;
+  el.dataset.rotation = rot;
+}
+
+function initLayers() {
+  document.querySelectorAll(".item").forEach((el) => {
+    applyLayer(el,
+      parseFloat(el.dataset.x),
+      parseFloat(el.dataset.y),
+      parseFloat(el.dataset.w),
+      parseFloat(el.dataset.h),
+      parseFloat(el.dataset.scale),
+      parseFloat(el.dataset.rotation) || 0);
+  });
+  loadPositions();
+}
+
+(function () {
+  const scene = document.getElementById("scene");
+  const sizePanel = document.getElementById("sizePanel");
+  const sizeSlider = document.getElementById("sizeSlider");
+  const sizeVal = document.getElementById("sizeVal");
+  const sizeLabel = document.getElementById("sizeLabel");
+  let active = null, dragged = false, selected = null;
+  let startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+  document.querySelectorAll(".item").forEach((el) => {
+    el.addEventListener("mousedown", begin);
+    el.addEventListener("touchstart", begin, { passive: false });
+  });
+
+  function begin(e) {
+    e.preventDefault();
+    active = this;
+    dragged = false;
+    active.style.zIndex = 999;
+    const pt = e.touches ? e.touches[0] : e;
+    startX = pt.clientX;
+    startY = pt.clientY;
+    origLeft = active.offsetLeft;
+    origTop = active.offsetTop;
+  }
+
+  document.addEventListener("mousemove", move);
+  document.addEventListener("touchmove", move, { passive: false });
+  function move(e) {
+    if (!active) return;
+    e.preventDefault();
+    const pt = e.touches ? e.touches[0] : e;
+    const dx = pt.clientX - startX;
+    const dy = pt.clientY - startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragged = true;
+    active.style.left = (origLeft + dx) + "px";
+    active.style.top  = (origTop + dy) + "px";
+  }
+
+  document.addEventListener("mouseup", end);
+  document.addEventListener("touchend", end);
+  function end() {
+    if (!active) return;
+    active.style.zIndex = "";
+    if (dragged) {
+      const rect = scene.getBoundingClientRect();
+      const newX = active.offsetLeft / rect.width * VIEW_W;
+      const newY = active.offsetTop / rect.height * VIEW_H;
+      const w = parseFloat(active.dataset.w);
+      const h = parseFloat(active.dataset.h);
+      const s = parseFloat(active.dataset.scale);
+      const r = parseFloat(active.dataset.rotation) || 0;
+      applyLayer(active, newX, newY, w, h, s, r);
+    } else {
+      selectItem(active);
+    }
+    active = null;
+  }
+
+  scene.addEventListener("mousedown", function (e) {
+    if (e.target === scene || e.target.classList.contains("bg")) {
+      deselectAll();
+    }
+  });
+
+  function selectItem(el) {
+    deselectAll();
+    selected = el;
+    el.classList.add("selected");
+    sizePanel.classList.add("show");
+    const s = parseFloat(el.dataset.scale);
+    // 个别图层（如 coo-06）允许放得更大，其余沿用滑动条默认上限 2.5
+    const maxScale = parseFloat(el.dataset.maxScale) || parseFloat(sizeSlider.getAttribute("data-default-max")) || 2.5;
+    sizeSlider.max = maxScale;
+    sizeSlider.value = s;
+    sizeVal.textContent = "scale " + s.toFixed(2);
+    sizeLabel.textContent = el.dataset.id;
+  }
+
+  function deselectAll() {
+    if (selected) selected.classList.remove("selected");
+    selected = null;
+    sizePanel.classList.remove("show");
+  }
+
+  sizeSlider.addEventListener("input", function () {
+    if (!selected) return;
+    const s = parseFloat(this.value);
+    const x = parseFloat(selected.dataset.x);
+    const y = parseFloat(selected.dataset.y);
+    const w = parseFloat(selected.dataset.w);
+    const h = parseFloat(selected.dataset.h);
+    const r = parseFloat(selected.dataset.rotation) || 0;
+    applyLayer(selected, x, y, w, h, s, r);
+    sizeVal.textContent = "scale " + s.toFixed(2);
+  });
+})();
+
+function loadPositions() {
+  // EMBEDDED 优先：嵌入快照非空时一定生效，覆盖 localStorage；为 null 时才回退 localStorage
+  let raw;
+  if (EMBEDDED_LAYOUT && typeof EMBEDDED_LAYOUT === 'object') {
+    raw = JSON.stringify(EMBEDDED_LAYOUT);
+  } else {
+    raw = localStorage.getItem(STORAGE_KEY);
+  }
+  if (raw) {
+    let data;
+    try { data = JSON.parse(raw); } catch (e) { data = null; }
+    if (data) {
+      document.querySelectorAll(".item").forEach((el) => {
+        const d = data[el.dataset.id];
+        if (!d) return;
+        applyLayer(el, d.x, d.y, d.w, d.h, d.scale, d.rotation || 0);
+      });
+    }
+  }
+
+  // 恢复人物路线（EMBEDDED 优先）
+  let savedRoutes;
+  if (Array.isArray(EMBEDDED_ROUTES)) {
+    savedRoutes = JSON.stringify(EMBEDDED_ROUTES);
+  } else {
+    savedRoutes = localStorage.getItem(ROUTES_KEY);
+  }
+  if (savedRoutes) {
+    try {
+      const routeData = JSON.parse(savedRoutes);
+      function restoreRoutes(agents) {
+        routeData.forEach(r => {
+          const ag = agents.find(a => a.name === r.name);
+          if (!ag || !r.fixedRoute) return;
+          ag.x = r.x;
+          ag.y = r.y;
+          if (typeof r.scale === 'number' && r.scale > 0) {
+            ag.scale = r.scale;
+            if (ag.applyTransform) ag.applyTransform();
+          }
+          ag.fixedRoute = r.fixedRoute.map(p => [...p]);
+          ag.linear = r.linear;
+          // 让保存过的路线刷新页面后从头再走，避免 linear 路线 atEnd=true 后人物原地不动
+          ag.atEnd = false;
+          ag.fixedRouteIndex = 0;
+          ag.target = null;
+          ag.pauseUntil = 0;
+        });
+      }
+      if (window.__companyAgents) {
+        restoreRoutes(window.__companyAgents);
+      } else {
+        document.addEventListener('company:agentsReady', e => restoreRoutes(e.detail.agents), { once: true });
+      }
+    } catch (e) { console.warn('恢复路线失败', e); }
+  }
+}
+
+function savePositions() {
+  const data = {};
+  document.querySelectorAll(".item").forEach((el) => {
+    data[el.dataset.id] = {
+      x: parseFloat(el.dataset.x),
+      y: parseFloat(el.dataset.y),
+      w: parseFloat(el.dataset.w),
+      h: parseFloat(el.dataset.h),
+      scale: parseFloat(el.dataset.scale),
+      rotation: parseFloat(el.dataset.rotation) || 0,
+    };
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  const agents = window.__companyAgents || [];
+  const agentRoutes = agents.map(ag => ({
+    name:       ag.name,
+    x:          ag.x,
+    y:          ag.y,
+    scale:      ag.scale,
+    fixedRoute: ag.fixedRoute ? ag.fixedRoute.map(p => [...p]) : null,
+    linear:     ag.linear,
+    atEnd:      ag.atEnd,
+  }));
+  localStorage.setItem(ROUTES_KEY, JSON.stringify(agentRoutes));
+
+  flashHint('已保存位置和路线');
+}
+
+function resetPositions() {
+  if (!confirm('重置所有位置和人物路线？')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ROUTES_KEY);
+  location.reload();
+}
+
+// === 复制快照 JSON — 弹窗显示当前 layout/routes，复制后手动粘到 EMBEDDED_* 位置 ===
+function copySnapshotJSON() {
+  if (typeof savePositions === 'function') savePositions();
+  const layoutRaw = localStorage.getItem(STORAGE_KEY);
+  const routesRaw = localStorage.getItem(ROUTES_KEY);
+  if (!layoutRaw && !routesRaw) {
+    alert('当前没有任何可复制的快照。请先调整布局或路线后再点击。');
+    return;
+  }
+  const layoutJson = layoutRaw ? JSON.stringify(JSON.parse(layoutRaw), null, 2) : 'null';
+  const routesJson = routesRaw ? JSON.stringify(JSON.parse(routesRaw), null, 2) : 'null';
+  showSnapshotModal(layoutJson, routesJson);
+}
+
+function showSnapshotModal(layoutJson, routesJson) {
+  let modal = document.getElementById('snapshotModal');
+  if (modal) modal.remove();
+  modal = document.createElement('div');
+  modal.id = 'snapshotModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-family:"Microsoft YaHei",sans-serif;';
+  modal.innerHTML =
+    '<div style="background:#fff;border-radius:10px;padding:18px 22px;max-width:780px;width:90vw;max-height:90vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,.3);">' +
+      '<h3 style="margin:0 0 8px;font-size:17px;color:#1f2937;">📋 复制快照 JSON</h3>' +
+      '<p style="margin:0 0 14px;color:#4b5563;font-size:13px;line-height:1.6;">分别复制下面两段，粘到本 HTML 源码顶部 <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">EMBEDDED_LAYOUT</code> / <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">EMBEDDED_ROUTES</code> 两个 <code>null</code> 的位置（保留尾部 <code>;</code> 和 <code>//__EMBEDDED_*_END</code> 注释）。然后把整个场景文件夹打包发出，对方解压双击 html 就是当前状态。</p>' +
+      '<div style="margin-bottom:12px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<label style="font-size:13px;color:#374151;font-weight:600;">EMBEDDED_LAYOUT =</label>' +
+          '<button class="snap-copy" data-target="snapLayoutArea" style="padding:4px 14px;font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;">复制</button>' +
+        '</div>' +
+        '<textarea id="snapLayoutArea" readonly style="width:100%;height:170px;font-family:Consolas,Menlo,monospace;font-size:12px;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>' +
+      '</div>' +
+      '<div style="margin-bottom:14px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<label style="font-size:13px;color:#374151;font-weight:600;">EMBEDDED_ROUTES =</label>' +
+          '<button class="snap-copy" data-target="snapRoutesArea" style="padding:4px 14px;font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;">复制</button>' +
+        '</div>' +
+        '<textarea id="snapRoutesArea" readonly style="width:100%;height:170px;font-family:Consolas,Menlo,monospace;font-size:12px;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>' +
+      '</div>' +
+      '<div style="text-align:right;">' +
+        '<button id="snapClose" style="padding:8px 22px;font-size:13px;background:#6b7280;color:#fff;border:none;border-radius:6px;cursor:pointer;">关闭</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  document.getElementById('snapLayoutArea').value = layoutJson;
+  document.getElementById('snapRoutesArea').value = routesJson;
+  modal.querySelectorAll('.snap-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ta = document.getElementById(btn.dataset.target);
+      ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      const orig = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      btn.style.background = '#10b981';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = '#3b82f6'; }, 1500);
+    });
+  });
+  modal.querySelector('#snapClose').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+function flashHint(msg) {
+  const h = document.getElementById('planHint');
+  h.textContent = msg;
+  h.classList.remove('hidden');
+  clearTimeout(window.__hintTimer);
+  window.__hintTimer = setTimeout(() => h.classList.add('hidden'), 1800);
+}
+
+initLayers();
+</script>
+
+<!-- ============================================================
+     人物行走系统：walk_4 / walk_5
+     viewBox = 1242 x 941（与 cutout.png 等比）
+     ============================================================ -->
+<script>
+(function () {
+  const VIEW_W = 1242, VIEW_H = 941;
+
+  const WALK_CONFIG = {
+    frameMs: 90,
+    pauseMs: [400, 1200],
+  };
+
+  function makeSprite(folder) {
+    const dirs = {
+      front: Array.from({length:12},(_,i)=>`${folder}/walk_front_${String(i+1).padStart(2,"0")}.png`),
+      back:  Array.from({length:12},(_,i)=>`${folder}/walk_back_${String(i+1).padStart(2,"0")}.png`),
+      left:  Array.from({length:12},(_,i)=>`${folder}/walk_left_${String(i+1).padStart(2,"0")}.png`),
+      right: Array.from({length:12},(_,i)=>`${folder}/walk_right_${String(i+1).padStart(2,"0")}.png`),
+    };
+    return {
+      box: 512,
+      footFrac: 0.795,
+      midFrac: 0.50,
+      dirs,
+      dirMap: { front:"front", back:"back", left:"left", right:"right" },
+      idle: dirs.front[0],
+    };
+  }
+  const WALK_4 = makeSprite("walk_4");
+  const WALK_5 = makeSprite("walk_5");
+  const SPRITE_POOL = [WALK_4, WALK_5];
+
+  // ---------- 预加载所有方向帧（消除首次切方向时的解码闪烁） ----------
+  function preloadSpriteImages() {
+    const urls = new Set();
+    SPRITE_POOL.forEach(sp => {
+      if (sp.idle) urls.add(sp.idle);
+      Object.values(sp.dirs || {}).forEach(frames => frames.forEach(u => urls.add(u)));
+    });
+    return Promise.all([...urls].map(src => new Promise(res => {
+      const img = new Image();
+      img.onload = res; img.onerror = res; img.src = src;
+    })));
+  }
+
+  // 默认巡逻路线（沿办公区前后两排粗略给两条）
+  const WALK_ZONES = [
+    { name:"员工A", sprite:WALK_4,
+      route:[[300, 500],[520, 470],[760, 540],[600, 690],[360, 640]],
+      color:"#ff6600" },
+    { name:"员工B", sprite:WALK_5,
+      route:[[870, 460],[1050, 580],[960, 730],[760, 660],[820, 520]],
+      color:"#8b5cf6" },
+  ];
+
+  function clampToFloor(x, y) { return [x, y]; }
+
+  function getDirection(dx, dy) {
+    const u = dx - dy, v = dx + dy;
+    if (Math.abs(u) >= Math.abs(v)) return u >= 0 ? "front" : "back";
+    return v >= 0 ? "right" : "left";
+  }
+
+  function buildAgent({ name, sprite, x, y, speed, scale, color }) {
+    const ns = "http://www.w3.org/2000/svg";
+    const g  = document.createElementNS(ns, "g");
+    g.setAttribute("class", "agent");
+    g.dataset.name = name;
+
+    const img = document.createElementNS(ns, "image");
+    img.setAttribute("class", "agent-frame");
+    const W = sprite.box * scale;
+    img.setAttribute("width",  W);
+    img.setAttribute("height", W);
+    img.setAttributeNS("http://www.w3.org/1999/xlink", "href", sprite.idle);
+    g.appendChild(img);
+
+    document.getElementById("company-characters").appendChild(g);
+
+    const ag = {
+      name, sprite, color,
+      x, y, speed, scale,
+      W,
+      dir: "front",
+      frameIdx: 0,
+      frameClock: 0,
+      currentHref: null,
+      walking: false,
+
+      fixedRoute: null,
+      fixedRouteIndex: 0,
+      linear: false,
+      atEnd: false,
+
+      target: null,
+      pauseUntil: 0,
+
+      el: g,
+      img: img,
+      // 外部脚本（恢复 localStorage 时）调用，重算 W/锚点并写到 SVG
+      applyTransform: null,
+    };
+    ag.applyTransform = () => placeAgent(ag);
+
+    g.addEventListener("click", (e) => {
+      e.stopPropagation();
+      selectAgent(ag);
+    });
+
+    return ag;
+  }
+
+  function placeAgent(ag) {
+    const W = ag.sprite.box * ag.scale;
+    ag.W = W;
+    ag.img.setAttribute("width",  W);
+    ag.img.setAttribute("height", W);
+    const left = ag.x - W * ag.sprite.midFrac;
+    const top  = ag.y - W * ag.sprite.footFrac;
+    ag.img.setAttribute("x", left);
+    ag.img.setAttribute("y", top);
+  }
+
+  function setFrame(ag, walking, dtMs) {
+    const frameMs = WALK_CONFIG.frameMs;
+    if (walking) {
+      ag.frameClock += dtMs;
+      if (ag.frameClock >= frameMs) {
+        const steps = Math.floor(ag.frameClock / frameMs);
+        ag.frameClock %= frameMs;
+        ag.frameIdx = (ag.frameIdx + steps) % 12;
+      }
+    } else {
+      ag.frameIdx = 0;
+      ag.frameClock = 0;
+    }
+    const mapped = ag.sprite.dirMap[ag.dir];
+    let dirKey = mapped;
+    let mirror = false;
+    if (typeof mapped === "object" && mapped !== null) {
+      dirKey = mapped.dir;
+      mirror = !!mapped.mirror;
+    }
+    const frames = ag.sprite.dirs[dirKey] || ag.sprite.dirs.front;
+    const f = frames[ag.frameIdx];
+    // 同帧 href 写入去重，避免 60fps 反复触发解码闪烁
+    if (ag.currentHref !== f) {
+      ag.currentHref = f;
+      ag.img.setAttributeNS("http://www.w3.org/1999/xlink", "href", f);
+    }
+    const left = ag.x - ag.W * ag.sprite.midFrac;
+    const top  = ag.y - ag.W * ag.sprite.footFrac;
+    if (mirror) {
+      ag.img.setAttribute("transform",
+        `translate(${left + ag.W},${top}) scale(-1,1)`);
+      ag.img.setAttribute("x", 0);
+      ag.img.setAttribute("y", 0);
+    } else {
+      ag.img.removeAttribute("transform");
+      ag.img.setAttribute("x", left);
+      ag.img.setAttribute("y", top);
+    }
+  }
+
+  function nextTarget(ag) {
+    if (!ag.fixedRoute || ag.fixedRoute.length === 0) return null;
+    if (ag.linear && ag.atEnd) return null;
+    const pt = ag.fixedRoute[ag.fixedRouteIndex];
+    ag.fixedRouteIndex++;
+    if (ag.fixedRouteIndex >= ag.fixedRoute.length) {
+      if (ag.linear) {
+        ag.atEnd = true;
+      } else {
+        ag.fixedRouteIndex = 0;
+      }
+    }
+    return { x: pt[0], y: pt[1] };
+  }
+
+  const agents = [];
+  const z1 = WALK_ZONES[0], z2 = WALK_ZONES[1];
+  agents.push(buildAgent({
+    name: z1.name, sprite: z1.sprite,
+    x: z1.route[0][0], y: z1.route[0][1],
+    speed: 90, scale: 0.35, color: z1.color,
+  }));
+  agents.push(buildAgent({
+    name: z2.name, sprite: z2.sprite,
+    x: z2.route[0][0], y: z2.route[0][1],
+    speed: 85, scale: 0.35, color: z2.color,
+  }));
+
+  agents[0].fixedRoute = z1.route.map(p => [...p]);
+  agents[1].fixedRoute = z2.route.map(p => [...p]);
+  agents.forEach(ag => { ag.fixedRouteIndex = 0; placeAgent(ag); });
+
+  window.__companyAgents = agents;
+
+  let selectedAgent = null;
+  function selectAgent(ag) {
+    if (selectedAgent) selectedAgent.el.classList.remove("selected");
+    selectedAgent = ag;
+    ag.el.classList.add("selected");
+    showAgentScalePanel(ag);
+  }
+  function clearAgentSelection() {
+    if (selectedAgent) selectedAgent.el.classList.remove("selected");
+    selectedAgent = null;
+    hideAgentScalePanel();
+  }
+  document.getElementById("scene").addEventListener("mousedown", (e) => {
+    if (e.target.classList.contains("bg") || e.target.id === "scene") {
+      clearAgentSelection();
+    }
+  });
+
+  function showAgentScalePanel(ag) {
+    let panel = document.getElementById("agentScalePanel");
+    if (!panel) {
+      panel = document.createElement("div");
+      panel.id = "agentScalePanel";
+      panel.style.cssText = `
+        position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+        z-index: 9999; background: rgba(255,255,255,.96); border-radius: 10px;
+        padding: 10px 16px; box-shadow: 0 4px 16px rgba(0,0,0,.18);
+        display: flex; align-items: center; gap: 10px;
+        font-family: "Microsoft YaHei", sans-serif; font-size: 13px;`;
+      panel.innerHTML = `
+        <label id="agScaleLabel" style="color:#333"></label>
+        <input type="range" id="agScaleSlider" min="0.15" max="1.2" step="0.01" style="width:200px;accent-color:#4a90d9">
+        <span id="agScaleVal" style="min-width:60px;text-align:center;color:#666"></span>`;
+      document.body.appendChild(panel);
+      panel.querySelector("#agScaleSlider").addEventListener("input", (e) => {
+        if (!selectedAgent) return;
+        selectedAgent.scale = parseFloat(e.target.value);
+        placeAgent(selectedAgent);
+        panel.querySelector("#agScaleVal").textContent = "scale " + selectedAgent.scale.toFixed(2);
+      });
+    }
+    panel.style.display = "flex";
+    panel.querySelector("#agScaleLabel").textContent = ag.name;
+    panel.querySelector("#agScaleSlider").value = ag.scale;
+    panel.querySelector("#agScaleVal").textContent = "scale " + ag.scale.toFixed(2);
+  }
+  function hideAgentScalePanel() {
+    const p = document.getElementById("agentScalePanel");
+    if (p) p.style.display = "none";
+  }
+
+  let lastT = performance.now();
+  function tick(now) {
+    // dt 截断到 50ms，避免标签页切换/卡顿后第一帧把人物甩飞
+    const dtMs = Math.min(now - lastT, 50);
+    lastT = now;
+    const dt = dtMs / 1000;
+
+    for (const ag of agents) {
+      if (ag.atEnd && ag.linear) {
+        setFrame(ag, false, dtMs);
+        continue;
+      }
+      if (!ag.target) {
+        if (ag.pauseUntil > now) {
+          setFrame(ag, false, dtMs);
+          continue;
+        }
+        const nt = nextTarget(ag);
+        if (!nt) { setFrame(ag, false, dtMs); continue; }
+        ag.target = nt;
+      }
+      const dx = ag.target.x - ag.x;
+      const dy = ag.target.y - ag.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 4) {
+        ag.x = ag.target.x; ag.y = ag.target.y;
+        ag.target = null;
+        const [lo, hi] = WALK_CONFIG.pauseMs;
+        ag.pauseUntil = now + (lo + Math.random()*(hi-lo));
+        setFrame(ag, false, dtMs);
+        continue;
+      }
+      // 一帧最多走到目标点为止，杜绝跨越 waypoint
+      const step = Math.min(dist, ag.speed * dt);
+      const nx = ag.x + dx/dist * step;
+      const ny = ag.y + dy/dist * step;
+      const [cx, cy] = clampToFloor(nx, ny);
+      ag.x = cx; ag.y = cy;
+      ag.dir = getDirection(dx, dy);
+      placeAgent(ag);
+      setFrame(ag, true, dtMs);
+    }
+
+    const g = document.getElementById("company-characters");
+    const sorted = [...agents].sort((a,b) => a.y - b.y);
+    const orderKey = sorted.map(a => a.name).join("|");
+    if (orderKey !== window.__companyOrderKey) {
+      window.__companyOrderKey = orderKey;
+      sorted.forEach(ag => g.appendChild(ag.el));
+    }
+
+    requestAnimationFrame(tick);
+  }
+  // 等所有方向帧解码完成再启动主循环
+  preloadSpriteImages().then(() => {
+    lastT = performance.now();
+    requestAnimationFrame(tick);
+  });
+
+  document.dispatchEvent(new CustomEvent("company:agentsReady", { detail: { agents } }));
+})();
+</script>
+
+<!-- ============================================================
+     路线规划系统
+     ============================================================ -->
+<script>
+(function () {
+  const VIEW_W = 1242, VIEW_H = 941;
+  let planMode = false;
+  let planAgentIndex = -1;
+  let planPoints = [];
+
+  const scene = document.getElementById("scene");
+
+  function domToSVG(clientX, clientY) {
+    const rect = scene.getBoundingClientRect();
+    return [
+      Math.round((clientX - rect.left) / rect.width  * VIEW_W),
+      Math.round((clientY - rect.top)  / rect.height * VIEW_H),
+    ];
+  }
+
+  function setBtn(id, show, klass) {
+    const b = document.getElementById(id);
+    b.style.display = show ? "" : "none";
+    if (klass !== undefined) {
+      if (klass) b.classList.add(klass); else {
+        ["active","selected"].forEach(c => b.classList.remove(c));
+      }
+    }
+  }
+
+  function hint(msg) {
+    const h = document.getElementById("planHint");
+    h.textContent = msg;
+    h.classList.remove("hidden");
+  }
+  function hideHint() {
+    document.getElementById("planHint").classList.add("hidden");
+  }
+
+  window.togglePlanMode = function () {
+    planMode = !planMode;
+    const btn = document.getElementById("btnPlan");
+    if (planMode) {
+      btn.classList.add("active");
+      scene.classList.add("plan-mode");
+      document.getElementById("agents-overlay").style.visibility = "hidden";
+      setBtn("btnAgent1", true);
+      setBtn("btnAgent2", true);
+      hint("选择要规划的员工：A 或 B");
+      planAgentIndex = -1;
+      planPoints = [];
+      renderPreview();
+    } else {
+      btn.classList.remove("active");
+      scene.classList.remove("plan-mode");
+      document.getElementById("agents-overlay").style.visibility = "";
+      ["btnAgent1","btnAgent2","btnPlanConfirm","btnPlanLoop","btnPlanClear"]
+        .forEach(id => setBtn(id, false));
+      document.getElementById("btnAgent1").classList.remove("selected");
+      document.getElementById("btnAgent2").classList.remove("selected");
+      planAgentIndex = -1;
+      planPoints = [];
+      renderPreview();
+      hideHint();
+    }
+  };
+
+  window.planSelectAgent = function (idx) {
+    if (!planMode) return;
+    planAgentIndex = idx;
+    document.getElementById("btnAgent1").classList.toggle("selected", idx === 0);
+    document.getElementById("btnAgent2").classList.toggle("selected", idx === 1);
+    planPoints = [];
+    renderPreview();
+    hint(`已选 ${idx===0?"员工A":"员工B"}，点击地板设置路径点（≥2 点后可确认）`);
+    setBtn("btnPlanClear", true);
+  };
+
+  window.clearPlan = function () {
+    if (planAgentIndex < 0) return;
+    planPoints = [];
+    renderPreview();
+    setBtn("btnPlanConfirm", false);
+    setBtn("btnPlanLoop", false);
+    hint("已清除规划点");
+  };
+
+  window.confirmPlan = function (loop) {
+    if (planAgentIndex < 0 || planPoints.length < 2) return;
+    const agents = window.__companyAgents || [];
+    const ag = agents[planAgentIndex];
+    if (!ag) return;
+    const route = planPoints.map(p => [...p]);
+    ag.x = route[0][0];
+    ag.y = route[0][1];
+    ag.fixedRoute = route;
+    ag.fixedRouteIndex = 0;
+    ag.linear = !loop;
+    ag.atEnd = false;
+    ag.target = null;
+    ag.pauseUntil = 0;
+    hint(`${ag.name} 路线已设置（${loop?"闭环":"单次"}，${route.length} 点）`);
+    setTimeout(() => window.togglePlanMode(), 600);
+  };
+
+  scene.addEventListener("click", (e) => {
+    if (!planMode) return;
+    if (planAgentIndex < 0) return;
+    if (e.target.tagName === "BUTTON") return;
+    const [x, y] = domToSVG(e.clientX, e.clientY);
+    planPoints.push([x, y]);
+    renderPreview();
+    if (planPoints.length >= 2) {
+      setBtn("btnPlanConfirm", true);
+      setBtn("btnPlanLoop", true);
+    }
+  });
+
+  function renderPreview() {
+    const layer = document.getElementById("plan-preview-layer");
+    while (layer.firstChild) layer.removeChild(layer.firstChild);
+    if (planPoints.length === 0) return;
+    const ns = "http://www.w3.org/2000/svg";
+
+    for (let i = 1; i < planPoints.length; i++) {
+      const a = planPoints[i-1], b = planPoints[i];
+      const line = document.createElementNS(ns, "line");
+      line.setAttribute("x1", a[0]); line.setAttribute("y1", a[1]);
+      line.setAttribute("x2", b[0]); line.setAttribute("y2", b[1]);
+      line.setAttribute("stroke", "#ff6600");
+      line.setAttribute("stroke-width", "4");
+      line.setAttribute("stroke-dasharray", "10 6");
+      line.setAttribute("class", "route-line");
+      layer.appendChild(line);
+    }
+
+    if (planPoints.length >= 3) {
+      const a = planPoints[planPoints.length-1], b = planPoints[0];
+      const loopLine = document.createElementNS(ns, "line");
+      loopLine.setAttribute("x1", a[0]); loopLine.setAttribute("y1", a[1]);
+      loopLine.setAttribute("x2", b[0]); loopLine.setAttribute("y2", b[1]);
+      loopLine.setAttribute("stroke", "#8b5cf6");
+      loopLine.setAttribute("stroke-width", "3");
+      loopLine.setAttribute("stroke-dasharray", "6 8");
+      loopLine.setAttribute("class", "route-line");
+      layer.appendChild(loopLine);
+    }
+
+    planPoints.forEach((p, i) => {
+      const c = document.createElementNS(ns, "circle");
+      c.setAttribute("cx", p[0]); c.setAttribute("cy", p[1]);
+      c.setAttribute("r", 10);
+      let color = "#f59e0b";
+      if (i === 0) color = "#10b981";
+      else if (i === planPoints.length-1) color = "#ef4444";
+      c.setAttribute("fill", color);
+      c.setAttribute("stroke", "#fff");
+      c.setAttribute("stroke-width", "2");
+      layer.appendChild(c);
+      const t = document.createElementNS(ns, "text");
+      t.setAttribute("x", p[0]); t.setAttribute("y", p[1]+5);
+      t.setAttribute("fill", "#fff");
+      t.setAttribute("font-size", "14");
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("font-weight", "bold");
+      t.textContent = i + 1;
+      layer.appendChild(t);
+    });
+  }
+})();
+</script>
+</body>
+</html>

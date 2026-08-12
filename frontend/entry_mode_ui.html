@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WonderEcon - Entry Mode Selection</title>
+  <style>
+    :root {
+      --blue: #2f80ed;
+      --blue-deep: #1468d4;
+      --green: #18a45b;
+      --ink: #172b3d;
+      --muted: #6d7f91;
+      --line: rgba(105, 137, 166, .24);
+      --panel: rgba(255, 255, 255, .88);
+      --shadow: 0 22px 54px rgba(39, 78, 118, .16);
+      --soft-shadow: 0 10px 26px rgba(39, 78, 118, .10);
+      --z-bg: 0;
+      --z-content: 10;
+      --z-card: 20;
+      --z-popover: 80;
+      --z-toast: 120;
+      --z-modal: 200;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(128, 211, 238, .22), transparent 32%),
+        linear-gradient(135deg, #e8f7ff 0%, #f8fbff 42%, #edf8ef 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -36px;
+      background: url("player_world_city_map_clean.png") center / cover no-repeat;
+      filter: blur(14px) saturate(.92);
+      opacity: .26;
+      transform: scale(1.05);
+    }
+
+    button { font: inherit; }
+
+    .page {
+      position: relative;
+      z-index: var(--z-content);
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      padding: 34px;
+    }
+
+    .entry-shell {
+      width: min(1120px, 100%);
+      margin: auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .hero {
+      padding: 28px 30px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, .84);
+      box-shadow: var(--soft-shadow);
+      backdrop-filter: blur(18px);
+      text-align: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(47, 128, 237, .10);
+      color: var(--blue-deep);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 58px);
+      letter-spacing: .2px;
+    }
+
+    .hero h2 {
+      margin: 8px 0 0;
+      font-size: clamp(22px, 3vw, 32px);
+      font-weight: 950;
+      color: #214a70;
+    }
+
+    .hero p {
+      max-width: 720px;
+      margin: 14px auto 0;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 750;
+      line-height: 1.7;
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(280px, 1fr));
+      gap: 22px;
+    }
+
+    .mode-card {
+      position: relative;
+      z-index: var(--z-card);
+      min-height: 390px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+
+    .mode-card::after {
+      content: "";
+      position: absolute;
+      right: -46px;
+      top: -46px;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(47, 128, 237, .16), transparent 64%);
+      pointer-events: none;
+    }
+
+    .mode-card:hover,
+    .mode-card.selected {
+      transform: translateY(-4px);
+      border-color: rgba(47, 128, 237, .62);
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 26px 58px rgba(47, 128, 237, .18);
+    }
+
+    .mode-head {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .mode-icon {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(47, 128, 237, .16), rgba(255, 255, 255, .96));
+      color: var(--blue-deep);
+      font-size: 28px;
+      box-shadow: inset 0 0 0 1px rgba(47, 128, 237, .12);
+    }
+
+    .mode-title {
+      margin: 0;
+      font-size: 23px;
+      font-weight: 950;
+    }
+
+    .mode-sub {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .mode-desc {
+      margin: 0;
+      color: #536a80;
+      font-size: 14px;
+      font-weight: 760;
+      line-height: 1.75;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+    }
+
+    .tag {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(47, 128, 237, .10);
+      color: var(--blue-deep);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .mode-button {
+      width: 100%;
+      border: 1px solid rgba(47, 128, 237, .30);
+      border-radius: 999px;
+      padding: 13px 18px;
+      background: linear-gradient(180deg, #2f80ed, #176ed2);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(47, 128, 237, .22);
+      font-size: 14px;
+      font-weight: 950;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+    }
+
+    .mode-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 32px rgba(47, 128, 237, .28);
+    }
+
+    .mode-button.loading {
+      opacity: .72;
+      cursor: wait;
+    }
+
+    .footer {
+      position: relative;
+      z-index: var(--z-content);
+      margin-top: 20px;
+      color: #6e8092;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 28px;
+      z-index: var(--z-toast);
+      transform: translateX(-50%) translateY(16px);
+      opacity: 0;
+      pointer-events: none;
+      max-width: min(560px, calc(100vw - 32px));
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: rgba(21, 52, 81, .90);
+      color: #fff;
+      box-shadow: 0 16px 32px rgba(21, 52, 81, .24);
+      font-size: 13px;
+      font-weight: 850;
+      transition: opacity .22s ease, transform .22s ease;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .entry-popover,
+    .mode-tooltip,
+    .floating-panel {
+      z-index: var(--z-popover);
+      max-width: min(360px, calc(100vw - 32px));
+      overflow-wrap: break-word;
+    }
+
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      .page { padding: 18px; }
+      .mode-grid { grid-template-columns: 1fr; }
+      .mode-card { min-height: 340px; }
+      .hero { padding: 24px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="entry-shell" aria-label="WonderEcon Entry Mode Selection">
+      <header class="hero">
+        <div class="eyebrow">Multi-Agent Economic World</div>
+        <h1>WonderEcon</h1>
+        <h2>Entry Mode Selection</h2>
+        <p>Select your perspective to enter the economic world. Different perspectives connect to different data interfaces and interaction flows.</p>
+      </header>
+
+      <section class="mode-grid">
+        <article class="mode-card" data-mode-card="observer">
+          <div class="mode-head">
+            <div class="mode-icon">◎</div>
+            <div>
+              <h3 class="mode-title">God's Eye / Observer Mode</h3>
+              <div class="mode-sub">Global Observation · System Analysis</div>
+            </div>
+          </div>
+          <p class="mode-desc">Observe the economic world from a global perspective, monitoring the overall behavior of agents such as banks, government, enterprises, households, and markets.</p>
+          <div class="tag-list" aria-label="Observer Mode Capabilities">
+            <span class="tag">Global Economic Status</span>
+            <span class="tag">Agent Monitoring</span>
+            <span class="tag">Market Data Observation</span>
+            <span class="tag">Policy & Environment Config</span>
+            <span class="tag">System-Level Analysis</span>
+          </div>
+          <button class="mode-button" type="button" data-mode="observer">Enter Observer Mode</button>
+        </article>
+
+        <article class="mode-card" data-mode-card="player">
+          <div class="mode-head">
+            <div class="mode-icon">◇</div>
+            <div>
+              <h3 class="mode-title">Player View / Participant Mode</h3>
+              <div class="mode-sub">Identity Creation · Economic Decisions</div>
+            </div>
+          </div>
+          <p class="mode-desc">Create a personal economic identity and participate in decisions such as loans, employment, consumption, stocks, and deposits as a consumer, worker, or non-worker.</p>
+          <div class="tag-list" aria-label="Player Mode Capabilities">
+            <span class="tag">Create Player Identity</span>
+            <span class="tag">Select Wealth Tier</span>
+            <span class="tag">Set Risk Preference</span>
+            <span class="tag">Make Economic Decisions</span>
+            <span class="tag">Enter City Interaction</span>
+          </div>
+          <button class="mode-button" type="button" data-mode="player">Enter Player Mode</button>
+        </article>
+      </section>
+    </section>
+    <footer class="footer">Prototype Version · Multi-Agent Economic World</footer>
+  </main>
+
+  <div class="toast" id="toast">Entry reserved.</div>
+
+  <script>
+    const modeConfig = {
+      observer: {
+        mode: "observer",
+        label: "God's Eye / Observer Mode",
+        apiBase: "/api/observer",
+        nextPage: "observer_config_ui.html"
+      },
+      player: {
+        mode: "player",
+        label: "Player View / Participant Mode",
+        apiBase: "/api/player",
+        nextPage: "player_init_identity_ui.html"
+      }
+    };
+
+    const toast = document.getElementById("toast");
+    const buttons = Array.from(document.querySelectorAll("[data-mode]"));
+    const cards = Array.from(document.querySelectorAll("[data-mode-card]"));
+
+    function closeAllFloatingPanels() {
+      document.querySelectorAll(".entry-popover, .mode-tooltip, .floating-panel").forEach(el => {
+        el.classList.remove("visible");
+      });
+    }
+
+    function showToast(message) {
+      closeAllFloatingPanels();
+      toast.textContent = message;
+      toast.classList.add("visible");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("visible"), 2600);
+    }
+
+    function setLoading(mode, isLoading) {
+      const config = modeConfig[mode];
+      buttons.forEach(button => {
+        const isTarget = button.dataset.mode === mode;
+        button.disabled = isLoading;
+        button.classList.toggle("loading", isLoading && isTarget);
+        if (isLoading && isTarget) {
+          button.textContent = `Entering ${mode === "observer" ? "Observer" : "Player"} Mode...`;
+        } else {
+          button.textContent = modeConfig[button.dataset.mode].mode === "observer"
+            ? "Enter Observer Mode"
+            : "Enter Player Mode";
+        }
+      });
+      cards.forEach(card => card.classList.toggle("selected", card.dataset.modeCard === mode && isLoading));
+      return config;
+    }
+
+    function enterMode(mode) {
+      const config = modeConfig[mode];
+      if (!config) return;
+
+      const selectedModeState = {
+        mode,
+        label: config.label,
+        apiBase: config.apiBase,
+        selectedAt: new Date().toISOString()
+      };
+
+      try {
+        sessionStorage.setItem("EWMSelectedMode", JSON.stringify(selectedModeState));
+      } catch (error) {
+        console.warn("[Selected Mode] sessionStorage unavailable", error);
+      }
+      console.log("[Selected Mode]", selectedModeState);
+
+      setLoading(mode, true);
+      window.location.href = config.nextPage;
+    }
+
+    buttons.forEach(button => {
+      button.addEventListener("click", event => {
+        event.stopPropagation();
+        enterMode(button.dataset.mode);
+      });
+    });
+
+    cards.forEach(card => {
+      card.addEventListener("click", event => {
+        if (event.target.closest(".mode-button")) return;
+        enterMode(card.dataset.modeCard);
+      });
+    });
+
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".mode-card, .entry-popover, .mode-tooltip, .floating-panel, .toast")) {
+        closeAllFloatingPanels();
+      }
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        closeAllFloatingPanels();
+      }
+    });
+
+    window.EWMEntryMode = { modeConfig, enterMode, closeAllFloatingPanels };
+  </script>
+</body>
+</html>

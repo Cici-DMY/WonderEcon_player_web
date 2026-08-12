@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "sceneSize": {
+    "width": 6400,
+    "height": 3600
+  },
+  "coords": "scene-pixel",
+  "loop": false,
+  "points": [
+    {
+      "x": 3487,
+      "y": 1135
+    },
+    {
+      "x": 3417,
+      "y": 1183
+    },
+    {
+      "x": 3533,
+      "y": 1246
+    },
+    {
+      "x": 3869,
+      "y": 1074
+    },
+    {
+      "x": 3805,
+      "y": 1017
+    }
+  ],
+  "exportedAt": "2026-06-28T13:34:08.198Z",
+  "note": "EWM 玩家行走路线 - 直接放入 data/player_routes/ 由前端加载",
+  "nearestBuildingId": "bank_01",
+  "nearestBuildingName": "商业银行1"
+}

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Economic World Model — Settlement</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, "Microsoft YaHei", sans-serif;
+    background: #f0f4f8; color: #1a202c; min-height: 100vh;
+    position: relative; overflow-x: hidden;
+}
+body::before, body::after {
+    content: ''; position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.4; z-index: -1;
+}
+body::before {
+    width: 400px; height: 400px; top: -80px; right: -100px;
+    background: radial-gradient(circle, #c7d2fe, transparent 70%);
+}
+body::after {
+    width: 500px; height: 500px; bottom: -120px; left: -150px;
+    background: radial-gradient(circle, #a5f3fc, transparent 70%);
+}
+.home-return-btn {
+    position: fixed;
+    top: 18px;
+    right: 22px;
+    z-index: 1000;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.92);
+    color: #1d4ed8;
+    box-shadow: 0 8px 22px rgba(37,99,235,0.12);
+    padding: 9px 15px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.home-return-btn:hover {
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+/* ─── 动画关键帧 ─── */
+@keyframes bounceIn {
+    0% { opacity: 0; transform: scale(0.3); }
+    50% { opacity: 1; transform: scale(1.05); }
+    70% { transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+}
+@keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+    50% { box-shadow: 0 0 30px 8px rgba(99, 102, 241, 0.15); }
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── 初始隐藏，等待动画触发 ─── */
+.station-header { opacity: 0; }
+.station-header.anim-active {
+    animation: bounceIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+               glowPulse 2s ease-in-out 0.7s 2;
+}
+.result-section {
+    opacity: 0; transform: translateY(24px);
+}
+.result-section.anim-active {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* ─── 决策页面通用 ─── */
+.decision-page { padding: 30px 20px; max-width: 1260px; margin: 0 auto; }
+.station-header {
+    text-align: center; margin-bottom: 28px; padding: 20px;
+    background: linear-gradient(135deg, #eff6ff, #f8fafc);
+    border-radius: 14px; border: 1px solid #e2e8f0;
+}
+.station-header .station-icon { font-size: 36px; margin-bottom: 8px; }
+.station-header h2 { font-size: 22px; margin-bottom: 4px; }
+.station-header p { font-size: 13px; color: #64748b; }
+
+/* ─── 两栏主布局 ─── */
+.main-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; align-items: stretch; }
+.col-left { display: flex; flex-direction: column; gap: 24px; }
+.col-left .result-section:last-child { flex: 1; }
+.col-right { display: flex; flex-direction: column; }
+.col-right .result-section { flex: 1; display: flex; flex-direction: column; }
+
+/* ─── 完成页：结果区块 ─── */
+.result-section {
+    padding: 20px 24px;
+    background: #fff; border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: box-shadow 0.3s ease;
+}
+.result-section:hover {
+    box-shadow: 0 6px 20px rgba(99,102,241,0.08);
+}
+.section-title {
+    font-size: 16px; font-weight: 700; color: #1e293b;
+    margin-bottom: 14px; padding-bottom: 8px; padding-left: 12px;
+    border-bottom: none; border-left: 3px solid #6366f1;
+    background: linear-gradient(90deg, rgba(99,102,241,0.05), transparent);
+}
+.recap-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.recap-item { background: #f8fafc; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 13px; }
+.recap-label { color: #64748b; font-weight: 500; flex-shrink: 0; margin-right: 12px; }
+.recap-val { color: #1e293b; font-weight: 600; text-align: right; }
+
+/* ─── 对比卡片 ─── */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.compare-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
+.compare-card-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+.compare-subtitle { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
+.compare-bar-group { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.compare-row { display: flex; align-items: center; gap: 8px; }
+.compare-label { font-size: 12px; color: #64748b; width: 52px; text-align: right; flex-shrink: 0; }
+.compare-label-player { font-weight: 700; color: #4f46e5; }
+.bar-wrap { flex: 1; height: 14px; background: #f1f5f9; border-radius: 7px; overflow: hidden; }
+.bar { height: 100%; border-radius: 7px; width: 0; transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+.bar-player { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+.bar-agent { background: #94a3b8; }
+.bar-avg { background: #cbd5e1; }
+.compare-num { font-size: 12px; font-weight: 700; min-width: 64px; text-align: right; flex-shrink: 0; white-space: nowrap; }
+.compare-num.positive { color: #10b981; }
+.compare-num.negative { color: #ef4444; }
+.compare-verdict { font-size: 12px; text-align: center; padding: 6px; border-radius: 6px; margin-top: 4px; }
+.compare-verdict.win { background: #ecfdf5; color: #065f46; }
+.compare-verdict.lose { background: #fef2f2; color: #991b1b; }
+
+/* ─── 四维人格 ─── */
+.epti-profile {
+    display: flex; align-items: center; gap: 24px;
+    background: linear-gradient(135deg, #f5f3ff, #eff6ff);
+    border-radius: 14px; padding: 24px; margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+}
+.epti-avatar {
+    flex-shrink: 0; width: 160px; height: 200px;
+    border-radius: 12px; overflow: hidden;
+    background: #fff; box-shadow: 0 4px 12px rgba(99,102,241,0.12);
+}
+.epti-avatar img { width: 100%; height: 100%; object-fit: contain; }
+.epti-info { flex: 1; text-align: center; }
+.personality-code { font-size: 36px; margin: 4px 0; letter-spacing: 6px; font-weight: 700; }
+.personality-name { font-size: 18px; font-weight: 700; color: #4f46e5; margin-bottom: 4px; }
+.personality-slogan { font-size: 13px; color: #64748b; font-style: italic; margin-bottom: 6px; }
+.personality-desc { font-size: 13px; color: #64748b; line-height: 1.5; }
+.dimension-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.dimension-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+.dim-header { margin-bottom: 8px; }
+.dim-label { font-size: 12px; font-weight: 600; color: #475569; }
+.dim-bar-wrap { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.dim-pole { font-size: 12px; color: #94a3b8; }
+.dim-pole.active { color: #1e293b; font-weight: 600; }
+.dim-meaning { font-size: 12px; color: #475569; line-height: 1.5; padding: 6px 0 0; border-top: 1px solid #f1f5f9; }
+</style>
+</head>
+<body>
+<button class="home-return-btn" type="button" onclick="sessionStorage.removeItem('EWMGuideState'); window.location.href='../../entry_mode_ui.html'">Home</button>
+
+<!-- ═══ 完成页面：结果比较 + 经济人格 ═══ -->
+<div class="decision-page" id="station-done">
+    <div class="station-header" style="background:linear-gradient(135deg,#f0fdf4,#ecfeff);">
+        <div class="station-icon">🎉</div>
+        <h2>All Decisions Completed</h2>
+        <p>Here is your performance comparison and economic personality analysis</p>
+    </div>
+
+    <!-- 决策回顾（由 decision_review.py 的 build_decision_review(player) 输出填充） -->
+    <!-- 表现对比（由 compare_performance.py 的 compare_performance() 输出填充） -->
+    <!-- 四维经济人格（由 judge_epti.py 的 judge_player_epti() 输出填充） -->
+    <div class="main-layout">
+        <div class="col-left">
+            <div class="result-section">
+                <h3 class="section-title">Decision Review</h3>
+                <div class="recap-grid" id="recap-grid"></div>
+            </div>
+            <div class="result-section">
+                <h3 class="section-title">Performance Comparison</h3>
+                <div class="compare-grid" id="compare-grid"></div>
+            </div>
+        </div>
+        <div class="col-right">
+            <div class="result-section">
+                <h3 class="section-title">Your Economic Personality</h3>
+                <div id="epti-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─── 决策回顾渲染 ───
+// 数据来源：decision_review.py 的 build_decision_review(player)["lines"]
+// 格式：[["贷款", "成功，1,074 元 @ 5.56%（1 号银行）"], ["就业", "留任，工资 3,420 元（企业 8）"], ...]
+function renderDecisionReview(lines) {
+    const grid = document.getElementById('recap-grid');
+    grid.innerHTML = '';
+    lines.forEach(([label, recap]) => {
+        const item = document.createElement('div');
+        item.className = 'recap-item';
+        item.innerHTML = `<span class="recap-label">${label}</span><span class="recap-val">${recap}</span>`;
+        grid.appendChild(item);
+    });
+}
+
+// ─── 表现对比渲染 ───
+// 数据来源：compare_performance.py 的 compare_performance(player_path, results_dir)
+// 格式：{player: {asset_change_pct, happiness}, matched_agent: {…}, group_mean: {…}}
+function renderComparePerformance(data) {
+    const grid = document.getElementById('compare-grid');
+    grid.innerHTML = '';
+
+    const pAsset = data.player.asset_change_pct;
+    const mAsset = data.matched_agent.asset_change_pct;
+    const gAsset = data.group_mean.asset_change_pct;
+
+    const pHappy = data.player.happiness;
+    const mHappy = data.matched_agent.happiness;
+    const gHappy = data.group_mean.happiness;
+
+    // Asset Change card
+    grid.innerHTML += buildCompareCard(
+        'Asset Change', null,
+        [pAsset, mAsset, gAsset],
+        v => v === null ? '—' : (v >= 0 ? `+${v.toFixed(2)}%` : `${v.toFixed(2)}%`),
+        v => v === null ? '' : (v >= 0 ? 'positive' : 'negative'),
+        buildAssetVerdict(pAsset, mAsset, gAsset)
+    );
+
+    // Happiness card
+    grid.innerHTML += buildCompareCard(
+        'Happiness', null,
+        [pHappy, mHappy, gHappy],
+        v => `${v.toFixed(1)} pts`,
+        () => '',
+        buildHappyVerdict(pHappy, mHappy, gHappy)
+    );
+
+    // Trigger bar animations after DOM paint
+    requestAnimationFrame(() => {
+        grid.querySelectorAll('.bar[data-width]').forEach(el => {
+            el.style.width = el.dataset.width;
+        });
+    });
+}
+
+function buildCompareCard(title, subtitle, values, fmtFn, classFn, verdict) {
+    const [pVal, mVal, gVal] = values;
+    const maxAbs = Math.max(...values.filter(v => v !== null).map(v => Math.abs(v)), 0.01);
+
+    function barWidth(v) {
+        if (v === null) return 0;
+        return Math.max(5, Math.abs(v) / maxAbs * 80);
+    }
+
+    const subtitleHtml = subtitle ? `<div class="compare-subtitle">${subtitle}</div>` : '';
+    return `
+    <div class="compare-card">
+        <div class="compare-card-title">${title}</div>
+        ${subtitleHtml}
+        <div class="compare-bar-group">
+            <div class="compare-row">
+                <span class="compare-label compare-label-player">You</span>
+                <div class="bar-wrap"><div class="bar bar-player" data-width="${barWidth(pVal)}%"></div></div>
+                <span class="compare-num ${classFn(pVal)}">${fmtFn(pVal)}</span>
+            </div>
+            <div class="compare-row">
+                <span class="compare-label">Orig. Agent</span>
+                <div class="bar-wrap"><div class="bar bar-agent" data-width="${barWidth(mVal)}%"></div></div>
+                <span class="compare-num ${classFn(mVal)}">${fmtFn(mVal)}</span>
+            </div>
+            <div class="compare-row">
+                <span class="compare-label">Group Avg</span>
+                <div class="bar-wrap"><div class="bar bar-avg" data-width="${barWidth(gVal)}%"></div></div>
+                <span class="compare-num ${classFn(gVal)}">${fmtFn(gVal)}</span>
+            </div>
+        </div>
+        ${verdict}
+    </div>`;
+}
+
+function buildAssetVerdict(p, m, g) {
+    if (p === null) return '';
+    if (p > m && p > g) return '<div class="compare-verdict win">You outperformed both the original agent and the group average!</div>';
+    if (p > m) return '<div class="compare-verdict win">You outperformed the original agent!</div>';
+    if (p > g) return '<div class="compare-verdict win">You outperformed the group average!</div>';
+    return '<div class="compare-verdict lose">Did not outperform the original agent or group average</div>';
+}
+
+function buildHappyVerdict(p, m, g) {
+    if (g > 0 && p > g) {
+        const pct = ((p - g) / g * 100).toFixed(0);
+        return `<div class="compare-verdict win">Happiness ${pct}% above group average!</div>`;
+    }
+    if (g > 0 && p < g) {
+        const pct = ((g - p) / g * 100).toFixed(0);
+        return `<div class="compare-verdict lose">Happiness ${pct}% below group average</div>`;
+    }
+    return '';
+}
+
+// ─── 四维经济人格渲染 ───
+// 数据来源：judge_epti.py 的 judge_player_epti(player_path, results_dir)
+// 格式：{code, code_dashed, dims: {维度名: {score, criteria, pole: [letter, name], desc}}, group_size, group_key}
+const PERSONALITY_MAP = {
+    SRCU: { name: 'Contrarian Gold Digger', slogan: 'While others chase hype, I pick the real gems.' },
+    SRCF: { name: 'Niche Spender', slogan: 'Trending items bore me — what helps me is what I buy.' },
+    SRTU: { name: 'Trending Trailblazer', slogan: 'When the wind blows, hop on — utility is king.' },
+    SRTF: { name: 'Trendy Big Spender', slogan: 'Chase the hottest trends, buy the shiniest self.' },
+    SPCU: { name: 'Savvy Shopper', slogan: 'Love to buy, but every penny counts.' },
+    SPCF: { name: 'Quality Slow Buyer', slogan: 'No rush to order — only what truly sparks joy.' },
+    SPTU: { name: 'Review Follower', slogan: 'If everyone says it\'s worth it, I\'m in.' },
+    SPTF: { name: 'Refined Steady Player', slogan: 'Refinement yes, risk no.' },
+    ARCU: { name: 'Cold Pick Bargain Hunter', slogan: 'When others are confused, I\'m already in.' },
+    ARCF: { name: 'Niche Collector', slogan: 'Rarely spend, but when I do — long-term love only.' },
+    ARTU: { name: 'Trend Catcher', slogan: 'I don\'t impulse buy — unless the trend demands it.' },
+    ARTF: { name: 'Future-Forward Investor', slogan: 'Spot the track, go all in — money belongs to the future.' },
+    APCU: { name: 'Rational Navigator', slogan: 'A life unbothered by consumerism.' },
+    APCF: { name: 'Quiet Tastemaker', slogan: 'Earn slowly, grow taste quietly.' },
+    APTU: { name: 'Human Piggy Bank', slogan: 'My balance gives more comfort than any trending item.' },
+    APTF: { name: 'Refined Saver', slogan: 'Save seriously, live seriously.' },
+};
+const DIM_META = [
+    {key: 'Time Preference', dataKey: 'Time Preference', index: '1', leftEmoji: '🔥', rightEmoji: '🌱', leftLetter: 'S', rightLetter: 'A', leftName: 'Spending', rightName: 'Saving'},
+    {key: 'Risk Attitude', dataKey: 'Risk Attitude', index: '2', leftEmoji: '⚡', rightEmoji: '🛡️', leftLetter: 'R', rightLetter: 'P', leftName: 'Aggressive', rightName: 'Prudent'},
+    {key: 'Market Stance', dataKey: 'Market Stance', index: '3', leftEmoji: '🔮', rightEmoji: '🌊', leftLetter: 'C', rightLetter: 'T', leftName: 'Contrarian', rightName: 'Trend'},
+    {key: 'Consumption Taste', dataKey: 'Consumption Taste', index: '4', leftEmoji: '🛒', rightEmoji: '🎨', leftLetter: 'U', rightLetter: 'F', leftName: 'Utilitarian', rightName: 'Refined'},
+];
+
+function renderEPTI(data) {
+    const container = document.getElementById('epti-container');
+    if (!container) return;
+
+    const poleName = DIM_META.map(m => {
+        const d = data.dims[m.dataKey] || data.dims[m.key];
+        return d.pole[1];
+    }).join(' · ');
+
+    const pInfo = PERSONALITY_MAP[data.code] || { name: data.code, slogan: '' };
+
+    let html = '';
+    html += '<div class="epti-profile">';
+    html += '  <div class="epti-avatar"><img src="avatars/' + data.code + '.png" alt="Personality Avatar"></div>';
+    html += '  <div class="epti-info">';
+    html += `    <div class="personality-code">${data.code_dashed}</div>`;
+    html += `    <div class="personality-name">「${pInfo.name}」</div>`;
+    html += `    <div class="personality-slogan">${pInfo.slogan}</div>`;
+    html += `    <div class="personality-desc">${poleName}</div>`;
+    html += '  </div>';
+    html += '</div>';
+    html += '<div class="dimension-grid">';
+
+    DIM_META.forEach(m => {
+        const d = data.dims[m.dataKey] || data.dims[m.key];
+        const score = d.score;
+        const isLeft = score >= 0;
+        const absScore = Math.abs(score);
+        const maxScore = m.dataKey === 'Risk Attitude' ? 6 : (m.dataKey === 'Market Stance' ? 5 : 2);
+        const pct = Math.min(95, Math.max(10, (absScore / maxScore) * 80 + 15));
+
+        let fillStyle, dotStyle;
+        if (isLeft) {
+            fillStyle = `width:${pct}%`;
+            dotStyle = `left:${pct}%`;
+        } else {
+            fillStyle = `width:${pct}%`;
+            dotStyle = `left:${100 - pct}%`;
+        }
+        const fillClass = isLeft ? 'dim-fill' : 'dim-fill right-fill';
+
+        const leftActive = isLeft ? ' active' : '';
+        const rightActive = isLeft ? '' : ' active';
+
+        const explain = d.desc;
+
+        html += `
+            <div class="dimension-card">
+                <div class="dim-header">
+                    <span class="dim-label">${m.key}</span>
+                </div>
+                <div class="dim-bar-wrap">
+                    <span class="dim-pole left${leftActive}">${m.leftEmoji} ${m.leftLetter} ${m.leftName}</span>
+                    <span class="dim-pole right${rightActive}">${m.rightEmoji} ${m.rightLetter} ${m.rightName}</span>
+                </div>
+                <div class="dim-meaning">${explain}</div>
+            </div>`;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ─── 数据注入（后端将 JSON 写入此变量） ───
+const decisionReviewData = /*[[DECISION_REVIEW_LINES]]*/[];
+const comparePerformanceData = /*[[COMPARE_PERFORMANCE]]*/null;
+const eptiData = /*[[EPTI_DATA]]*/null;
+
+// ─── 动画编排：依次出现 ───
+(function() {
+    const header = document.querySelector('.station-header');
+    const sections = document.querySelectorAll('.result-section');
+
+    let delay = 300;
+
+    // 恭喜区弹入
+    setTimeout(() => header.classList.add('anim-active'), delay);
+    delay += 1000;
+
+    // 区块一：决策回顾
+    setTimeout(() => {
+        if (decisionReviewData.length) renderDecisionReview(decisionReviewData);
+        sections[0].classList.add('anim-active');
+    }, delay);
+    const reviewChars = decisionReviewData.reduce((s, [a, b]) => s + a.length + b.length, 0);
+    delay += 600 + Math.min(reviewChars * 8, 1200);
+
+    // 区块二：表现对比
+    setTimeout(() => {
+        if (comparePerformanceData) renderComparePerformance(comparePerformanceData);
+        sections[1].classList.add('anim-active');
+    }, delay);
+    delay += 1000;
+
+    // 区块三：经济人格
+    setTimeout(() => {
+        if (eptiData) renderEPTI(eptiData);
+        sections[2].classList.add('anim-active');
+        launchConfetti();
+    }, delay);
+})();
+
+// ─── 彩带喷射效果 ───
+function launchConfetti() {
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    let W, H;
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const colors = ['#ff6b6b','#feca57','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#01a3a4','#f368e0','#ff9f43','#10ac84'];
+    const ribbons = [];
+    const TOTAL = 120;
+
+    for (let i = 0; i < TOTAL; i++) {
+        const fromLeft = i < TOTAL / 2;
+        ribbons.push({
+            x: fromLeft ? -10 : W + 10,
+            y: H * 0.2 + Math.random() * H * 0.3,
+            vx: (fromLeft ? 1 : -1) * (4 + Math.random() * 8),
+            vy: -(2 + Math.random() * 4),
+            gravity: 0.12 + Math.random() * 0.08,
+            w: 6 + Math.random() * 6,
+            h: 12 + Math.random() * 10,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            rotation: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.2,
+            opacity: 1,
+            delay: Math.random() * 400,
+            born: performance.now()
+        });
+    }
+
+    const start = performance.now();
+    function frame(now) {
+        ctx.clearRect(0, 0, W, H);
+        let alive = false;
+        for (const r of ribbons) {
+            const age = now - r.born;
+            if (age < r.delay) { alive = true; continue; }
+            const t = age - r.delay;
+            r.x += r.vx;
+            r.vy += r.gravity;
+            r.y += r.vy;
+            r.vx *= 0.98;
+            r.rotation += r.rotSpeed;
+            if (t > 2000) r.opacity = Math.max(0, 1 - (t - 2000) / 1000);
+            if (r.opacity <= 0 || r.y > H + 50) continue;
+            alive = true;
+            ctx.save();
+            ctx.globalAlpha = r.opacity;
+            ctx.translate(r.x, r.y);
+            ctx.rotate(r.rotation);
+            ctx.fillStyle = r.color;
+            ctx.fillRect(-r.w / 2, -r.h / 2, r.w, r.h);
+            ctx.restore();
+        }
+        if (alive) {
+            requestAnimationFrame(frame);
+        } else {
+            canvas.remove();
+            window.removeEventListener('resize', resize);
+        }
+    }
+    requestAnimationFrame(frame);
+}
+</script>
+
+</body>
+</html>

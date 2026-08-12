@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supermarket Scene (Browse)</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #111827; }
+body { display: flex; justify-content: center; align-items: center; }
+
+.scene {
+  position: relative;
+  width: min(95vw, calc(95vh * (1448 / 1086)));
+  aspect-ratio: 1448 / 1086;
+  background: #111827;
+}
+.scene .bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.item {
+  position: absolute;
+  user-select: none;
+}
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.agents-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 500;
+}
+.agents-overlay .agent { pointer-events: auto; cursor: default; }
+.agent-frame { image-rendering: auto; }
+</style>
+</head>
+<body>
+
+<!-- Return to Map button -->
+<button id="btnReturnToMap" style="position:fixed;top:20px;right:20px;z-index:9999;padding:10px 24px;font-size:16px;border-radius:8px;border:none;background:#2f80ed;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);">Return to Map</button>
+
+<div class="scene" id="scene">
+  <img class="bg" src="assets/cutout.png" alt="supermarket cutout">
+
+  <div class="item" data-id="labor-02"
+       data-x="205" data-y="390" data-w="360" data-h="313" data-scale="1">
+    <img src="assets/labor-02.png">
+  </div>
+  <div class="item" data-id="labor-03"
+       data-x="555" data-y="380" data-w="350" data-h="322" data-scale="1">
+    <img src="assets/labor-03.png">
+  </div>
+  <div class="item" data-id="labor-04"
+       data-x="965" data-y="430" data-w="180" data-h="140" data-scale="1">
+    <img src="assets/labor-04.png">
+  </div>
+  <div class="item" data-id="labor-16"
+       data-x="125" data-y="510" data-w="200" data-h="251" data-scale="1">
+    <img src="assets/labor-16.png">
+  </div>
+  <div class="item" data-id="labor-17"
+       data-x="335" data-y="505" data-w="195" data-h="254" data-scale="1">
+    <img src="assets/labor-17.png">
+  </div>
+  <div class="item" data-id="labor-01"
+       data-x="145" data-y="610" data-w="250" data-h="221" data-scale="1">
+    <img src="assets/labor-01.png">
+  </div>
+  <div class="item" data-id="labor-08"
+       data-x="430" data-y="620" data-w="240" data-h="240" data-scale="1">
+    <img src="assets/labor-08.png">
+  </div>
+  <div class="item" data-id="labor-10"
+       data-x="875" data-y="625" data-w="280" data-h="216" data-scale="1">
+    <img src="assets/labor-10.png">
+  </div>
+  <div class="item" data-id="labor-15"
+       data-x="1045" data-y="535" data-w="240" data-h="240" data-scale="1">
+    <img src="assets/labor-15.png">
+  </div>
+  <div class="item" data-id="labor-05"
+       data-x="905" data-y="665" data-w="300" data-h="243" data-scale="1">
+    <img src="assets/labor-05.png">
+  </div>
+  <div class="item" data-id="labor-06"
+       data-x="135" data-y="735" data-w="300" data-h="240" data-scale="1">
+    <img src="assets/labor-06.png">
+  </div>
+  <div class="item" data-id="labor-07"
+       data-x="615" data-y="770" data-w="140" data-h="125" data-scale="1">
+    <img src="assets/labor-07.png">
+  </div>
+  <div class="item" data-id="labor-12"
+       data-x="305" data-y="805" data-w="250" data-h="223" data-scale="1">
+    <img src="assets/labor-12.png">
+  </div>
+  <div class="item" data-id="labor-11"
+       data-x="55"  data-y="805" data-w="240" data-h="259" data-scale="1">
+    <img src="assets/labor-11.png">
+  </div>
+  <div class="item" data-id="labor-13"
+       data-x="540" data-y="780" data-w="280" data-h="233" data-scale="1">
+    <img src="assets/labor-13.png">
+  </div>
+  <div class="item" data-id="labor-14"
+       data-x="835" data-y="805" data-w="270" data-h="245" data-scale="1">
+    <img src="assets/labor-14.png">
+  </div>
+
+  <!-- Character walk overlay -->
+  <svg class="agents-overlay" id="agents-overlay"
+       viewBox="0 0 1448 1086" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg">
+    <g id="market-characters"></g>
+  </svg>
+</div>
+
+<script>
+// Return to Map
+document.getElementById('btnReturnToMap').addEventListener('click', function() {
+  window.location.href = window.location.origin + '/main_map.html';
+});
+</script>
+
+<script>
+const VIEW_W = 1448;
+const VIEW_H = 1086;
+
+const EMBEDDED_LAYOUT = {
+  "labor-02": { "x": 575.0575443135269, "y": 500.35374693795933, "w": 360, "h": 313, "scale": 0.69 },
+  "labor-03": { "x": 493.40284768894765, "y": 415.22411638254266, "w": 350, "h": 322, "scale": 0.69 },
+  "labor-04": { "x": 869.5356523532334, "y": 376.13397990301456, "w": 180, "h": 140, "scale": 1.53 },
+  "labor-16": { "x": 156.36005736621578, "y": 489.9297105434185, "w": 200, "h": 251, "scale": 0.8 },
+  "labor-17": { "x": 300.5587769372815, "y": 400.45673149027647, "w": 195, "h": 254, "scale": 0.8 },
+  "labor-01": { "x": 711.4382610162819, "y": 609.8061290806379, "w": 250, "h": 221, "scale": 0.7 },
+  "labor-08": { "x": 675.8229146161993, "y": 287.5296705494176, "w": 240, "h": 240, "scale": 0.8 },
+  "labor-10": { "x": 252.78209274204886, "y": 628.9168624706294, "w": 280, "h": 216, "scale": 0.75 },
+  "labor-15": { "x": 1074.5410609000496, "y": 463.00094985752133, "w": 240, "h": 240, "scale": 1 },
+  "labor-05": { "x": 985.0683614071596, "y": 625.4421836724491, "w": 300, "h": 243, "scale": 0.7 },
+  "labor-06": { "x": 821.7589681580008, "y": 740.9752537119432, "w": 300, "h": 240, "scale": 0.71 },
+  "labor-07": { "x": 676.6915816015672, "y": 806.1254811778233, "w": 140, "h": 125, "scale": 1 },
+  "labor-12": { "x": 457.78750128886514, "y": 738.369244613308, "w": 250, "h": 223, "scale": 0.78 },
+  "labor-11": { "x": 586.3502151233092, "y": 787.0147477878319, "w": 240, "h": 259, "scale": 0.81 },
+  "labor-13": { "x": 450.8381654059222, "y": 323.1451282307654, "w": 280, "h": 233, "scale": 0.83 },
+  "labor-14": { "x": 873.8789872800728, "y": 466.47562865570166, "w": 270, "h": 245, "scale": 0.53 }
+};
+
+const EMBEDDED_ROUTES = [
+  {
+    "name": "Shopper A",
+    "x": 486.0887035311304,
+    "y": 656.225599705114,
+    "fixedRoute": [[729,809],[411,609]],
+    "fixedRouteIndex": 0,
+    "linear": false,
+    "atEnd": false
+  },
+  {
+    "name": "Shopper B",
+    "x": 1011.5026268444859,
+    "y": 630.2400829347127,
+    "fixedRoute": [[1041,608],[909,705],[1051,793],[915,703]],
+    "fixedRouteIndex": 1,
+    "linear": false,
+    "atEnd": false
+  }
+];
+
+function applyLayer(el, x, y, w, h, scale) {
+  const finalW = w * scale;
+  const finalH = h * scale;
+  el.style.left   = (x / VIEW_W * 100).toFixed(4) + "%";
+  el.style.top    = (y / VIEW_H * 100).toFixed(4) + "%";
+  el.style.width  = (finalW / VIEW_W * 100).toFixed(4) + "%";
+  el.style.height = (finalH / VIEW_H * 100).toFixed(4) + "%";
+  el.dataset.x = x;
+  el.dataset.y = y;
+  el.dataset.w = w;
+  el.dataset.h = h;
+  el.dataset.scale = scale;
+}
+
+function initLayers() {
+  document.querySelectorAll(".item").forEach((el) => {
+    applyLayer(el,
+      parseFloat(el.dataset.x),
+      parseFloat(el.dataset.y),
+      parseFloat(el.dataset.w),
+      parseFloat(el.dataset.h),
+      parseFloat(el.dataset.scale));
+  });
+  loadPositions();
+}
+
+function loadPositions() {
+  if (EMBEDDED_LAYOUT && typeof EMBEDDED_LAYOUT === 'object') {
+    const data = EMBEDDED_LAYOUT;
+    document.querySelectorAll(".item").forEach((el) => {
+      const d = data[el.dataset.id];
+      if (!d) return;
+      applyLayer(el, d.x, d.y, d.w, d.h, d.scale);
+    });
+  }
+
+  if (Array.isArray(EMBEDDED_ROUTES)) {
+    const routeData = EMBEDDED_ROUTES;
+    function restoreRoutes(agents) {
+      routeData.forEach(r => {
+        try {
+          const ag = agents.find(a => a.name === r.name);
+          if (!ag || !r.fixedRoute || !Array.isArray(r.fixedRoute) || r.fixedRoute.length === 0) return;
+          ag.fixedRoute = r.fixedRoute.map(p => [...p]);
+          ag.linear = false; // always loop in browse mode
+          ag.atEnd = false;
+          const idx = typeof r.fixedRouteIndex === 'number' ? r.fixedRouteIndex : 0;
+          ag.fixedRouteIndex = Math.max(0, Math.min(idx, ag.fixedRoute.length - 1));
+          ag.x = typeof r.x === 'number' ? r.x : ag.fixedRoute[0][0];
+          ag.y = typeof r.y === 'number' ? r.y : ag.fixedRoute[0][1];
+          ag.target = null;
+          ag.pauseUntil = 0;
+          placeAgent(ag);
+        } catch (err) {
+          console.warn('Failed to restore route', r && r.name, err);
+        }
+      });
+    }
+    if (window.__marketAgents) {
+      restoreRoutes(window.__marketAgents);
+    } else {
+      document.addEventListener('market:agentsReady', e => restoreRoutes(e.detail.agents), { once: true });
+    }
+  }
+}
+
+initLayers();
+</script>
+
+<!-- Walk system -->
+<script>
+(function () {
+  const VIEW_W = 1448, VIEW_H = 1086;
+
+  const WALK_CONFIG = {
+    frameMs: 90,
+    pauseMs: [400, 1200],
+  };
+
+  function makeSprite(folder) {
+    const dirs = {
+      front: Array.from({length:12},(_,i)=>`${folder}/walk_front_${String(i+1).padStart(2,"0")}.png`),
+      back:  Array.from({length:12},(_,i)=>`${folder}/walk_back_${String(i+1).padStart(2,"0")}.png`),
+      left:  Array.from({length:12},(_,i)=>`${folder}/walk_left_${String(i+1).padStart(2,"0")}.png`),
+      right: Array.from({length:12},(_,i)=>`${folder}/walk_right_${String(i+1).padStart(2,"0")}.png`),
+    };
+    return {
+      box: 512,
+      footFrac: 0.795,
+      midFrac: 0.50,
+      dirs,
+      dirMap: { front:"front", back:"back", left:"left", right:"right" },
+      idle: dirs.front[0],
+    };
+  }
+  const WALK_7 = makeSprite("../../person/walk_7");
+  const WALK_8 = makeSprite("../../person/walk_8");
+
+  const WALK_ZONES = [
+    { name:"Shopper A", sprite:WALK_7,
+      route:[[480, 530],[760, 510],[1000, 580],[820, 720],[520, 700]],
+      color:"#ff6600" },
+    { name:"Shopper B", sprite:WALK_8,
+      route:[[1100, 470],[1180, 640],[980, 780],[760, 760],[900, 590]],
+      color:"#8b5cf6" },
+  ];
+
+  function getDirection(dx, dy) {
+    const u = dx - dy, v = dx + dy;
+    if (Math.abs(u) >= Math.abs(v)) return u >= 0 ? "front" : "back";
+    return v >= 0 ? "right" : "left";
+  }
+
+  function buildAgent({ name, sprite, x, y, speed, scale, color }) {
+    const ns = "http://www.w3.org/2000/svg";
+    const g  = document.createElementNS(ns, "g");
+    g.setAttribute("class", "agent");
+    g.dataset.name = name;
+
+    const img = document.createElementNS(ns, "image");
+    img.setAttribute("class", "agent-frame");
+    const W = sprite.box * scale;
+    img.setAttribute("width",  W);
+    img.setAttribute("height", W);
+    img.setAttributeNS("http://www.w3.org/1999/xlink", "href", sprite.idle);
+    g.appendChild(img);
+
+    document.getElementById("market-characters").appendChild(g);
+
+    const ag = {
+      name, sprite, color,
+      x, y, speed, scale,
+      W,
+      dir: "front",
+      frameIdx: 0,
+      lastFrameMs: 0,
+      walking: false,
+
+      fixedRoute: null,
+      fixedRouteIndex: 0,
+      linear: false,
+      atEnd: false,
+
+      target: null,
+      pauseUntil: 0,
+
+      el: g,
+      img: img,
+    };
+
+    return ag;
+  }
+
+  function placeAgent(ag) {
+    const W = ag.sprite.box * ag.scale;
+    ag.W = W;
+    ag.img.setAttribute("width",  W);
+    ag.img.setAttribute("height", W);
+    const left = ag.x - W * ag.sprite.midFrac;
+    const top  = ag.y - W * ag.sprite.footFrac;
+    ag.img.setAttribute("x", left);
+    ag.img.setAttribute("y", top);
+  }
+  window.placeAgent = placeAgent;
+
+  function setFrame(ag, walking, dtMs) {
+    ag.lastFrameMs += dtMs;
+    if (walking) {
+      if (ag.lastFrameMs >= WALK_CONFIG.frameMs) {
+        const steps = Math.floor(ag.lastFrameMs / WALK_CONFIG.frameMs);
+        ag.frameIdx = (ag.frameIdx + steps) % 12;
+        ag.lastFrameMs = ag.lastFrameMs % WALK_CONFIG.frameMs;
+      }
+    } else {
+      ag.frameIdx = 0;
+      ag.lastFrameMs = 0;
+    }
+    const mapped = ag.sprite.dirMap[ag.dir];
+    let dirKey = mapped;
+    let mirror = false;
+    if (typeof mapped === "object" && mapped !== null) {
+      dirKey = mapped.dir;
+      mirror = !!mapped.mirror;
+    }
+    const frames = ag.sprite.dirs[dirKey] || ag.sprite.dirs.front;
+    const f = frames[ag.frameIdx];
+    if (ag.currentHref !== f) {
+      ag.currentHref = f;
+      ag.img.setAttributeNS("http://www.w3.org/1999/xlink", "href", f);
+    }
+    const left = ag.x - ag.W * ag.sprite.midFrac;
+    const top  = ag.y - ag.W * ag.sprite.footFrac;
+    if (mirror) {
+      ag.img.setAttribute("transform",
+        `translate(${left + ag.W},${top}) scale(-1,1)`);
+      ag.img.setAttribute("x", 0);
+      ag.img.setAttribute("y", 0);
+    } else {
+      ag.img.removeAttribute("transform");
+      ag.img.setAttribute("x", left);
+      ag.img.setAttribute("y", top);
+    }
+  }
+
+  function nextTarget(ag) {
+    if (!ag.fixedRoute || ag.fixedRoute.length === 0) return null;
+    // Always loop in browse mode
+    const pt = ag.fixedRoute[ag.fixedRouteIndex];
+    ag.fixedRouteIndex++;
+    if (ag.fixedRouteIndex >= ag.fixedRoute.length) {
+      ag.fixedRouteIndex = 0;
+    }
+    return { x: pt[0], y: pt[1] };
+  }
+
+  const agents = [];
+  const z1 = WALK_ZONES[0], z2 = WALK_ZONES[1];
+  agents.push(buildAgent({
+    name: z1.name, sprite: z1.sprite,
+    x: z1.route[0][0], y: z1.route[0][1],
+    speed: 90, scale: 0.2625, color: z1.color,
+  }));
+  agents.push(buildAgent({
+    name: z2.name, sprite: z2.sprite,
+    x: z2.route[0][0], y: z2.route[0][1],
+    speed: 85, scale: 0.2625, color: z2.color,
+  }));
+
+  agents[0].fixedRoute = z1.route.map(p => [...p]);
+  agents[1].fixedRoute = z2.route.map(p => [...p]);
+  agents[0].linear = false;
+  agents[1].linear = false;
+  agents.forEach(ag => { ag.fixedRouteIndex = 0; placeAgent(ag); });
+
+  window.__marketAgents = agents;
+
+  let lastT = performance.now();
+  let lastAgentOrderKey = "";
+  function tick(now) {
+    if (window.__marketResetClock) { lastT = now; window.__marketResetClock = false; }
+    const dtMs = Math.min(now - lastT, 50);
+    lastT = now;
+    const dt = dtMs / 1000;
+
+    for (const ag of agents) {
+      if (!ag.target) {
+        if (ag.pauseUntil > now) {
+          setFrame(ag, false, dtMs);
+          continue;
+        }
+        const nt = nextTarget(ag);
+        if (!nt) { setFrame(ag, false, dtMs); continue; }
+        ag.target = nt;
+      }
+      const dx = ag.target.x - ag.x;
+      const dy = ag.target.y - ag.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 4) {
+        ag.x = ag.target.x; ag.y = ag.target.y;
+        ag.target = null;
+        const [lo, hi] = WALK_CONFIG.pauseMs;
+        ag.pauseUntil = now + (lo + Math.random()*(hi-lo));
+        setFrame(ag, false, dtMs);
+        continue;
+      }
+      const step = Math.min(dist, ag.speed * dt);
+      const nx = ag.x + dx/dist * step;
+      const ny = ag.y + dy/dist * step;
+      ag.x = nx; ag.y = ny;
+      ag.dir = getDirection(dx, dy);
+      placeAgent(ag);
+      setFrame(ag, true, dtMs);
+    }
+
+    const g = document.getElementById("market-characters");
+    const sorted = [...agents].sort((a,b) => a.y - b.y);
+    const orderKey = sorted.map(a => a.name).join("|");
+    if (orderKey !== lastAgentOrderKey) {
+      lastAgentOrderKey = orderKey;
+      sorted.forEach(ag => g.appendChild(ag.el));
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  function preloadSpriteImages() {
+    const urls = new Set();
+    [WALK_7, WALK_8].forEach(sp => {
+      if (sp.idle) urls.add(sp.idle);
+      Object.values(sp.dirs || {}).forEach(arr => arr.forEach(u => urls.add(u)));
+    });
+    return Promise.all([...urls].map(src => new Promise(res => {
+      const img = new Image();
+      img.onload = res; img.onerror = res; img.src = src;
+    })));
+  }
+  preloadSpriteImages().then(() => {
+    requestAnimationFrame((t) => { lastT = t; tick(t); });
+  });
+
+  document.dispatchEvent(new CustomEvent("market:agentsReady", { detail: { agents } }));
+})();
+</script>
+
+</body>
+</html>

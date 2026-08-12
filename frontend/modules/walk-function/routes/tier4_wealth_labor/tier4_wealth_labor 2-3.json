@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "sceneSize": {
+    "width": 6400,
+    "height": 3600
+  },
+  "coords": "scene-pixel",
+  "loop": false,
+  "points": [
+    {
+      "x": 4147,
+      "y": 1486
+    },
+    {
+      "x": 4096,
+      "y": 1533
+    },
+    {
+      "x": 3811,
+      "y": 1386
+    },
+    {
+      "x": 3873,
+      "y": 1341
+    }
+  ],
+  "exportedAt": "2026-06-28T13:39:07.123Z",
+  "note": "EWM 玩家行走路线 - 直接放入 data/player_routes/ 由前端加载",
+  "nearestBuildingId": "luxury_02",
+  "nearestBuildingName": "奢侈品店2"
+}

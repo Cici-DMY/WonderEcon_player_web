@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Economic World Model - Player Identity Initialization</title>
+  <script src="/config.js"></script>
+  <style>
+    :root {
+      --blue: #2f80ed;
+      --blue-deep: #1468d4;
+      --green: #18a45b;
+      --orange: #e18a21;
+      --ink: #172b3d;
+      --muted: #6d7f91;
+      --line: rgba(105, 137, 166, .24);
+      --panel: rgba(255, 255, 255, .88);
+      --shadow: 0 22px 54px rgba(39, 78, 118, .16);
+      --soft-shadow: 0 10px 26px rgba(39, 78, 118, .10);
+      --avatar-bg: #eef7fb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    .home-return-btn {
+      position: fixed;
+      top: 14px;
+      right: 18px;
+      z-index: 10000;
+      padding: 8px 14px;
+      border: 1px solid rgba(148,163,184,.35);
+      border-radius: 999px;
+      background: rgba(255,255,255,.92);
+      color: #334155;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(15,23,42,.12);
+    }
+    .home-return-btn:hover {
+      background: #eff6ff;
+      color: #2563eb;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      min-height: 100vh;
+      color: var(--ink);
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(128, 211, 238, .22), transparent 32%),
+        linear-gradient(135deg, #e8f7ff 0%, #f8fbff 42%, #edf8ef 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -28px;
+      background: url("player_world_city_map_clean.png") center / cover no-repeat;
+      filter: blur(12px) saturate(.92);
+      opacity: .28;
+      transform: scale(1.04);
+    }
+
+    button, input, select { font: inherit; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 18px;
+      gap: 14px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 20px;
+      padding: 12px 18px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, .84);
+      box-shadow: var(--soft-shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: 27px;
+      letter-spacing: .2px;
+    }
+
+    .title-wrap p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .ghost-btn,
+    .primary-btn,
+    .plain-btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, .82);
+      color: #214a70;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .ghost-btn:hover,
+    .plain-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(239, 248, 255, .94);
+      box-shadow: 0 10px 22px rgba(47, 128, 237, .11);
+    }
+
+    .primary-btn {
+      border-color: rgba(47, 128, 237, .30);
+      background: linear-gradient(180deg, #2f80ed, #176ed2);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(47, 128, 237, .22);
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 32px rgba(47, 128, 237, .28);
+    }
+
+    .plain-btn {
+      border-color: transparent;
+      background: transparent;
+      color: #4c647a;
+    }
+
+    .workspace {
+      min-height: 0;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 235px minmax(620px, 1fr) 340px;
+      gap: 14px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .steps-panel {
+      min-height: 0;
+      min-width: 0;
+      max-height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 18px 16px;
+    }
+
+    .panel-kicker {
+      color: var(--blue-deep);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .panel-title {
+      margin-top: 5px;
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .step-list {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .step-item {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 10px;
+      align-items: start;
+      position: relative;
+    }
+
+    .step-item:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 15px;
+      top: 34px;
+      bottom: -16px;
+      width: 2px;
+      background: rgba(105, 137, 166, .22);
+    }
+
+    .step-dot {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #edf2f6;
+      color: #8795a3;
+      font-size: 13px;
+      font-weight: 950;
+      z-index: 1;
+    }
+
+    .step-item.done .step-dot {
+      background: rgba(24, 164, 91, .13);
+      color: var(--green);
+    }
+
+    .step-item.active .step-dot {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 0 0 6px rgba(47, 128, 237, .13);
+    }
+
+    .step-name {
+      display: block;
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .step-state {
+      display: block;
+      margin-top: 4px;
+      color: #8494a3;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .step-item.done .step-state { color: var(--green); }
+    .step-item.active .step-state { color: var(--blue-deep); font-weight: 900; }
+    .step-item.pending .step-state { color: #9aa8b5; }
+    .step-item.pending .step-dot {
+      background: rgba(214, 222, 230, .70);
+      color: #8b9aa8;
+    }
+
+    .summary-card,
+    .month-card {
+      margin-top: 26px;
+      padding: 13px;
+      border: 1px solid rgba(105, 137, 166, .18);
+      border-radius: 18px;
+      background: rgba(239, 248, 252, .68);
+    }
+
+    .summary-card {
+      margin-top: 16px;
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .summary-card h3 {
+      margin: 0 0 4px;
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: #62768a;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.5;
+      padding: 7px 0;
+      border-top: 1px solid rgba(105, 137, 166, .12);
+    }
+
+    .summary-row:first-child { border-top: 0; }
+
+    .summary-row strong {
+      color: var(--blue-deep);
+      text-align: right;
+      font-weight: 950;
+    }
+
+    .summary-group-title {
+      margin: 6px 0 -1px;
+      color: #173451;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .summary-row.soft {
+      color: #8a98a6;
+      font-size: 11px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+
+    .summary-row.soft strong {
+      color: #72869a;
+      font-weight: 900;
+    }
+
+    .month-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .month-card strong {
+      display: block;
+      margin-top: 6px;
+      color: var(--blue-deep);
+      font-size: 20px;
+    }
+
+    .matrix-panel {
+      padding: 18px;
+      min-width: 0;
+      overflow: auto;
+    }
+
+    .matrix-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    .matrix-head h2 {
+      margin: 0;
+      font-size: 21px;
+      font-weight: 950;
+    }
+
+    .matrix-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .matrix-badge {
+      flex-shrink: 0;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: rgba(47, 128, 237, .10);
+      color: var(--blue-deep);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .choice-block {
+      margin-bottom: 18px;
+      padding: 15px;
+      border: 1px solid rgba(105, 137, 166, .16);
+      border-radius: 20px;
+      background: rgba(247, 252, 255, .70);
+    }
+
+    .choice-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .choice-head h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 950;
+    }
+
+    .choice-head p {
+      margin: 4px 0 0;
+      color: #6c7d8d;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .month-timeline {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      gap: 14px;
+      overflow-x: auto;
+      min-height: 196px;
+      padding: 18px 3px 12px;
+      scrollbar-width: thin;
+    }
+
+    .month-timeline::before {
+      content: "";
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 48px;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(47, 128, 237, .18), rgba(24, 164, 91, .18));
+    }
+
+    .timeline-node {
+      position: relative;
+      z-index: 1;
+      min-width: 82px;
+      border: 1px solid rgba(105, 137, 166, .20);
+      border-radius: 16px;
+      padding: 10px 8px 9px;
+      background: rgba(255, 255, 255, .86);
+      color: #536a80;
+      text-align: center;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+
+    .timeline-node:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, .98);
+      box-shadow: 0 12px 22px rgba(47, 128, 237, .12);
+    }
+
+    .timeline-node.active {
+      border-color: rgba(47, 128, 237, .62);
+      background: rgba(47, 128, 237, .10);
+      box-shadow: 0 12px 24px rgba(47, 128, 237, .15);
+    }
+
+    .timeline-node strong,
+    .timeline-node span {
+      display: block;
+    }
+
+    .timeline-node strong {
+      color: #173451;
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .timeline-node .phase {
+      margin-top: 5px;
+      color: var(--blue-deep);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .timeline-node .event {
+      margin-top: 5px;
+      color: #7b8da0;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .tick-hike-tag {
+      min-height: 18px;
+      color: #d95c5c;
+      font-size: 11px;
+      font-weight: 950;
+    }
+
+    .tick-rate-hint {
+      margin-top: 4px;
+      color: #475b6f;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .tick-bar {
+      width: 18px;
+      margin: 7px auto 0;
+      border-radius: 999px 999px 4px 4px;
+      background: #bfdbfe;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.45);
+    }
+
+    .tick-dot {
+      width: 15px;
+      height: 15px;
+      margin: 7px auto 6px;
+      border-radius: 50%;
+      background: #bfdbfe;
+      box-shadow: 0 0 0 3px rgba(191,219,254,.35);
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .timeline-node:hover .tick-dot {
+      transform: scale(1.18);
+    }
+
+    .timeline-node.hike .tick-dot {
+      background: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239,68,68,.18);
+    }
+
+    .timeline-node.active .tick-dot {
+      background: var(--blue);
+      box-shadow: 0 0 0 4px rgba(47,128,237,.20);
+      transform: scale(1.22);
+    }
+
+    .tick-label {
+      color: #173451;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .profile-section + .profile-section { margin-top: 18px; }
+
+    .section-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 10px;
+    }
+
+    .section-label h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 950;
+    }
+
+    .section-label p {
+      margin: 4px 0 0;
+      color: #6c7d8d;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(124px, 1fr));
+      gap: 11px;
+    }
+
+    .profile-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(105, 137, 166, .20);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, .80);
+      box-shadow: 0 8px 18px rgba(39, 78, 118, .08);
+      min-height: 222px;
+      padding: 10px;
+      cursor: pointer;
+      overflow: hidden;
+      text-align: left;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .profile-card:hover {
+      transform: translateY(-3px);
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 14px 28px rgba(47, 128, 237, .13);
+    }
+
+    .profile-card.selected {
+      border-color: rgba(47, 128, 237, .70);
+      box-shadow: 0 18px 34px rgba(47, 128, 237, .20);
+    }
+
+    .profile-card.selected::after {
+      content: "Selected";
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 950;
+    }
+
+    .profile-image-wrap {
+      position: relative;
+      isolation: isolate;
+      height: 154px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      border-radius: 16px;
+      background: var(--avatar-bg);
+      border: 1px solid rgba(105, 137, 166, .10);
+      box-shadow: none;
+      overflow: hidden;
+    }
+
+    .profile-image {
+      position: relative;
+      z-index: 1;
+      width: var(--crop-w, auto);
+      max-width: none;
+      height: var(--crop-h, 238px);
+      object-fit: contain;
+      object-position: var(--crop-pos, center top);
+      transform: translate(var(--crop-x, 0), var(--crop-y, 0)) scale(var(--crop-scale, 1));
+      transform-origin: center top;
+      display: block;
+    }
+
+    .image-fallback {
+      width: 86px;
+      height: 86px;
+      display: none;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #dff2ff, #ffffff);
+      color: var(--blue-deep);
+      font-size: 28px;
+      font-weight: 950;
+      margin-bottom: 20px;
+    }
+
+    .profile-card.image-missing .profile-image { display: none; }
+    .profile-card.image-missing .image-fallback { display: grid; }
+    .profile-name {
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .profile-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-top: 7px;
+      color: #5e7184;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .profile-desc {
+      margin: 8px 0 0;
+      color: #67798a;
+      font-size: 12px;
+      line-height: 1.45;
+      display: none;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: auto;
+      padding-top: 9px;
+    }
+
+    .tag {
+      padding: 5px 7px;
+      border-radius: 999px;
+      background: rgba(47, 128, 237, .10);
+      color: var(--blue-deep);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .preview-panel {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      overflow-x: hidden;
+    }
+
+    .preview-scroll {
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
+      max-width: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 18px;
+    }
+
+    .preview-hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      height: 310px;
+      min-height: 310px;
+      border-radius: 22px;
+      background: var(--avatar-bg);
+      border: 1px solid rgba(105, 137, 166, .16);
+      overflow: hidden;
+    }
+
+    .preview-hero img {
+      width: auto;
+      max-width: none;
+      height: 430px;
+      object-fit: contain;
+      object-position: center top;
+      transform: translateY(-16px);
+      display: block;
+    }
+
+    .preview-section-title {
+      margin: 12px 0 0;
+      padding-top: 9px;
+      border-top: 1px solid rgba(105, 137, 166, .14);
+      color: #173451;
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .preview-name {
+      margin: 12px 0 0;
+      font-size: 23px;
+      font-weight: 950;
+    }
+
+    .preview-sub {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .stat-list {
+      display: grid;
+      gap: 4px;
+      margin-top: 10px;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-top: 1px solid rgba(105, 137, 166, .14);
+      color: #66788a;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .stat-row strong {
+      color: var(--ink);
+      font-weight: 950;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-row strong.blue { color: var(--blue-deep); }
+    .stat-row strong.muted { color: #7f8f9f; }
+
+    .environment-module {
+      min-width: 0;
+      max-width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid rgba(148, 163, 184, .22);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .82);
+      overflow-x: hidden;
+    }
+
+    .environment-module-title {
+      margin-bottom: 8px;
+      color: #1e3a8a;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .environment-row {
+      display: grid;
+      grid-template-columns: minmax(112px, 38%) minmax(0, 1fr);
+      gap: 8px;
+      min-width: 0;
+      max-width: 100%;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(148, 163, 184, .18);
+    }
+
+    .environment-row:last-child {
+      border-bottom: none;
+    }
+
+    .environment-label {
+      min-width: 0;
+      max-width: 100%;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.45;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .environment-value {
+      min-width: 0;
+      max-width: 100%;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 850;
+      line-height: 1.45;
+      text-align: left;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-row.long {
+      display: block;
+      line-height: 1.55;
+    }
+
+    .stat-row.long strong {
+      display: block;
+      margin-top: 5px;
+      text-align: left;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-row.news {
+      display: block;
+      line-height: 1.55;
+    }
+
+    .stat-row.news strong {
+      display: block;
+      margin-top: 5px;
+      text-align: left;
+    }
+
+    .agent-placeholder {
+      margin-top: 12px;
+      padding: 13px;
+      border: 1px dashed rgba(47, 128, 237, .28);
+      border-radius: 16px;
+      background: rgba(239, 248, 255, .72);
+    }
+
+    .agent-placeholder strong {
+      display: block;
+      color: #173451;
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .agent-placeholder span {
+      display: block;
+      margin-top: 6px;
+      color: #6d7f91;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .agent-status-grid {
+      display: grid;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .agent-status-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: #66788a;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .agent-status-row b {
+      color: var(--blue-deep);
+      text-align: right;
+    }
+
+    .risk-box {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid rgba(105, 137, 166, .20);
+      border-radius: 20px;
+      background: rgba(239, 248, 252, .68);
+    }
+
+    .risk-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 950;
+    }
+
+    .risk-control {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 11px;
+    }
+
+    .risk-chip {
+      border: 1px solid rgba(105, 137, 166, .22);
+      border-radius: 999px;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, .78);
+      color: #50677d;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .risk-chip.active {
+      border-color: rgba(47, 128, 237, .50);
+      background: rgba(47, 128, 237, .12);
+      color: var(--blue-deep);
+      box-shadow: 0 8px 18px rgba(47, 128, 237, .12);
+    }
+
+    .risk-box.inline {
+      margin-top: 0;
+      background: rgba(255, 255, 255, .64);
+    }
+
+    .task-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 15px;
+    }
+
+    .task-list::before {
+      content: "Available Tasks";
+      flex: 0 0 100%;
+      color: #173451;
+      font-size: 14px;
+      font-weight: 950;
+      margin-bottom: 2px;
+    }
+
+    .task-pill {
+      padding: 7px 9px;
+      border-radius: 999px;
+      background: rgba(24, 164, 91, .10);
+      color: #16874c;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .task-pill.disabled {
+      background: rgba(112, 128, 144, .10);
+      color: #8a9aad;
+      text-decoration: line-through;
+    }
+
+    .preview-actions {
+      display: grid;
+      gap: 10px;
+      padding: 14px 18px 18px;
+      border-top: 1px solid rgba(105, 137, 166, .16);
+      background: rgba(247, 252, 255, .76);
+    }
+
+    .preview-actions .primary-btn:disabled,
+    .preview-actions .ghost-btn:disabled {
+      cursor: not-allowed;
+      opacity: .54;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 84px;
+      z-index: 5;
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      max-width: min(560px, calc(100vw - 32px));
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: rgba(21, 52, 81, .90);
+      color: #fff;
+      box-shadow: 0 16px 32px rgba(21, 52, 81, .24);
+      font-size: 13px;
+      font-weight: 800;
+      transition: opacity .22s ease, transform .22s ease;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .month-event-popover {
+      position: fixed;
+      z-index: 160;
+      width: 260px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid rgba(105, 137, 166, .24);
+      box-shadow: 0 18px 38px rgba(39, 78, 118, .18);
+      color: #172b3d;
+      font-size: 12px;
+      line-height: 1.6;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .month-event-popover.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .month-event-popover .popover-title {
+      margin-bottom: 5px;
+      color: #173451;
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .month-event-popover .popover-bg {
+      margin-top: 7px;
+      padding-top: 7px;
+      border-top: 1px solid rgba(105, 137, 166, .16);
+      color: #5c6f82;
+    }
+
+    .timeline-node.hike {
+      border-color: rgba(217, 92, 92, .34);
+    }
+
+    .timeline-node .hike-tag {
+      display: inline-flex;
+      width: fit-content;
+      margin-top: 5px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(217, 92, 92, .12);
+      color: #c94d4d;
+      font-size: 11px;
+      font-weight: 950;
+    }
+
+    .timeline-node .rate {
+      margin-top: 5px;
+      color: #475b6f;
+      font-size: 11px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 1240px) {
+      body { overflow: auto; }
+      .workspace {
+        grid-template-columns: 220px minmax(560px, 1fr);
+      }
+      .preview-panel {
+        grid-column: 1 / -1;
+      }
+      .preview-scroll {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 18px;
+      }
+      .preview-hero { min-height: 300px; }
+    }
+
+    @media (max-width: 860px) {
+      .page { padding: 10px; }
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+      .profile-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .preview-scroll {
+        display: block;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .profile-grid { grid-template-columns: 1fr; }
+      .title-wrap h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <button class="home-return-btn" type="button" onclick="window.location.href='entry_mode_ui.html'">Back to Home</button>
+  <main class="page">
+    <header class="topbar">
+      <div class="title-wrap">
+        <h1>Create Your Economic World Character</h1>
+        <p>Select economic time point, identity type, wealth tier and risk preference to generate your initial player state.</p>
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="Player Identity Initialization">
+      <aside class="panel steps-panel">
+        <div class="panel-kicker">Initialization Flow</div>
+        <div class="panel-title">Before Entering the Economic World</div>
+        <div class="step-list" id="step-list"></div>
+        <div class="summary-card">
+          <h3>Current Selection</h3>
+          <div id="selected-summary"></div>
+        </div>
+      </aside>
+
+      <section class="panel matrix-panel">
+        <section class="choice-block">
+          <div class="choice-head">
+            <div>
+              <h3>Select Economic Time Point</h3>
+              <p>Select the month to enter the economic world. Different Ticks affect macro environment and initial market data.</p>
+            </div>
+          </div>
+          <div class="month-timeline" id="month-selector"></div>
+        </section>
+        <section class="choice-block">
+          <div class="matrix-head">
+            <div>
+              <h2>Character Selection Matrix</h2>
+              <p>Select identity type and wealth tier to generate initial player profile.</p>
+            </div>
+            <div class="matrix-badge">Default Recommendation: Labor Force Tier 3</div>
+          </div>
+          <div id="profile-matrix"></div>
+        </section>
+        <section class="choice-block">
+          <div class="choice-head">
+            <div>
+              <h3>Select Risk Preference</h3>
+              <p>Risk preference affects player behavior parameters Beta / Lambda.</p>
+            </div>
+            <div class="matrix-badge" id="risk-formula">Beta 1.05 / Lambda 1.4</div>
+          </div>
+          <div class="risk-control" id="risk-control"></div>
+        </section>
+      </section>
+
+      <aside class="panel preview-panel">
+        <div class="preview-scroll">
+          <div class="preview-hero" id="preview-hero"></div>
+          <div>
+            <h2 class="preview-name" id="preview-name">Office Worker</h2>
+            <div class="preview-sub" id="preview-sub">Consumer / Observer / Labor Force</div>
+            <div class="stat-list" id="preview-stats"></div>
+            <div class="task-list" id="task-list"></div>
+          </div>
+        </div>
+        <div class="preview-actions">
+          <button class="ghost-btn" type="button" id="reset-selection">Reset Selection</button>
+          <button class="ghost-btn" type="button" id="confirm-selection">Confirm Selection</button>
+          <button class="primary-btn" type="button" id="enter-city-side">Enter Economic City</button>
+        </div>
+      </aside>
+    </section>
+  </main>
+  <div class="toast" id="toast">Initial State generated. Check Console.</div>
+  <div class="month-event-popover" id="month-event-popover"></div>
+
+  <script>
+    /* =========================================================
+       Character configuration data: DOM rendered by profileOptions. Asset values can be replaced directly later.
+       ========================================================= */
+    const profileOptions = [
+      {
+        id: "labor_1",
+        group: "labor",
+        level: 1,
+        name: "Temp Worker / New Hire",
+        image: "assets/characters/01_student_clipboard.png",
+        cardCrop: { w: "auto", h: "238px", x: "0px", y: "-8px", scale: "1", objectPosition: "center top" },
+        previewCrop: { w: "auto", h: "300px", x: "0", y: "0", scale: "1" },
+        incomeSource: "Wage Income",
+        riskBase: "Conservative",
+        cash: 8000,
+        deposit: 3000,
+        stockShares: 0,
+        loan: 2000,
+        totalAssets: 12000,
+        wage: 3500,
+        tags: ["Challenge Mode"],
+        description: "Low income, weak risk resistance. Must carefully manage loans, consumption and employment."
+      },
+      {
+        id: "labor_2",
+        group: "labor",
+        level: 2,
+        name: "Blue-Collar Worker",
+        image: "assets/characters/02_worker_helmet.png",
+        cardCrop: { w: "auto", h: "238px", x: "0px", y: "-8px", scale: "1", objectPosition: "center top" },
+        previewCrop: { w: "auto", h: "300px", x: "0", y: "0", scale: "1" },
+        incomeSource: "Stable Skilled Wage",
+        riskBase: "Steady",
+        cash: 22000,
+        deposit: 12000,
+        stockShares: 10,
+        loan: 5000,
+        totalAssets: 30000,
+        wage: 5200,
+        tags: ["Labor Income"],
+        description: "Stable skilled income with good cash flow, but limited asset allocation options."
+      },
+      {
+        id: "labor_3",
+        group: "labor",
+        level: 3,
+        name: "Office Worker",
+        image: "assets/characters/03_office_coffee_cutout.png",
+        cardCrop: { w: "auto", h: "238px", x: "0px", y: "-8px", scale: "1", objectPosition: "center top" },
+        previewCrop: { w: "auto", h: "300px", x: "0", y: "0", scale: "1" },
+        incomeSource: "Wage Income + Deposit Returns",
+        riskBase: "Balanced",
+        cash: 42000,
+        deposit: 25000,
+        stockShares: 50,
+        loan: 0,
+        totalAssets: 52000,
+        wage: 8000,
+        tags: ["Standard"],
+        description: "Stable salary with some savings. Can experience loan, employment, consumption, stock and deposit tasks."
+      },
+      {
+        id: "labor_4",
+        group: "labor",
+        level: 4,
+        name: "White-Collar / Middle Manager",
+        image: "assets/characters/04_businesswoman_bag.png",
+        cardCrop: { w: "auto", h: "238px", x: "0px", y: "-8px", scale: "1", objectPosition: "center top" },
+        previewCrop: { w: "auto", h: "300px", x: "0", y: "0", scale: "1" },
+        incomeSource: "High Wage + Asset Allocation",
+        riskBase: "Growth",
+        cash: 76000,
+        deposit: 52000,
+        stockShares: 120,
+        loan: 12000,
+        totalAssets: 118000,
+        wage: 14500,
+        tags: ["Advanced"],
+        description: "Higher income with stronger asset allocation. Ideal for observing interest rate and investment decision linkages."
+      },
+      {
+        id: "labor_5",
+        group: "labor",
+        level: 5,
+        name: "Executive / Senior Manager",
+        image: "assets/characters/05_businessman_suit.png",
+        cardCrop: { w: "auto", h: "238px", x: "0px", y: "-8px", scale: "1", objectPosition: "center top" },
+        previewCrop: { w: "auto", h: "300px", x: "0", y: "0", scale: "1" },
+        incomeSource: "High Wage + Stock Returns",
+        riskBase: "Aggressive",
+        cash: 128000,
+        deposit: 90000,
+        stockShares: 260,
+        loan: 25000,
+        totalAssets: 220000,
+        wage: 26000,
+        tags: ["High Asset"],
+        description: "High wage, high assets, strong investment ability. More sensitive to macro policies and market fluctuations."
+      },
+      {
+        id: "nonlabor_1",
+        group: "nonlabor",
+        level: 1,
+        name: "Low-Income Retiree",
+        image: "assets/characters/06_elder_man_cane.png",
+        cardCrop: { w: "auto", h: "238px", x: "0px", y: "-8px", scale: "1", objectPosition: "center top" },
+        previewCrop: { w: "auto", h: "300px", x: "0", y: "0", scale: "1" },
+        incomeSource: "Subsidy + Small Savings",
+        riskBase: "Conservative",
+        cash: 6000,
+        deposit: 5000,
+        stockShares: 0,
+        loan: 0,
+        totalAssets: 11000,
+        subsidy: 900,
+        tags: ["Conservative Living"],
+        description: "Few assets, cautious spending. Primarily concerned with inflation, subsidies and basic living costs."
+      },
+      {
+        id: "nonlabor_2",
+        group: "nonlabor",
+        level: 2,
+        name: "Frugal Retiree",
+        image: "assets/characters/07_elder_woman_basket.png",
+        cardCrop: { w: "auto", h: "238px", x: "0px", y: "-8px", scale: "1", objectPosition: "center top" },
+        previewCrop: { w: "auto", h: "300px", x: "0", y: "0", scale: "1" },
+        incomeSource: "Deposit Returns + Subsidy",
+        riskBase: "Steady",
+        cash: 18000,
+        deposit: 22000,
+        stockShares: 5,
+        loan: 0,
+        totalAssets: 40500,
+        subsidy: 1800,
+        tags: ["Steady Living"],
+        description: "Basic savings, relies on deposits and subsidies. Suitable for observing interest rates and consumption pressure."
+      },
+      {
+        id: "nonlabor_3",
+        group: "nonlabor",
+        level: 3,
+        name: "Average Retiree",
+        image: "assets/characters/08_elder_man_newspaper.png",
+        cardCrop: { w: "auto", h: "238px", x: "0px", y: "-8px", scale: "1", objectPosition: "center top" },
+        previewCrop: { w: "auto", h: "300px", x: "0", y: "0", scale: "1" },
+        incomeSource: "Deposit Returns + Asset Returns",
+        riskBase: "Balanced",
+        cash: 36000,
+        deposit: 62000,
+        stockShares: 45,
+        loan: 0,
+        totalAssets: 102000,
+        subsidy: 2200,
+        tags: ["Asset-Based"],
+        description: "Some asset returns, conservative allocation. Not wage-dependent but significantly affected by interest rates."
+      },
+      {
+        id: "nonlabor_4",
+        group: "nonlabor",
+        level: 4,
+        name: "Middle-Class Retiree",
+        image: "assets/characters/09_elder_man_plant.png",
+        cardCrop: { w: "auto", h: "238px", x: "0px", y: "-8px", scale: "1", objectPosition: "center top" },
+        previewCrop: { w: "auto", h: "300px", x: "0", y: "0", scale: "1" },
+        incomeSource: "Asset Returns + Deposit Returns",
+        riskBase: "Growth",
+        cash: 82000,
+        deposit: 130000,
+        stockShares: 180,
+        loan: 0,
+        totalAssets: 230000,
+        subsidy: 0,
+        tags: ["Wealthy"],
+        description: "Substantial assets with strong consumption and investment ability. Good for observing wealth effects and market allocation."
+      },
+      {
+        id: "nonlabor_5",
+        group: "nonlabor",
+        level: 5,
+        name: "Wealthy Retiree",
+        image: "assets/characters/10_elder_woman_scarf.png",
+        cardCrop: { w: "auto", h: "238px", x: "0px", y: "-8px", scale: "1", objectPosition: "center top" },
+        previewCrop: { w: "auto", h: "300px", x: "0", y: "0", scale: "1" },
+        incomeSource: "High Asset Returns",
+        riskBase: "Aggressive",
+        cash: 180000,
+        deposit: 260000,
+        stockShares: 420,
+        loan: 0,
+        totalAssets: 520000,
+        subsidy: 0,
+        tags: ["High Net Worth"],
+        description: "Not wage-dependent, lives primarily on asset returns. Highly sensitive to stock prices and interest rate changes."
+      }
+    ];
+
+    const riskOptions = [
+      { id: "conservative", label: "Conservative", lambda: 1.8, beta: 1.05 },
+      { id: "steady", label: "Steady", lambda: 1.6, beta: 1.05 },
+      { id: "balanced", label: "Balanced", lambda: 1.4, beta: 1.05 },
+      { id: "growth", label: "Growth", lambda: 1.2, beta: 1.05 },
+      { id: "aggressive", label: "Aggressive", lambda: 1.0, beta: 1.05 }
+    ];
+
+    const DEPOSIT_RATES = [2.25, 2.25, 2.25, 2.25, 2.25, 2.25, 2.50, 2.50, 2.50, 2.75, 3.00, 3.00, 3.25];
+    const LOAN_RATES = [5.31, 5.31, 5.31, 5.31, 5.31, 5.31, 5.56, 5.56, 5.56, 5.81, 6.06, 6.06, 6.31];
+    const MORTGAGE_RATES = [4.16, 4.16, 4.16, 4.16, 4.16, 4.16, 5.22, 5.22, 5.22, 5.44, 5.61, 5.61, 5.78];
+    const HIKE_TICKS = [7, 10, 11, 13];
+    const ECONOMIC_BACKGROUNDS = {
+      1: "The economy shows localized overheating. Real estate is active, food prices are rising rapidly.",
+      2: "Inflation expectations are accumulating, price pressures are rising, and asset bubbles in major cities are expanding.",
+      3: "Real estate developers are actively acquiring land. Residential consumer prices continue to rise.",
+      4: "Credit growth remains elevated. The government signals tightening but has not yet acted formally.",
+      5: "Inflation breaches the 4% threshold. Commodity and housing speculation further intensifies.",
+      6: "The government begins implementing selective housing purchase restrictions in major cities.",
+      7: "Inflation situation deteriorates significantly. The central bank raises the benchmark rate by 25 basis points.",
+      8: "Post-hike market enters adjustment. Real estate transaction volume declines, but prices remain sticky.",
+      9: "Inflation remains above target. Weakening global demand slows export growth.",
+      10: "The central bank raises rates again. Bond yields rise, stock market comes under pressure.",
+      11: "The third rate hike of this cycle lands. Credit conditions for SMEs tighten significantly.",
+      12: "Aggregate demand begins comprehensive contraction. Housing inventory in lower-tier cities rises.",
+      13: "The fourth rate hike signals peak tightening. The economy cools rapidly, unemployment risk rises."
+    };
+
+    const monthOptions = Array.from({ length: 13 }, (_, index) => {
+      const tick = index + 1;
+      const rateInfo = getMonthRateInfo(tick);
+      return {
+        id: `tick_${tick}`,
+        tick,
+        monthLabel: `Month ${tick}`,
+        eventType: rateInfo.eventLabel,
+        depositRate: rateInfo.depositRate,
+        loanRate: rateInfo.loanRate,
+        mortgageRate: rateInfo.mortgageRate,
+        economicBackground: rateInfo.economicBackground,
+        macroNews: rateInfo.isHike ? `Central bank raises rate by 25 basis points. ${rateInfo.economicBackground}` : `Normal month. ${rateInfo.economicBackground}`
+      };
+    });
+
+    const steps = [
+      { id: "month", title: "Select Entry Month", hint: "Set Tick / Month / Economic Phase" },
+      { id: "profile", title: "Select Identity & Wealth Tier", hint: "Choose Labor or Non-Labor Household" },
+      { id: "risk", title: "Select Risk Preference", hint: "Set Beta / Lambda behavior parameters" },
+      { id: "confirm", title: "Confirm Initial State", hint: "Generate initialState and enter city" }
+    ];
+
+    const TASK_DEFINITIONS = [
+      { id: "loan_decision", number: 1, label: "Loan", title: "Loan Decision", targetEntityId: "bank-0" },
+      { id: "labor_decision", number: 2, label: "Employment", title: "Employment Decision", targetEntityId: "labor-market" },
+      { id: "consumption_decision", number: 3, label: "Consumption", title: "Consumption Decision", targetEntityId: "supermarket" },
+      { id: "stock_decision", number: 4, label: "Stock", title: "Stock Decision", targetEntityId: "stock-market" },
+      { id: "deposit_decision", number: 5, label: "Deposit", title: "Deposit Decision", targetEntityId: "bank-0" }
+    ];
+
+    const appState = {
+      selectedProfileId: null,
+      selectedRiskId: null,
+      selectedMonthId: null,
+      monthTouched: false,
+      profileTouched: false,
+      riskTouched: false,
+      isConfirmed: false,
+      lastInitialState: null
+    };
+
+    const dom = {
+      stepList: document.getElementById("step-list"),
+      selectedSummary: document.getElementById("selected-summary"),
+      monthSelector: document.getElementById("month-selector"),
+      profileMatrix: document.getElementById("profile-matrix"),
+      previewHero: document.getElementById("preview-hero"),
+      previewName: document.getElementById("preview-name"),
+      previewSub: document.getElementById("preview-sub"),
+      previewStats: document.getElementById("preview-stats"),
+      taskList: document.getElementById("task-list"),
+      riskControl: document.getElementById("risk-control"),
+      riskFormula: document.getElementById("risk-formula"),
+      resetSelection: document.getElementById("reset-selection"),
+      confirmSelection: document.getElementById("confirm-selection"),
+      enterCitySide: document.getElementById("enter-city-side"),
+      monthEventPopover: document.getElementById("month-event-popover"),
+      toast: document.getElementById("toast")
+    };
+
+    function formatMoney(value) {
+      return Number(value || 0).toLocaleString("en-US") + " CNY";
+    }
+
+    function getSelectedProfile() {
+      return profileOptions.find(profile => profile.id === appState.selectedProfileId) || null;
+    }
+
+    function getSelectedRisk() {
+      return riskOptions.find(risk => risk.id === appState.selectedRiskId) || null;
+    }
+
+    function getSelectedMonth() {
+      return monthOptions.find(month => month.id === appState.selectedMonthId) || null;
+    }
+
+    function isSelectionComplete() {
+      return Boolean(getSelectedProfile() && getSelectedRisk() && getSelectedMonth());
+    }
+
+    function missingSelectionLabels() {
+      const missing = [];
+      if (!getSelectedMonth()) missing.push("Economic Time Point");
+      if (!getSelectedProfile()) missing.push("Character Identity");
+      if (!getSelectedRisk()) missing.push("Risk Preference");
+      return missing;
+    }
+
+    function getMonthRateInfo(month) {
+      const monthNumber = typeof month === "number" ? month : Number(month?.tick || 1);
+      const index = Math.max(0, Math.min(DEPOSIT_RATES.length - 1, monthNumber - 1));
+      const isHike = HIKE_TICKS.includes(monthNumber);
+      return {
+        month: monthNumber,
+        isHike,
+        eventLabel: isHike ? "Rate Hike 25bp" : "Normal Month",
+        depositRate: DEPOSIT_RATES[index],
+        loanRate: LOAN_RATES[index],
+        mortgageRate: MORTGAGE_RATES[index],
+        economicBackground: ECONOMIC_BACKGROUNDS[monthNumber] || ""
+      };
+    }
+
+    function showMonthEventPopover(month, nodeEl) {
+      if (!dom.monthEventPopover || !nodeEl) return;
+      const monthNumber = typeof month === "number" ? month : Number(month?.tick || 1);
+      const rateInfo = getMonthRateInfo(monthNumber);
+      const eventLabel = rateInfo.eventLabel.replace(/25bp/gi, "25 basis points");
+      dom.monthEventPopover.innerHTML = `
+        <div class="popover-title">Period ${monthNumber} / Month ${monthNumber} Economic Situation</div>
+        <div>Current Event: ${eventLabel}</div>
+        <div>1-Year Deposit Rate: ${rateInfo.depositRate.toFixed(2)}%</div>
+        <div>1-Year Loan Rate: ${rateInfo.loanRate.toFixed(2)}%</div>
+        <div>Mortgage Rate: ${rateInfo.mortgageRate.toFixed(2)}%</div>
+        <div class="popover-bg">${rateInfo.economicBackground}</div>
+      `;
+      dom.monthEventPopover.classList.add("visible");
+
+      const rect = nodeEl.getBoundingClientRect();
+      const popoverHeight = dom.monthEventPopover.offsetHeight;
+      let left = rect.left + rect.width / 2 - 130;
+      let top = rect.top - 12 - popoverHeight;
+
+      if (left < 16) left = 16;
+      if (left + 260 > window.innerWidth - 16) left = window.innerWidth - 276;
+      if (top < 16) top = rect.bottom + 12;
+      if (top + popoverHeight > window.innerHeight - 16) top = window.innerHeight - popoverHeight - 16;
+
+      dom.monthEventPopover.style.left = `${left}px`;
+      dom.monthEventPopover.style.top = `${top}px`;
+    }
+
+    function hideMonthEventPopover() {
+      dom.monthEventPopover?.classList.remove("visible");
+    }
+
+    function groupLabel(group) {
+      return group === "labor" ? "Labor Force" : "Non-Labor Force";
+    }
+
+    function roleLabel(profile) {
+      return profile.group === "labor" ? "Consumer / Observer / Labor Force" : "Consumer / Observer / Non-Labor Force";
+    }
+
+    function getTaskPermission(player) {
+      const identityText = String(player.identity || player.group || "").toLowerCase();
+      const isNonLabor = identityText.includes("nonlabor") || identityText.includes("非劳动力") || identityText.includes("退休");
+      const isEmployed = player.isEmployed ?? player.is_employed ?? (!isNonLabor && (player.group === "labor" || identityText.includes("labor") || identityText.includes("劳动力")));
+      const wealthLevel = Number.parseInt(player.wealthLevel ?? player.level, 10) || 3;
+      let allowedTaskNumbers;
+
+      if (!isEmployed) {
+        allowedTaskNumbers = [3, 4, 5];
+      } else if (wealthLevel <= 2) {
+        allowedTaskNumbers = [1, 2, 3, 4, 5];
+      } else {
+        allowedTaskNumbers = [2, 3, 4, 5];
+      }
+
+      const allowedTaskIds = TASK_DEFINITIONS
+        .filter(task => allowedTaskNumbers.includes(task.number))
+        .map(task => task.id);
+      const blockedTaskIds = TASK_DEFINITIONS
+        .filter(task => !allowedTaskNumbers.includes(task.number))
+        .map(task => task.id);
+      const firstAllowed = TASK_DEFINITIONS.find(task => allowedTaskIds.includes(task.id)) || TASK_DEFINITIONS[0];
+
+      return {
+        isEmployed: Boolean(isEmployed),
+        wealthLevel,
+        allowedTaskIds,
+        blockedTaskIds,
+        startTaskId: firstAllowed.id,
+        startTaskIndex: TASK_DEFINITIONS.findIndex(task => task.id === firstAllowed.id)
+      };
+    }
+
+    function readInitialStateFromSession() {
+      try {
+        return JSON.parse(sessionStorage.getItem("EWMInitialState") || "null");
+      } catch (error) {
+        console.warn("[EWMInitialState] sessionStorage parse failed", error);
+        return null;
+      }
+    }
+
+    function getPanelValue(obj, paths, fallback = "Pending") {
+      const candidates = Array.isArray(paths) ? paths : [paths];
+      for (const path of candidates) {
+        const value = String(path).split(".").reduce((current, key) => current == null ? undefined : current[key], obj);
+        if (value !== undefined && value !== null && value !== "") return value;
+      }
+      return fallback;
+    }
+
+    function mergePanelState(currentState, sessionState) {
+      if (!sessionState || typeof sessionState !== "object") return currentState;
+      return {
+        ...currentState,
+        ...sessionState,
+        player: {
+          ...(currentState.player || {}),
+          ...(sessionState.player || {})
+        },
+        environment: {
+          ...(currentState.environment || {}),
+          ...(sessionState.environment || {})
+        },
+        market: {
+          ...(currentState.market || {}),
+          ...(sessionState.market || {})
+        }
+      };
+    }
+
+    function isLaborState(initialState) {
+      const identity = getPanelValue(initialState, ["player.is_labor_force", "is_labor_force", "player.identity", "identity"], "");
+      if (typeof identity === "boolean") return identity;
+      const normalized = String(identity).toLowerCase();
+      if (normalized === "true" || normalized === "labor" || normalized === "labor_force") return true;
+      return normalized.includes("劳动力") && !normalized.includes("非劳动力");
+    }
+
+    function buildPlayerAttributePanelData(initialState) {
+      const p = initialState.player || {};
+      const labor = isLaborState(initialState);
+      const modules = [
+        {
+          title: "Identity Information",
+          rows: [
+            ["Is Labor Force", p.is_labor_force != null ? (p.is_labor_force ? "Yes" : "No") : "Pending"],
+            ["Wealth Level (Tier 1-5)", p.wealth_level ?? "Pending"],
+            ["Risk Preference Type", p.risk_preference ?? "Pending"],
+            ["Composite Ability Beta", p.beta ?? "Pending"],
+            ["Loss Aversion Lambda", p.loss_aversion ?? "Pending"]
+          ]
+        }
+      ];
+
+      if (labor) {
+        modules.push({
+          title: "Employment Information",
+          rows: [
+            ["Is Employed", p.is_employed != null ? (p.is_employed ? "Yes" : "No") : "Pending"],
+            ["Employer ID", p.employer_id ?? "Pending"],
+            ["Last Monthly Wage (CNY)", p.last_wage != null ? Number(p.last_wage).toFixed(2) : "Pending"]
+          ]
+        });
+      }
+
+      modules.push(
+        {
+          title: "Income & Funds",
+          rows: [
+            ["Current Personal Income Tax", p.personal_income_tax != null ? Number(p.personal_income_tax).toFixed(2) : "Pending"],
+            ["Last R&D Bonus", p.last_rnd_bonus != null ? Number(p.last_rnd_bonus).toFixed(2) : "Pending"],
+            ["Current Government Subsidy", p.current_subsidy != null ? Number(p.current_subsidy).toFixed(2) : "Pending"],
+            ["Safety-Net Subsidy Triggered", p.government_extra_subsidy != null ? (p.government_extra_subsidy ? "Yes" : "No") : "Pending"],
+            ["Total Available Funds", p.total_available_funds != null ? Number(p.total_available_funds).toFixed(2) : "Pending"],
+            ["Current Total Assets", p.current_total_assets != null ? Number(p.current_total_assets).toFixed(2) : "Pending"]
+          ]
+        },
+        {
+          title: "Deposit Information",
+          rows: [
+            ["Last Deposit Amount (CNY)", p.last_deposit_amount != null ? Number(p.last_deposit_amount).toFixed(2) : "Pending"],
+            ["Last Deposit Rate", p.last_deposit_rate != null ? (p.last_deposit_rate * 100).toFixed(2) + "%" : "Pending"],
+            ["Deposit Bank ID", p.last_deposit_bank_id ?? "Pending"]
+          ]
+        },
+        {
+          title: "Stock Information",
+          rows: [
+            ["Necessity Stock Shares Held", p.shares_held_necessity ?? "Pending"],
+            ["Luxury Stock Shares Held", p.shares_held_luxury ?? "Pending"],
+            ["Last Stock Investment Total", p.last_stock_investment != null ? Number(p.last_stock_investment).toFixed(2) : "Pending"],
+            ["Last Stock Investment Ratio", p.last_stock_investment_ratio != null ? (p.last_stock_investment_ratio * 100).toFixed(2) + "%" : "Pending"],
+            ["Necessity Stock Ratio", p.last_necessity_stock_ratio != null ? (p.last_necessity_stock_ratio * 100).toFixed(2) + "%" : "Pending"]
+          ]
+        },
+        {
+          title: "Consumption Information",
+          rows: [
+            ["Last Necessity Consumption Qty", p.last_consumption_qty_necessity ?? "Pending"],
+            ["Last Luxury Consumption Qty", p.last_consumption_qty_luxury ?? "Pending"],
+            ["Last Necessity Avg Price (CNY/unit)", p.last_consumption_avg_price_necessity != null ? Number(p.last_consumption_avg_price_necessity).toFixed(2) : "Pending"],
+            ["Last Luxury Avg Price (CNY/unit)", p.last_consumption_avg_price_luxury != null ? Number(p.last_consumption_avg_price_luxury).toFixed(2) : "Pending"],
+            ["Last Consumption Ratio", p.last_consumption_ratio != null ? (p.last_consumption_ratio * 100).toFixed(2) + "%" : "Pending"],
+            ["Necessity Consumption Ratio", p.last_necessity_consumption_ratio != null ? (p.last_necessity_consumption_ratio * 100).toFixed(2) + "%" : "Pending"]
+          ]
+        }
+      );
+
+      if (labor) {
+        modules.push({
+          title: "Loan Information",
+          rows: [
+            ["Had Loan Last Period", p.last_has_loan != null ? (p.last_has_loan ? "Yes" : "No") : "Pending"],
+            ["Last Loan Amount (CNY)", p.last_loan_amount != null ? Number(p.last_loan_amount).toFixed(2) : "Pending"],
+            ["Last Loan Rate", p.last_loan_rate != null ? (p.last_loan_rate * 100).toFixed(2) + "%" : "N/A"],
+            ["Loan Bank ID", p.last_loan_bank_id ?? "N/A"]
+          ]
+        });
+      }
+
+      modules.push({
+        title: "Mortgage Information",
+        rows: [
+          ["Mortgage Bank ID", p.mortgage_bank_id ?? "Pending"],
+          ["Initial Mortgage Principal (CNY)", p.initial_mortgage_principal != null ? Number(p.initial_mortgage_principal).toFixed(2) : "Pending"],
+          ["Last Mortgage Remaining (CNY)", p.last_mortgage_remaining != null ? Number(p.last_mortgage_remaining).toFixed(2) : "Pending"],
+          ["Current Monthly Mortgage Payment (CNY)", p.current_mortgage_payment != null ? Number(p.current_mortgage_payment).toFixed(2) : "Pending"],
+          ["Current Mortgage Interest", p.current_mortgage_interest != null ? Number(p.current_mortgage_interest).toFixed(2) : "Pending"]
+        ]
+      });
+
+      return modules;
+    }
+
+    function buildEnvironmentPanelData(initialState) {
+      const env = initialState.environment || {};
+      const month = getSelectedMonth();
+      const rateInfo = month ? getMonthRateInfo(month) : null;
+      return [
+        {
+          title: "Macro Narrative",
+          rows: [
+            ["Current Economic Background", rateInfo ? rateInfo.economicBackground : "Pending"],
+            ["Current Macro News", month ? month.macroNews : "Pending"]
+          ]
+        },
+        {
+          title: "Benchmark Rates",
+          rows: [
+            ["Current 1-Year Benchmark Deposit Rate", env.current_deposit_1yr != null ? (env.current_deposit_1yr * 100).toFixed(2) + "%" : "Pending"],
+            ["Current 1-Year Benchmark Loan Rate", env.current_loan_1yr != null ? (env.current_loan_1yr * 100).toFixed(2) + "%" : "Pending"],
+            ["Current Mortgage Execution Rate", env.current_mortgage_rate != null ? (env.current_mortgage_rate * 100).toFixed(2) + "%" : "Pending"]
+          ]
+        },
+        {
+          title: "Last Period Stock Market",
+          rows: [
+            ["Necessity Stock Price (CNY/share)", env.last_stock_price_necessity != null ? Number(env.last_stock_price_necessity).toFixed(2) : "Pending"],
+            ["Luxury Stock Price (CNY/share)", env.last_stock_price_luxury != null ? Number(env.last_stock_price_luxury).toFixed(2) : "Pending"],
+            ["Necessity Stock Volume (shares)", env.last_stock_volume_necessity ?? "Pending"],
+            ["Luxury Stock Volume (shares)", env.last_stock_volume_luxury ?? "Pending"]
+          ]
+        },
+        {
+          title: "Last Period Goods Market",
+          rows: [
+            ["Necessity Weighted Avg Taxed Price (CNY/unit)", env.last_avg_taxed_goods_price_necessity != null ? Number(env.last_avg_taxed_goods_price_necessity).toFixed(2) : "Pending"],
+            ["Luxury Weighted Avg Taxed Price (CNY/unit)", env.last_avg_taxed_goods_price_luxury != null ? Number(env.last_avg_taxed_goods_price_luxury).toFixed(2) : "Pending"],
+            ["Avg Household Necessity Consumption (units)", env.last_avg_household_consumption_qty_necessity != null ? Number(env.last_avg_household_consumption_qty_necessity).toFixed(1) : "Pending"],
+            ["Avg Household Luxury Consumption (units)", env.last_avg_household_consumption_qty_luxury != null ? Number(env.last_avg_household_consumption_qty_luxury).toFixed(1) : "Pending"]
+          ]
+        },
+        {
+          title: "Last Period Labor & Credit Market",
+          rows: [
+            ["Avg Household Wage (CNY)", env.last_avg_household_wage != null ? Number(env.last_avg_household_wage).toFixed(2) : "Pending"],
+            ["Employment Rate (Labor Households Only)", env.last_employment_rate != null ? (env.last_employment_rate * 100).toFixed(1) + "%" : "Pending"],
+            ["Weighted Avg Loan Rate", env.last_avg_bank_loan_rate != null ? (env.last_avg_bank_loan_rate * 100).toFixed(2) + "%" : "Pending"],
+            ["Weighted Avg Deposit Rate", env.last_avg_bank_deposit_rate != null ? (env.last_avg_bank_deposit_rate * 100).toFixed(2) + "%" : "Pending"]
+          ]
+        }
+      ];
+    }
+
+    function renderPanelModules(modules) {
+      return modules.map(module => `
+        <div class="environment-module">
+          <div class="environment-module-title">${module.title}</div>
+          ${module.rows.map(([label, value]) => `
+            <div class="environment-row">
+              <span class="environment-label">${label}</span>
+              <strong class="environment-value">${value}</strong>
+            </div>
+          `).join("")}
+        </div>
+      `).join("");
+    }
+
+    function renderPlayerAttributePanel(initialState) {
+      return renderPanelModules(buildPlayerAttributePanelData(initialState));
+    }
+
+    function renderEnvironmentPanel(initialState) {
+      return renderPanelModules(buildEnvironmentPanelData(initialState));
+    }
+
+    function renderAll() {
+      renderInitSteps();
+      renderSelectedSummary();
+      renderMonthTimeline();
+      renderProfileMatrix();
+      renderRiskSelector();
+      renderPreviewPanel();
+    }
+
+    function updateInitStepState() {
+      if (appState.isConfirmed) {
+        return {
+          month: ["done", "Completed"],
+          profile: ["done", "Completed"],
+          risk: ["done", "Completed"],
+          confirm: ["done", "Confirmed"]
+        };
+      }
+      const states = {
+        month: appState.monthTouched ? ["done", "Completed"] : ["active", "Current"],
+        profile: appState.profileTouched ? ["done", "Completed"] : ["pending", "Pending"],
+        risk: appState.riskTouched ? ["done", "Completed"] : ["pending", "Pending"],
+        confirm: ["pending", "Pending"]
+      };
+      if (appState.monthTouched && !appState.profileTouched) states.profile = ["active", "Current"];
+      if (appState.monthTouched && appState.profileTouched && !appState.riskTouched) states.risk = ["active", "Current"];
+      if (appState.monthTouched && appState.profileTouched && appState.riskTouched) states.confirm = ["active", "Current"];
+      return states;
+    }
+
+    function renderInitSteps() {
+      const stepStates = updateInitStepState();
+      dom.stepList.innerHTML = steps.map((step, index) => {
+        const [state, stateText] = stepStates[step.id] || ["pending", "Pending"];
+        return `
+          <div class="step-item ${state}">
+            <span class="step-dot">${state === "done" ? "✓" : index + 1}</span>
+            <span>
+              <span class="step-name">${step.title}</span>
+              <span class="step-state">${stateText} · ${step.hint}</span>
+            </span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderSteps() {
+      renderInitSteps();
+    }
+
+    function renderSelectedSummary() {
+      const profile = getSelectedProfile();
+      const risk = getSelectedRisk();
+      const month = getSelectedMonth();
+      const rateInfo = month ? getMonthRateInfo(month) : null;
+      const timeRows = [
+        ["Economic Time Point", month ? `Tick ${month.tick} / ${month.monthLabel}` : "To be selected"],
+        ["Event", rateInfo ? rateInfo.eventLabel : "To be selected"],
+        ["Deposit Rate", rateInfo ? `${rateInfo.depositRate.toFixed(2)}%` : "To be selected"],
+      ];
+      const profileRows = [
+        ["Identity Type", profile ? groupLabel(profile.group) : "To be selected"],
+        ["Wealth Tier", profile ? profile.level : "To be selected"],
+        ["Character", profile ? profile.name : "To be selected"]
+      ];
+      const params = [
+        ["Risk Preference", risk ? risk.label : "To be selected"],
+        ["Beta / Lambda", risk ? `${risk.beta} / ${risk.lambda}` : "To be selected"]
+      ];
+      dom.selectedSummary.innerHTML = `
+        <div class="summary-group-title">Economic Time Point</div>
+        ${timeRows.map(([label, value]) => `
+          <div class="summary-row"><span>${label}</span><strong>${value}</strong></div>
+        `).join("")}
+        <div class="summary-group-title">Player Profile</div>
+        ${profileRows.map(([label, value]) => `
+          <div class="summary-row"><span>${label}</span><strong>${value}</strong></div>
+        `).join("")}
+        <div class="summary-group-title">Behavior Parameters</div>
+        ${params.map(([label, value]) => `
+          <div class="summary-row soft"><span>${label}</span><strong>${value}</strong></div>
+        `).join("")}
+      `;
+    }
+
+    function handleMonthSelect(monthId) {
+      appState.selectedMonthId = monthId;
+      appState.monthTouched = true;
+      appState.isConfirmed = false;
+      appState.lastInitialState = null;
+      renderAll();
+    }
+
+    function renderMonthTimeline() {
+      const maxRate = 3.25;
+      const minRate = 2.25;
+      dom.monthSelector.innerHTML = monthOptions.map(month => {
+        const rateInfo = getMonthRateInfo(month);
+        const barHeight = 30 + ((rateInfo.depositRate - minRate) / (maxRate - minRate)) * 120;
+        return `
+        <button class="timeline-node ${month.id === appState.selectedMonthId ? "active" : ""} ${rateInfo.isHike ? "hike" : ""}" type="button" data-month-id="${month.id}">
+          <span class="tick-hike-tag">${rateInfo.isHike ? "Rate Hike" : ""}</span>
+          <span class="tick-rate-hint">${rateInfo.depositRate.toFixed(2)}%</span>
+          <span class="tick-bar" style="height:${barHeight}px;background:${rateInfo.isHike ? "#fca5a5" : "#bfdbfe"}"></span>
+          <span class="tick-dot"></span>
+          <span class="tick-label">${month.monthLabel}</span>
+          <span class="phase">${rateInfo.isHike ? "Rate Hike Month" : "Normal Month"}</span>
+        </button>
+      `;
+      }).join("");
+      dom.monthSelector.querySelectorAll("[data-month-id]").forEach(button => {
+        const month = monthOptions.find(item => item.id === button.dataset.monthId);
+        button.addEventListener("mouseenter", () => showMonthEventPopover(month, button));
+        button.addEventListener("mouseleave", hideMonthEventPopover);
+        button.addEventListener("pointerenter", () => showMonthEventPopover(month, button));
+        button.addEventListener("pointerleave", hideMonthEventPopover);
+        button.addEventListener("click", () => {
+          handleMonthSelect(button.dataset.monthId);
+          window.requestAnimationFrame(() => {
+            const activeButton = dom.monthSelector.querySelector(`[data-month-id="${button.dataset.monthId}"]`);
+            showMonthEventPopover(month, activeButton || button);
+          });
+        });
+      });
+    }
+
+    function renderProfileMatrix() {
+      const groups = [
+        {
+          id: "labor",
+          title: "Labor Household",
+          description: "Has wage income, can participate in employment decisions. Affected by wages, unemployment rate and hiring."
+        },
+        {
+          id: "nonlabor",
+          title: "Non-Labor Household",
+          description: "No wage income. Lives primarily on deposits, stocks, asset returns or subsidies."
+        }
+      ];
+
+      dom.profileMatrix.innerHTML = groups.map(group => {
+        const profiles = profileOptions.filter(profile => profile.group === group.id);
+        return `
+          <section class="profile-section">
+            <div class="section-label">
+              <div>
+                <h3>${group.title}</h3>
+                <p>${group.description}</p>
+              </div>
+            </div>
+            <div class="profile-grid">
+              ${profiles.map(profile => renderProfileCard(profile)).join("")}
+            </div>
+          </section>
+        `;
+      }).join("");
+
+      dom.profileMatrix.querySelectorAll("[data-profile-id]").forEach(card => {
+        card.addEventListener("click", () => {
+          appState.selectedProfileId = card.dataset.profileId;
+          appState.profileTouched = true;
+          appState.isConfirmed = false;
+          appState.lastInitialState = null;
+          renderAll();
+        });
+      });
+    }
+
+    function cropStyle(profile, mode = "card") {
+      const crop = mode === "preview"
+        ? (profile.previewCrop || profile.cardCrop || profile.crop || {})
+        : (profile.cardCrop || profile.crop || {});
+      return [
+        `--crop-w:${crop.w || "300%"}`,
+        `--crop-h:${crop.h || "100%"}`,
+        `--crop-x:${crop.x || "0"}`,
+        `--crop-y:${crop.y || "0"}`,
+        `--crop-scale:${crop.scale || "1"}`,
+        `--crop-pos:${crop.objectPosition || crop.pos || "center top"}`
+      ].join(";");
+    }
+
+    function renderProfileCard(profile) {
+      return `
+        <button class="profile-card ${profile.id === appState.selectedProfileId ? "selected" : ""}" type="button" data-profile-id="${profile.id}">
+          <span class="profile-image-wrap">
+            <img class="profile-image" style="${cropStyle(profile, "card")}" src="${profile.image}" alt="${profile.name}" onerror="this.closest('.profile-card').classList.add('image-missing')">
+            <span class="image-fallback">${profile.level}</span>
+          </span>
+          <span class="profile-name">${profile.name}</span>
+          <span class="profile-meta">
+            <span>Wealth Tier ${profile.level}</span>
+            <span>${groupLabel(profile.group)}</span>
+          </span>
+          <span class="tag-row">${profile.tags.map(tag => `<span class="tag">${tag}</span>`).join("")}</span>
+        </button>
+      `;
+    }
+
+    function renderPreviewPanel() {
+      const profile = getSelectedProfile();
+      const risk = getSelectedRisk();
+      const month = getSelectedMonth();
+      const complete = isSelectionComplete();
+      const taskPermission = profile ? getTaskPermission({
+        group: profile.group,
+        identity: groupLabel(profile.group),
+        wealthLevel: profile.level,
+        isEmployed: profile.group === "labor"
+      }) : null;
+      const basicRows = [
+        ["Identity Type", profile ? groupLabel(profile.group) : "To be selected"],
+        ["Wealth Tier", profile ? profile.level : "To be selected"],
+        ["Risk Preference", risk ? risk.label : "To be selected"]
+      ];
+      const panelState = appState.isConfirmed && appState.lastInitialState ? appState.lastInitialState : null;
+
+      dom.previewHero.innerHTML = `
+        ${profile ? `<img src="${profile.image}" alt="${profile.name}" onerror="this.remove()">` : `<div class="image-fallback">To be selected</div>`}
+      `;
+      dom.previewName.textContent = profile ? profile.name : "Please select a character";
+      dom.previewSub.textContent = profile ? roleLabel(profile) : "Complete three selections on the left to generate initial state";
+      dom.previewStats.innerHTML = `
+        <div class="preview-section-title">Current Character Preview</div>
+        ${basicRows.map(([label, value]) => `
+          <div class="stat-row">
+            <span>${label}</span>
+            <strong>${value}</strong>
+          </div>
+        `).join("")}
+        <div class="preview-section-title">Character Attributes</div>
+        ${panelState ? renderPlayerAttributePanel(panelState) : `<div class="stat-row"><span>Initialization Status</span><strong class="muted">Selection incomplete</strong></div>`}
+        <div class="preview-section-title">Environment Information</div>
+        ${panelState ? renderEnvironmentPanel(panelState) : `<div class="stat-row"><span>Economic Environment</span><strong class="muted">${month ? `${month.monthLabel} selected` : "To be selected"}</strong></div>`}
+      `;
+      dom.taskList.innerHTML = TASK_DEFINITIONS.map(task => {
+        const allowed = taskPermission?.allowedTaskIds.includes(task.id);
+        return `<span class="task-pill ${allowed ? "" : "disabled"}" title="${allowed ? "Executable" : "Pending character selection"}">${task.number}. ${task.label}</span>`;
+      }).join("");
+      dom.riskFormula.textContent = risk ? `Beta ${risk.beta} / Lambda ${risk.lambda}` : "Beta / Lambda to be selected";
+      dom.confirmSelection.textContent = appState.isConfirmed ? "Confirmed" : "Confirm Selection";
+      dom.confirmSelection.disabled = appState.isConfirmed || !complete;
+      dom.enterCitySide.disabled = !appState.isConfirmed;
+    }
+
+    function renderRiskSelector() {
+      dom.riskControl.innerHTML = riskOptions.map(risk => `
+        <button class="risk-chip ${risk.id === appState.selectedRiskId ? "active" : ""}" type="button" data-risk-id="${risk.id}">
+          ${risk.label}
+        </button>
+      `).join("");
+      dom.riskControl.querySelectorAll("[data-risk-id]").forEach(button => {
+        button.addEventListener("click", () => {
+          appState.selectedRiskId = button.dataset.riskId;
+          appState.riskTouched = true;
+          appState.isConfirmed = false;
+          appState.lastInitialState = null;
+          renderAll();
+        });
+      });
+    }
+
+    function buildInitialState() {
+      const selectedProfile = getSelectedProfile();
+      const selectedRisk = getSelectedRisk();
+      const selectedMonth = getSelectedMonth();
+      if (!selectedProfile || !selectedRisk || !selectedMonth) return null;
+      const rateInfo = getMonthRateInfo(selectedMonth);
+      const taskPermission = getTaskPermission({
+        group: selectedProfile.group,
+        identity: groupLabel(selectedProfile.group),
+        wealthLevel: selectedProfile.level,
+        isEmployed: selectedProfile.group === "labor"
+      });
+      return {
+        tick: selectedMonth.tick,
+        monthLabel: selectedMonth.monthLabel,
+        eventType: rateInfo.eventLabel,
+        depositRate: `${rateInfo.depositRate.toFixed(2)}%`,
+        loanRate: `${rateInfo.loanRate.toFixed(2)}%`,
+        mortgageRate: `${rateInfo.mortgageRate.toFixed(2)}%`,
+        economicBackground: rateInfo.economicBackground,
+        macroNews: selectedMonth.macroNews,
+        environment: {
+          tick: selectedMonth.tick,
+          monthLabel: selectedMonth.monthLabel,
+          eventType: rateInfo.eventLabel,
+          economic_background: rateInfo.economicBackground,
+          economicBackground: rateInfo.economicBackground,
+          macro_news: selectedMonth.macroNews,
+          macroNews: selectedMonth.macroNews,
+          current_deposit_1yr: `${rateInfo.depositRate.toFixed(2)}%`,
+          current_loan_1yr: `${rateInfo.loanRate.toFixed(2)}%`,
+          current_mortgage_rate: `${rateInfo.mortgageRate.toFixed(2)}%`,
+          last_stock_price: null,
+          last_avg_taxed_goods_price: null,
+          last_avg_household_consumption_qty: null,
+          last_avg_household_wage: null,
+          last_employment_rate: null,
+          last_avg_bank_loan_rate: null,
+          last_avg_bank_deposit_rate: null,
+          employer: null
+        },
+        player: {
+          name: selectedProfile.name,
+          identity: groupLabel(selectedProfile.group),
+          group: selectedProfile.group,
+          isEmployed: taskPermission.isEmployed,
+          wealthLevel: selectedProfile.level,
+          riskPreference: selectedRisk.id,
+          beta: selectedRisk.beta,
+          lambda: selectedRisk.lambda,
+          roleName: selectedProfile.name,
+          incomeSource: null,
+          initialAssets: null,
+          cash: null,
+          deposit: null,
+          stockShares: null,
+          loan: null,
+          assetParams: null,
+          cashFlow: null,
+          taskPermission,
+          allowedTasks: taskPermission.allowedTaskIds,
+          initialTaskId: taskPermission.startTaskId
+        }
+      };
+    }
+
+    async function confirmSelection() {
+      if (!isSelectionComplete()) {
+        showToast(`Please select first: ${missingSelectionLabels().join(", ")}.`);
+        return null;
+      }
+      const selectedProfile = getSelectedProfile();
+      const selectedRisk = getSelectedRisk();
+      const selectedMonth = getSelectedMonth();
+      const payload = {
+        tick: selectedMonth.tick,
+        is_labor_force: selectedProfile.group === "labor",
+        wealth: selectedProfile.level,
+        risk: selectedRisk.id
+      };
+      showToast("Matching Agent, generating player.json...");
+      try {
+        const resp = await fetch(API_BASE + "/api/init_player", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!data.success) {
+          showToast(`Match failed: ${data.error}`);
+          return null;
+        }
+        const initialState = buildInitialState();
+        initialState.player = {
+          ...initialState.player,
+          ...data.player.attributes,
+          matched_agent_id: data.player.matched_agent_id,
+          matched_risk: data.player.matched_risk,
+          risk_distance: data.player.risk_distance,
+          exact_risk_match: data.player.exact_risk_match,
+          available_tasks: data.player.available_tasks,
+          is_labor_force: data.player.is_labor_force,
+          wealth_level: data.player.wealth_level,
+          risk_preference: data.player.risk_preference,
+        };
+        if (data.environment) {
+          initialState.environment = { ...initialState.environment, ...data.environment };
+        }
+        appState.lastInitialState = initialState;
+        appState.monthTouched = true;
+        appState.profileTouched = true;
+        appState.riskTouched = true;
+        appState.isConfirmed = true;
+        renderAll();
+        showToast(`Match successful! Agent ID = ${data.player.matched_agent_id}, player.json generated.`);
+        return initialState;
+      } catch (err) {
+        showToast(`Network error: Unable to connect to server.`);
+        console.error("[init_player API]", err);
+        return null;
+      }
+    }
+
+    function enterCity() {
+      if (!appState.isConfirmed) {
+        showToast('Please click “Confirm Selection” first, then enter the economic city.');
+        return null;
+      }
+      const initialState = appState.lastInitialState || buildInitialState();
+      window.EWMInitialState = initialState;
+      try {
+        sessionStorage.setItem("EWMInitialState", JSON.stringify(initialState));
+        sessionStorage.removeItem("EWMGuideState");
+      } catch (error) {
+        console.warn("[Initial State] sessionStorage unavailable", error);
+      }
+      console.log("[Initial State]", initialState);
+      window.location.href = "main_map.html";
+      return initialState;
+    }
+
+    function showToast(message) {
+      dom.toast.textContent = message;
+      dom.toast.classList.add("visible");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => dom.toast.classList.remove("visible"), 2600);
+    }
+
+    function wireEvents() {
+      dom.resetSelection.addEventListener("click", () => {
+        appState.selectedProfileId = null;
+        appState.selectedRiskId = null;
+        appState.selectedMonthId = null;
+        appState.monthTouched = false;
+        appState.profileTouched = false;
+        appState.riskTouched = false;
+        appState.isConfirmed = false;
+        appState.lastInitialState = null;
+        renderAll();
+        showToast("Selection cleared. Please re-select economic time point, character and risk preference.");
+      });
+      dom.confirmSelection.addEventListener("click", confirmSelection);
+      dom.enterCitySide.addEventListener("click", enterCity);
+    }
+
+    wireEvents();
+    renderAll();
+  </script>
+</body>
+</html>

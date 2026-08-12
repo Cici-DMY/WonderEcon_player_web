@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Exchange Scene</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #111827; }
+body { display: flex; justify-content: center; align-items: center; }
+
+.scene {
+  position: relative;
+  width: min(95vw, calc(95vh * (1393 / 1129)));
+  aspect-ratio: 1393 / 1129;
+  background: #111827;
+}
+.scene .bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.item {
+  position: absolute;
+  user-select: none;
+}
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.agents-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 500;
+}
+.agents-overlay .agent { pointer-events: auto; cursor: default; }
+.agent-frame { image-rendering: auto; }
+.route-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+
+<!-- Return to Map button -->
+<button id="returnBtn" style="position:fixed;top:20px;right:20px;z-index:9999;padding:10px 24px;font-size:16px;border-radius:8px;border:none;background:#2f80ed;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);">Return to Map</button>
+
+<div class="scene" id="scene">
+  <img class="bg" src="assets/cutout.png" alt="stock exchange cutout">
+
+  <div class="item" data-id="stock-04"
+       data-x="762.71" data-y="662.24" data-w="360" data-h="337" data-scale="0.65">
+    <img src="assets/stock-04.png">
+  </div>
+  <div class="item" data-id="stock-02"
+       data-x="916.75" data-y="388.66" data-w="430" data-h="375" data-scale="0.59">
+    <img src="assets/stock-02.png">
+  </div>
+  <div class="item" data-id="stock-01"
+       data-x="115.91" data-y="205.01" data-w="1228" data-h="820" data-scale="0.45">
+    <img src="assets/stock-01.png">
+  </div>
+  <div class="item" data-id="stock-08"
+       data-x="251.36" data-y="376.83" data-w="122" data-h="227" data-scale="1.03">
+    <img src="assets/stock-08.png">
+  </div>
+  <div class="item" data-id="stock-03"
+       data-x="138.25" data-y="564.10" data-w="296" data-h="282" data-scale="1">
+    <img src="assets/stock-03.png">
+  </div>
+  <div class="item" data-id="stock-09"
+       data-x="1253.64" data-y="494.09" data-w="93" data-h="236" data-scale="1">
+    <img src="assets/stock-09.png">
+  </div>
+  <div class="item" data-id="stock-05"
+       data-x="614.56" data-y="846.81" data-w="260" data-h="149" data-scale="0.73">
+    <img src="assets/stock-05.png">
+  </div>
+  <div class="item" data-id="stock-10"
+       data-x="587.77" data-y="197.77" data-w="150" data-h="187" data-scale="0.72">
+    <img src="assets/stock-10.png">
+  </div>
+  <div class="item" data-id="stock-06"
+       data-x="365.02" data-y="652.73" data-w="145" data-h="230" data-scale="0.72">
+    <img src="assets/stock-06.png">
+  </div>
+  <div class="item" data-id="stock-10-2"
+       data-x="684.22" data-y="912.78" data-w="150" data-h="187" data-scale="0.72">
+    <img src="assets/stock-10.png">
+  </div>
+
+  <!-- 人物行走图层 -->
+  <svg class="agents-overlay" id="agents-overlay"
+       viewBox="0 0 1393 1129" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg">
+    <g id="stock-characters"></g>
+  </svg>
+</div>
+
+<script>
+// Return to Map
+document.getElementById('returnBtn').addEventListener('click', function() {
+  window.location.href = window.location.origin + '/main_map.html';
+});
+
+const VIEW_W = 1393;
+const VIEW_H = 1129;
+
+const EMBEDDED_LAYOUT = {
+  "stock-04": { "x": 897.642754401248, "y": 745.9313103034544, "w": 360, "h": 337, "scale": 0.65 },
+  "stock-02": { "x": 1005.107027815482, "y": 461.46598010298453, "w": 430, "h": 375, "scale": 0.59 },
+  "stock-01": { "x": 408.18362674986327, "y": 393.73613957906315, "w": 1228, "h": 820, "scale": 0.45 },
+  "stock-08": { "x": 251.36, "y": 376.83, "w": 122, "h": 227, "scale": 1.03 },
+  "stock-03": { "x": 138.25, "y": 564.1, "w": 296, "h": 282, "scale": 1 },
+  "stock-09": { "x": 1253.64, "y": 494.09, "w": 93, "h": 236, "scale": 1 },
+  "stock-05": { "x": 648.3978849699156, "y": 897.6461530770385, "w": 260, "h": 149, "scale": 0.73 },
+  "stock-10": { "x": 604.1478900346427, "y": 230.2814577813328, "w": 150, "h": 187, "scale": 0.72 },
+  "stock-06": { "x": 359.41832620895036, "y": 686.3290506424037, "w": 145, "h": 230, "scale": 0.72 },
+  "stock-10-2": { "x": 692.6478799051883, "y": 940.0901864720292, "w": 150, "h": 187, "scale": 0.72 }
+};
+
+const EMBEDDED_ROUTES = [
+  {
+    "name": "Trader A",
+    "x": 495,
+    "y": 908,
+    "fixedRoute": [[495,908],[687,858],[685,529],[687,809]],
+    "fixedRouteIndex": 1,
+    "linear": false,
+    "atEnd": false
+  },
+  {
+    "name": "Trader B",
+    "x": 851,
+    "y": 803,
+    "fixedRoute": [[1031,691],[841,810]],
+    "fixedRouteIndex": 1,
+    "linear": false,
+    "atEnd": false
+  }
+];
+
+function applyLayer(el, x, y, w, h, scale) {
+  const finalW = w * scale;
+  const finalH = h * scale;
+  el.style.left   = (x / VIEW_W * 100).toFixed(4) + "%";
+  el.style.top    = (y / VIEW_H * 100).toFixed(4) + "%";
+  el.style.width  = (finalW / VIEW_W * 100).toFixed(4) + "%";
+  el.style.height = (finalH / VIEW_H * 100).toFixed(4) + "%";
+  el.dataset.x = x;
+  el.dataset.y = y;
+  el.dataset.w = w;
+  el.dataset.h = h;
+  el.dataset.scale = scale;
+}
+
+function initLayers() {
+  document.querySelectorAll(".item").forEach((el) => {
+    applyLayer(el,
+      parseFloat(el.dataset.x),
+      parseFloat(el.dataset.y),
+      parseFloat(el.dataset.w),
+      parseFloat(el.dataset.h),
+      parseFloat(el.dataset.scale));
+  });
+  loadPositions();
+}
+
+function loadPositions() {
+  if (EMBEDDED_LAYOUT && typeof EMBEDDED_LAYOUT === 'object') {
+    document.querySelectorAll(".item").forEach((el) => {
+      const d = EMBEDDED_LAYOUT[el.dataset.id];
+      if (!d) return;
+      applyLayer(el, d.x, d.y, d.w, d.h, d.scale);
+    });
+  }
+
+  if (Array.isArray(EMBEDDED_ROUTES)) {
+    try {
+      const routeData = EMBEDDED_ROUTES;
+      function restoreRoutes(agents) {
+        routeData.forEach(r => {
+          try {
+            const ag = agents.find(a => a.name === r.name);
+            if (!ag || !r.fixedRoute || !Array.isArray(r.fixedRoute) || r.fixedRoute.length === 0) return;
+            ag.fixedRoute = r.fixedRoute.map(p => [...p]);
+            ag.linear = false; // always loop in browse mode
+            ag.atEnd = false;
+            const idx = typeof r.fixedRouteIndex === 'number' ? r.fixedRouteIndex : 0;
+            ag.fixedRouteIndex = Math.max(0, Math.min(idx, ag.fixedRoute.length - 1));
+            ag.x = typeof r.x === 'number' ? r.x : ag.fixedRoute[0][0];
+            ag.y = typeof r.y === 'number' ? r.y : ag.fixedRoute[0][1];
+            ag.target = null;
+            ag.pauseUntil = 0;
+            placeAgent(ag);
+          } catch (err) {
+            console.warn('Failed to restore route', r && r.name, err);
+          }
+        });
+      }
+      if (window.__stockAgents) {
+        restoreRoutes(window.__stockAgents);
+      } else {
+        document.addEventListener('stock:agentsReady', e => restoreRoutes(e.detail.agents), { once: true });
+      }
+    } catch (e) { console.warn('Failed to restore routes', e); }
+  }
+}
+
+initLayers();
+
+// Pause clock on tab switch to avoid jumps
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    window.__stockResetClock = true;
+  }
+});
+</script>
+
+<!-- Walk system -->
+<script>
+(function () {
+  const VIEW_W = 1393, VIEW_H = 1129;
+
+  const WALK_CONFIG = {
+    frameMs: 90,
+    pauseMs: [400, 1200],
+  };
+
+  // Sprite factory
+  function makeSprite(folder) {
+    const dirs = {
+      front: Array.from({length:12},(_,i)=>`${folder}/walk_front_${String(i+1).padStart(2,"0")}.png`),
+      back:  Array.from({length:12},(_,i)=>`${folder}/walk_back_${String(i+1).padStart(2,"0")}.png`),
+      left:  Array.from({length:12},(_,i)=>`${folder}/walk_left_${String(i+1).padStart(2,"0")}.png`),
+      right: Array.from({length:12},(_,i)=>`${folder}/walk_right_${String(i+1).padStart(2,"0")}.png`),
+    };
+    return {
+      box: 512,
+      footFrac: 0.795,
+      midFrac: 0.50,
+      dirs,
+      dirMap: { front:"front", back:"back", left:"left", right:"right" },
+      idle: dirs.front[0],
+    };
+  }
+  const WALK_5 = makeSprite("../../person/walk_5");
+  const WALK_6 = makeSprite("../../person/walk_6");
+
+  // Default patrol routes (looping)
+  const WALK_ZONES = [
+    { name:"Trader A", sprite:WALK_5,
+      route:[[481, 541],[673, 520],[818, 645],[654, 811],[433, 749]],
+      color:"#ff6600" },
+    { name:"Trader B", sprite:WALK_6,
+      route:[[914, 499],[1058, 624],[1010, 811],[818, 749],[885, 603]],
+      color:"#8b5cf6" },
+  ];
+
+  function getDirection(dx, dy) {
+    const u = dx - dy, v = dx + dy;
+    if (Math.abs(u) >= Math.abs(v)) return u >= 0 ? "front" : "back";
+    return v >= 0 ? "right" : "left";
+  }
+
+  function buildAgent({ name, sprite, x, y, speed, scale, color }) {
+    const svg = document.getElementById("agents-overlay");
+    const ns = "http://www.w3.org/2000/svg";
+    const g  = document.createElementNS(ns, "g");
+    g.setAttribute("class", "agent");
+    g.dataset.name = name;
+
+    const img = document.createElementNS(ns, "image");
+    img.setAttribute("class", "agent-frame");
+    const W = sprite.box * scale;
+    img.setAttribute("width",  W);
+    img.setAttribute("height", W);
+    img.setAttributeNS("http://www.w3.org/1999/xlink", "href", sprite.idle);
+    g.appendChild(img);
+
+    document.getElementById("stock-characters").appendChild(g);
+
+    return {
+      name, sprite, color,
+      x, y, speed, scale,
+      W,
+      dir: "front",
+      frameIdx: 0,
+      lastFrameMs: 0,
+      walking: false,
+      fixedRoute: null,
+      fixedRouteIndex: 0,
+      linear: false,
+      atEnd: false,
+      target: null,
+      pauseUntil: 0,
+      el: g,
+      img: img,
+    };
+  }
+
+  function placeAgent(ag) {
+    const W = ag.sprite.box * ag.scale;
+    ag.W = W;
+    ag.img.setAttribute("width",  W);
+    ag.img.setAttribute("height", W);
+    const left = ag.x - W * ag.sprite.midFrac;
+    const top  = ag.y - W * ag.sprite.footFrac;
+    ag.img.setAttribute("x", left);
+    ag.img.setAttribute("y", top);
+  }
+  window.__stockPlaceAgent = placeAgent;
+  // expose globally for loadPositions
+  window.placeAgent = placeAgent;
+
+  function setFrame(ag, walking, dtMs) {
+    ag.lastFrameMs += dtMs;
+    if (walking) {
+      if (ag.lastFrameMs >= WALK_CONFIG.frameMs) {
+        const steps = Math.floor(ag.lastFrameMs / WALK_CONFIG.frameMs);
+        ag.frameIdx = (ag.frameIdx + steps) % 12;
+        ag.lastFrameMs = ag.lastFrameMs % WALK_CONFIG.frameMs;
+      }
+    } else {
+      ag.frameIdx = 0;
+      ag.lastFrameMs = 0;
+    }
+    const mapped = ag.sprite.dirMap[ag.dir];
+    let dirKey = mapped;
+    let mirror = false;
+    if (typeof mapped === "object" && mapped !== null) {
+      dirKey = mapped.dir;
+      mirror = !!mapped.mirror;
+    }
+    const frames = ag.sprite.dirs[dirKey] || ag.sprite.dirs.front;
+    const f = frames[ag.frameIdx];
+    if (ag.currentHref !== f) {
+      ag.currentHref = f;
+      ag.img.setAttributeNS("http://www.w3.org/1999/xlink", "href", f);
+    }
+    const left = ag.x - ag.W * ag.sprite.midFrac;
+    const top  = ag.y - ag.W * ag.sprite.footFrac;
+    if (mirror) {
+      ag.img.setAttribute("transform",
+        `translate(${left + ag.W},${top}) scale(-1,1)`);
+      ag.img.setAttribute("x", 0);
+      ag.img.setAttribute("y", 0);
+    } else {
+      ag.img.removeAttribute("transform");
+      ag.img.setAttribute("x", left);
+      ag.img.setAttribute("y", top);
+    }
+  }
+
+  function nextTarget(ag) {
+    if (!ag.fixedRoute || ag.fixedRoute.length === 0) return null;
+    const pt = ag.fixedRoute[ag.fixedRouteIndex];
+    ag.fixedRouteIndex++;
+    if (ag.fixedRouteIndex >= ag.fixedRoute.length) {
+      ag.fixedRouteIndex = 0; // always loop
+    }
+    return { x: pt[0], y: pt[1] };
+  }
+
+  // Create NPC agents only (no Player)
+  const agents = [];
+  WALK_ZONES.forEach((z, i) => {
+    agents.push(buildAgent({
+      name: z.name, sprite: z.sprite,
+      x: z.route[0][0], y: z.route[0][1],
+      speed: i === 0 ? 90 : 85,
+      scale: 0.35, color: z.color,
+    }));
+  });
+
+  // Bind default looping routes
+  WALK_ZONES.forEach((z, i) => {
+    agents[i].fixedRoute = z.route.map(p => [...p]);
+    agents[i].linear = false;
+  });
+  agents.forEach(ag => { ag.fixedRouteIndex = 0; placeAgent(ag); });
+
+  window.__stockAgents = agents;
+
+  // Main loop
+  let lastT = performance.now();
+  let lastAgentOrderKey = "";
+  function tick(now) {
+    if (window.__stockResetClock) { lastT = now; window.__stockResetClock = false; }
+    const dtMs = Math.min(now - lastT, 50);
+    lastT = now;
+    const dt = dtMs / 1000;
+
+    for (const ag of agents) {
+      if (!ag.target) {
+        if (ag.pauseUntil > now) {
+          setFrame(ag, false, dtMs);
+          continue;
+        }
+        const nt = nextTarget(ag);
+        if (!nt) { setFrame(ag, false, dtMs); continue; }
+        ag.target = nt;
+      }
+      const dx = ag.target.x - ag.x;
+      const dy = ag.target.y - ag.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 4) {
+        ag.x = ag.target.x; ag.y = ag.target.y;
+        ag.target = null;
+        const [lo, hi] = WALK_CONFIG.pauseMs;
+        ag.pauseUntil = now + (lo + Math.random()*(hi-lo));
+        setFrame(ag, false, dtMs);
+        continue;
+      }
+      const step = Math.min(dist, ag.speed * dt);
+      ag.x += dx/dist * step;
+      ag.y += dy/dist * step;
+      ag.dir = getDirection(dx, dy);
+      placeAgent(ag);
+      setFrame(ag, true, dtMs);
+    }
+
+    // y-sort (foot y larger = in front)
+    const g = document.getElementById("stock-characters");
+    const sorted = [...agents].sort((a,b) => a.y - b.y);
+    const orderKey = sorted.map(a => a.name).join("|");
+    if (orderKey !== lastAgentOrderKey) {
+      lastAgentOrderKey = orderKey;
+      sorted.forEach(ag => g.appendChild(ag.el));
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  function preloadSpriteImages() {
+    const urls = new Set();
+    [WALK_5, WALK_6].forEach(sp => {
+      if (sp.idle) urls.add(sp.idle);
+      Object.values(sp.dirs || {}).forEach(arr => arr.forEach(u => urls.add(u)));
+    });
+    return Promise.all([...urls].map(src => new Promise(res => {
+      const img = new Image();
+      img.onload = res; img.onerror = res; img.src = src;
+    })));
+  }
+  preloadSpriteImages().then(() => {
+    requestAnimationFrame((t) => { lastT = t; tick(t); });
+  });
+
+  // Notify ready
+  document.dispatchEvent(new CustomEvent("stock:agentsReady", { detail: { agents } }));
+})();
+</script>
+</body>
+</html>

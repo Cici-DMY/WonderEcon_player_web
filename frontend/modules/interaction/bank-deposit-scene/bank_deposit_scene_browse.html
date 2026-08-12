@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Scene - Browse</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #ffffff; }
+body { display: flex; justify-content: center; align-items: center; }
+.scene {
+  position: relative;
+  width: min(95vw, calc(95vh * 1.333));
+  aspect-ratio: 4 / 3;
+}
+.scene .bg {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.item {
+  position: absolute;
+  user-select: none;
+}
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(4px 6px 6px rgba(40,30,10,0.18));
+}
+/* --- Walking layer --- */
+.agents-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 500;
+}
+.agents-overlay .agent { pointer-events: auto; cursor: default; }
+.agent-frame { image-rendering: auto; }
+.floor-poly { fill: rgba(74,144,217,.06); stroke: #4a90d9; stroke-width: 2; stroke-dasharray: 10 8; }
+.route-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+
+<!-- Return to Map button -->
+<button id="btnReturnMap" style="position:fixed;top:20px;right:20px;z-index:9999;padding:10px 24px;font-size:16px;border-radius:8px;border:none;background:#2f80ed;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);">Return to Map</button>
+
+<div class="scene" id="scene">
+  <img class="bg" src="images/background.png" alt="Background">
+
+  <!-- 双人柜台1 -->
+  <div class="item" id="el-counter-double1" data-name="Double counter 1" style="width:15%; left:42.17%; top:28.33%; z-index:20;">
+    <img src="cutouts/1.png">
+  </div>
+
+  <!-- 双人柜台2 -->
+  <div class="item" id="el-counter-double2" data-name="Double counter 2" style="width:15%; left:57.41%; top:38.96%; z-index:19;">
+    <img src="cutouts/16.png">
+  </div>
+
+  <!-- ATM机 -->
+  <div class="item" id="el-atm" data-name="ATM" style="width:6%; left:39.66%; top:13.64%; z-index:15;">
+    <img src="cutouts/3.png">
+  </div>
+
+  <!-- 单人柜台 -->
+  <div class="item" id="el-counter-single" data-name="Single counter" style="width:10%; left:38.14%; top:46.08%; z-index:35;">
+    <img src="cutouts/2.png">
+  </div>
+
+  <!-- 左沙发 -->
+  <div class="item" id="el-sofa-left" data-name="Left sofa" style="width:9.5%; left:51.52%; top:66.52%; z-index:30;">
+    <img src="cutouts/4.png">
+  </div>
+
+  <!-- 右沙发 -->
+  <div class="item" id="el-sofa-right" data-name="Right sofa" style="width:9.5%; left:17.30%; top:39.78%; z-index:45;">
+    <img src="cutouts/4.png">
+  </div>
+
+  <!-- 左茶几 -->
+  <div class="item" id="el-table-left" data-name="Left coffee table" style="width:10%; left:58.23%; top:73.09%; z-index:32;">
+    <img src="cutouts/5.png">
+  </div>
+
+  <!-- 右茶几 -->
+  <div class="item" id="el-table-right" data-name="Right coffee table" style="width:10%; left:22.73%; top:45.53%; z-index:48;">
+    <img src="cutouts/6.png">
+  </div>
+
+  <!-- 金色隔离栏 -->
+  <div class="item" id="el-barrier" data-name="Barrier" style="width:16%; left:50.24%; top:49.75%; z-index:36;">
+    <img src="cutouts/7.png">
+  </div>
+
+  <!-- 告示牌 -->
+  <div class="item" id="el-sign" data-name="Notice board" style="width:3.5%; left:31.05%; top:61.97%; z-index:37;">
+    <img src="cutouts/8.png">
+  </div>
+
+  <!-- 植物 左上 -->
+  <div class="item" id="el-plant-lt" data-name="Plant top-left" style="width:5.5%; left:8.20%; top:42.52%; z-index:16;">
+    <img src="cutouts/9.png">
+  </div>
+
+  <!-- 植物 右上 -->
+  <div class="item" id="el-plant-rt" data-name="Plant top-right" style="width:4%; left:31.01%; top:26.03%; z-index:22;">
+    <img src="cutouts/10.png">
+  </div>
+
+  <!-- 植物 右下 -->
+  <div class="item" id="el-plant-rb" data-name="Plant bottom-right" style="width:5.5%; left:49.83%; top:77.91%; z-index:44;">
+    <img src="cutouts/11.png">
+  </div>
+
+  <!-- 植物 左前 -->
+  <div class="item" id="el-plant-lf" data-name="Plant left-front" style="width:5.5%; left:73.88%; top:42.85%; z-index:42;">
+    <img src="cutouts/9.png">
+  </div>
+
+  <!-- 保险柜 -->
+  <div class="item" id="el-safe" data-name="Safe" style="width:9.5%; left:84.55%; top:43.89%; z-index:24;">
+    <img src="cutouts/12.png">
+  </div>
+
+  <!-- 宣传架 -->
+  <div class="item" id="el-rack" data-name="Brochure rack" style="width:4.5%; left:25.86%; top:57.20%; z-index:34;">
+    <img src="cutouts/13.png">
+  </div>
+
+  <!-- 垃圾桶 -->
+  <div class="item" id="el-bin" data-name="Trash bin" style="width:2%; left:70.13%; top:52.00%; z-index:43;">
+    <img src="cutouts/14.png">
+  </div>
+
+  <!-- 银行标志 -->
+  <div class="item" id="el-logo" data-name="Bank logo" style="width:4%; left:63.96%; top:24.66%; z-index:10;">
+    <img src="cutouts/15.png">
+  </div>
+
+  <!-- Walking layer -->
+  <svg class="agents-overlay" id="agents-overlay" viewBox="0 0 1000 750" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <g id="bank-characters"></g>
+  </svg>
+</div>
+
+<script>
+// === Embedded Layout Snapshot ===
+const EMBEDDED_LAYOUT = {
+  "el-counter-double1": { "left": "40.92%", "top": "27.01%", "width": "15%" },
+  "el-counter-double2": { "left": "57.37%", "top": "37.61%", "width": "15%" },
+  "el-atm": { "left": "39.72%", "top": "13.55%", "width": "6%" },
+  "el-counter-single": { "left": "39.18%", "top": "47.81%", "width": "10%" },
+  "el-sofa-left": { "left": "50.82%", "top": "70.52%", "width": "9.5%" },
+  "el-sofa-right": { "left": "18.12%", "top": "35.46%", "width": "10%" },
+  "el-table-left": { "left": "56.59%", "top": "76.42%", "width": "10%" },
+  "el-table-right": { "left": "22.32%", "top": "41.28%", "width": "10%" },
+  "el-barrier": { "left": "57.55%", "top": "58.33%", "width": "16%" },
+  "el-sign": { "left": "30.00%", "top": "62.56%", "width": "3.5%" },
+  "el-plant-lt": { "left": "8.22%", "top": "42.55%", "width": "5.5%" },
+  "el-plant-rt": { "left": "30.96%", "top": "25.98%", "width": "4%" },
+  "el-plant-rb": { "left": "49.86%", "top": "78.02%", "width": "5.5%" },
+  "el-plant-lf": { "left": "73.87%", "top": "42.95%", "width": "5.5%" },
+  "el-safe": { "left": "84.55%", "top": "43.99%", "width": "9.5%" },
+  "el-rack": { "left": "25.80%", "top": "57.69%", "width": "4.5%" },
+  "el-bin": { "left": "70.09%", "top": "52.04%", "width": "2%" },
+  "el-logo": { "left": "63.91%", "top": "24.70%", "width": "4%" }
+};
+
+// NPC routes only (no Player), all set to loop
+const EMBEDDED_ROUTES = [
+  {
+    "name": "person1",
+    "x": 540.42,
+    "y": 380.96,
+    "fixedRoute": [[381,578],[469,514],[307,409],[399,323],[582,398]],
+    "linear": false,
+    "atEnd": false
+  },
+  {
+    "name": "person2",
+    "x": 782.89,
+    "y": 434.64,
+    "fixedRoute": [[718,485],[771,520],[840,485],[785,433]],
+    "linear": false,
+    "atEnd": false
+  }
+];
+
+// === Apply embedded layout positions ===
+function loadPositions() {
+  if (EMBEDDED_LAYOUT && typeof EMBEDDED_LAYOUT === 'object') {
+    Object.keys(EMBEDDED_LAYOUT).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) {
+        el.style.left = EMBEDDED_LAYOUT[id].left;
+        el.style.top = EMBEDDED_LAYOUT[id].top;
+        if (EMBEDDED_LAYOUT[id].width) el.style.width = EMBEDDED_LAYOUT[id].width;
+      }
+    });
+  }
+
+  // Restore routes once agents are ready
+  function restoreRoutes(agents) {
+    EMBEDDED_ROUTES.forEach(function(r) {
+      var ag = agents.find(function(a) { return a.name === r.name; });
+      if (!ag || !r.fixedRoute) return;
+      ag.x = r.x;
+      ag.y = r.y;
+      ag.fixedRoute = r.fixedRoute.map(function(p) { return [p[0], p[1]]; });
+      ag.linear = false; // Force loop
+      ag.atEnd = false;
+      ag.fixedRouteIndex = 0;
+      ag.target = null;
+      ag.pauseUntil = 0;
+    });
+  }
+  if (window.__bankAgents) {
+    restoreRoutes(window.__bankAgents);
+  } else {
+    document.addEventListener('bank:agentsReady', function(e) {
+      restoreRoutes(e.detail.agents);
+    }, { once: true });
+  }
+}
+loadPositions();
+
+// === Return to Map button ===
+document.getElementById('btnReturnMap').addEventListener('click', function() {
+  window.location.href = window.location.origin + '/main_map.html';
+});
+</script>
+
+<!-- ======== Walking System (NPCs only, looping routes) ======== -->
+<script>
+(function() {
+  var svgNS = "http://www.w3.org/2000/svg";
+  var charactersLayer = document.querySelector("#bank-characters");
+  var scene = document.getElementById("scene");
+
+  var FRAME_MS = 60;
+  var PAUSE_MS = [400, 1200];
+
+  // --- Sprite definitions ---
+  var WALK_1_SPRITE = {
+    box: 135, footFrac: 0.826, midFrac: 0.499,
+    dirs: {
+      front: Array.from({ length: 12 }, function(_, i) { return '../../person/walk_1/walk_front_' + String(i+1).padStart(2,"0") + '.png'; }),
+      back:  Array.from({ length: 12 }, function(_, i) { return '../../person/walk_1/walk_back_' + String(i+1).padStart(2,"0") + '.png'; }),
+      left:  Array.from({ length: 12 }, function(_, i) { return '../../person/walk_1/walk_left_' + String(i+1).padStart(2,"0") + '.png'; }),
+      right: Array.from({ length: 12 }, function(_, i) { return '../../person/walk_1/walk_right_' + String(i+1).padStart(2,"0") + '.png'; })
+    },
+    dirMap: { front: "front", back: "back", left: "left", right: "right" }
+  };
+  WALK_1_SPRITE.idle = WALK_1_SPRITE.dirs.front[0];
+
+  var WALK_2_SPRITE = {
+    box: 135, footFrac: 0.826, midFrac: 0.499,
+    dirs: {
+      front: Array.from({ length: 12 }, function(_, i) { return '../../person/walk_2/walk_front_' + String(i+1).padStart(2,"0") + '.png'; }),
+      back:  Array.from({ length: 12 }, function(_, i) { return '../../person/walk_2/walk_back_' + String(i+1).padStart(2,"0") + '.png'; }),
+      left:  Array.from({ length: 12 }, function(_, i) { return '../../person/walk_2/walk_left_' + String(i+1).padStart(2,"0") + '.png'; }),
+      right: Array.from({ length: 12 }, function(_, i) { return '../../person/walk_2/walk_right_' + String(i+1).padStart(2,"0") + '.png'; })
+    },
+    dirMap: { front: "front", back: "back", left: "left", right: "right" }
+  };
+  WALK_2_SPRITE.idle = WALK_2_SPRITE.dirs.front[0];
+
+  var SPRITE_POOL = [WALK_1_SPRITE, WALK_2_SPRITE];
+
+  function _makeBankSprite(folder) {
+    var dirs = {
+      front: Array.from({ length: 12 }, function(_, i) { return folder + '/walk_front_' + String(i+1).padStart(2,"0") + '.png'; }),
+      back:  Array.from({ length: 12 }, function(_, i) { return folder + '/walk_back_' + String(i+1).padStart(2,"0") + '.png'; }),
+      left:  Array.from({ length: 12 }, function(_, i) { return folder + '/walk_left_' + String(i+1).padStart(2,"0") + '.png'; }),
+      right: Array.from({ length: 12 }, function(_, i) { return folder + '/walk_right_' + String(i+1).padStart(2,"0") + '.png'; })
+    };
+    return { box: 135, footFrac: 0.826, midFrac: 0.499, dirs: dirs, dirMap: { front: "front", back: "back", left: "left", right: "right" }, idle: dirs.front[0] };
+  }
+
+  // --- SVG helper ---
+  function svgElement(tag, attrs) {
+    var el = document.createElementNS(svgNS, tag);
+    if (attrs) {
+      Object.keys(attrs).forEach(function(k) { el.setAttribute(k, attrs[k]); });
+    }
+    return el;
+  }
+
+  // --- Build agent ---
+  function buildAgent(opts) {
+    var name = opts.name, label = opts.label, sprite = opts.sprite;
+    var x = opts.x || 0, y = opts.y || 0;
+    var speed = opts.speed || 45, scale = opts.scale || 1;
+
+    var root = svgElement("g", { "class": "agent", "data-agent": name, "data-label": label });
+    var depth = svgElement("g", { "class": "agent-depth" });
+    var sp = sprite;
+    var image = svgElement("image", {
+      "class": "agent-frame",
+      href: sp.idle,
+      x: -sp.box * sp.midFrac,
+      y: -sp.box * sp.footFrac,
+      width: sp.box,
+      height: sp.box,
+      preserveAspectRatio: "xMidYMid meet"
+    });
+    depth.appendChild(image);
+    root.appendChild(depth);
+    charactersLayer.appendChild(root);
+
+    return {
+      el: root, name: name, label: label, x: x, y: y, speed: speed, scale: scale, sprite: sp,
+      dir: "front", frameIndex: 0, frameClock: 0,
+      target: null, fixedRoute: null, fixedRouteIndex: 0,
+      linear: false, atEnd: false,
+      pauseUntil: performance.now() + Math.random() * 500,
+      image: image, depthNode: depth
+    };
+  }
+
+  // --- Place agents (NPCs only) ---
+  var agents = [
+    buildAgent({ name: "person1", label: "Customer A", sprite: SPRITE_POOL[0], x: 0, y: 0, speed: 42 }),
+    buildAgent({ name: "person2", label: "Customer B", sprite: SPRITE_POOL[1], x: 0, y: 0, speed: 48, scale: 0.889 })
+  ];
+
+  // Assign initial routes from EMBEDDED_ROUTES
+  EMBEDDED_ROUTES.forEach(function(r, i) {
+    if (!agents[i]) return;
+    agents[i].fixedRoute = r.fixedRoute.map(function(p) { return [p[0], p[1]]; });
+    agents[i].fixedRouteIndex = 0;
+    agents[i].linear = false; // Always loop
+    agents[i].atEnd = false;
+    agents[i].x = r.fixedRoute[0][0];
+    agents[i].y = r.fixedRoute[0][1];
+  });
+
+  // --- Direction from movement vector ---
+  function getDirection(dx, dy) {
+    var u = dx - dy;
+    var v = dx + dy;
+    if (Math.abs(u) >= Math.abs(v)) {
+      return u >= 0 ? "front" : "back";
+    }
+    return v >= 0 ? "right" : "left";
+  }
+
+  // --- Frame animation ---
+  function setFrame(agent, walking, dtMs) {
+    var sp = agent.sprite;
+    var mappedDir = agent.dir;
+    if (sp.dirMap && sp.dirMap[agent.dir] != null) {
+      var m = sp.dirMap[agent.dir];
+      if (typeof m === "string") mappedDir = m;
+    }
+    var frames = sp.dirs[mappedDir] || sp.dirs.front;
+
+    if (!walking) {
+      agent.frameIndex = 0;
+      agent.frameClock = 0;
+      var f = frames[0];
+      if (agent.currentHref !== f) {
+        agent.currentHref = f;
+        agent.image.setAttribute("href", f);
+      }
+      return;
+    }
+    agent.frameClock += dtMs;
+    if (agent.frameClock >= FRAME_MS) {
+      var steps = Math.floor(agent.frameClock / FRAME_MS);
+      agent.frameClock %= FRAME_MS;
+      agent.frameIndex = (agent.frameIndex + steps) % frames.length;
+    }
+    var f2 = frames[agent.frameIndex];
+    if (agent.currentHref !== f2) {
+      agent.currentHref = f2;
+      agent.image.setAttribute("href", f2);
+    }
+  }
+
+  // --- Next target (always looping) ---
+  function nextTarget(agent) {
+    if (!agent.fixedRoute || agent.fixedRoute.length === 0) return null;
+    agent.fixedRouteIndex = (agent.fixedRouteIndex + 1) % agent.fixedRoute.length;
+    var pt = agent.fixedRoute[agent.fixedRouteIndex];
+    return { x: pt[0], y: pt[1] };
+  }
+
+  // --- Pause duration ---
+  function pauseDuration() {
+    return PAUSE_MS[0] + Math.random() * (PAUSE_MS[1] - PAUSE_MS[0]);
+  }
+
+  // --- Main tick loop ---
+  var previousTime = performance.now();
+  var lastAgentOrderKey = "";
+
+  function tick(now) {
+    var dtMs = Math.min(now - previousTime, 50);
+    var dt = dtMs / 1000;
+    previousTime = now;
+
+    for (var i = 0; i < agents.length; i++) {
+      var agent = agents[i];
+      var walking = false;
+
+      if (!agent.target && !agent.atEnd && now >= agent.pauseUntil) {
+        var next = nextTarget(agent);
+        if (next) agent.target = next;
+      }
+
+      if (agent.target) {
+        var dx = agent.target.x - agent.x;
+        var dy = agent.target.y - agent.y;
+        var distance = Math.hypot(dx, dy);
+
+        if (distance < 2) {
+          agent.x = agent.target.x;
+          agent.y = agent.target.y;
+          agent.target = null;
+          agent.pauseUntil = now + pauseDuration();
+        } else {
+          walking = true;
+          var step = Math.min(distance, agent.speed * dt);
+          agent.x += (dx / distance) * step;
+          agent.y += (dy / distance) * step;
+          agent.dir = getDirection(dx, dy);
+        }
+      }
+
+      setFrame(agent, walking, dtMs);
+      agent.el.setAttribute("transform", "translate(" + agent.x.toFixed(2) + " " + agent.y.toFixed(2) + ")");
+      agent.depthNode.setAttribute("transform", "scale(" + agent.scale + ")");
+    }
+
+    // Y-sort for depth ordering
+    var sorted = agents.slice().sort(function(a, b) { return a.y - b.y; });
+    var orderKey = sorted.map(function(a) { return a.name; }).join("|");
+    if (orderKey !== lastAgentOrderKey) {
+      lastAgentOrderKey = orderKey;
+      sorted.forEach(function(a) { charactersLayer.appendChild(a.el); });
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // Preload sprite images then start loop
+  function preloadSpriteImages() {
+    var urls = new Set();
+    SPRITE_POOL.forEach(function(sp) {
+      if (sp.idle) urls.add(sp.idle);
+      Object.values(sp.dirs || {}).forEach(function(arr) { arr.forEach(function(u) { urls.add(u); }); });
+    });
+    return Promise.all(Array.from(urls).map(function(src) {
+      return new Promise(function(res) {
+        var img = new Image();
+        img.onload = res; img.onerror = res; img.src = src;
+      });
+    }));
+  }
+  preloadSpriteImages().then(function() {
+    requestAnimationFrame(tick);
+  });
+
+  // Expose agents
+  window.__bankAgents = agents;
+  document.dispatchEvent(new CustomEvent("bank:agentsReady", { detail: { agents: agents } }));
+})();
+</script>
+</body>
+</html>

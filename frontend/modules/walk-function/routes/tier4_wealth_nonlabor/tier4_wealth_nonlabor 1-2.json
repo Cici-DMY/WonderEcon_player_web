@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "sceneSize": {
+    "width": 6400,
+    "height": 3600
+  },
+  "coords": "scene-pixel",
+  "loop": false,
+  "points": [
+    {
+      "x": 2284,
+      "y": 1777
+    },
+    {
+      "x": 2381,
+      "y": 1832
+    },
+    {
+      "x": 3185,
+      "y": 1411
+    },
+    {
+      "x": 3106,
+      "y": 1350
+    }
+  ],
+  "exportedAt": "2026-06-28T13:41:32.807Z",
+  "note": "EWM 玩家行走路线 - 直接放入 data/player_routes/ 由前端加载",
+  "nearestBuildingId": "supermarket",
+  "nearestBuildingName": "超市"
+}

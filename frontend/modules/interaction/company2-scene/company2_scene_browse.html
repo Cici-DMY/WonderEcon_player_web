@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Company 2 Scene - Browse</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #111827; }
+body { display: flex; justify-content: center; align-items: center; }
+
+.scene {
+  position: relative;
+  width: min(95vw, calc(95vh * (1448 / 1086)));
+  aspect-ratio: 1448 / 1086;
+  background: #111827;
+}
+.scene .bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.item {
+  position: absolute;
+  user-select: none;
+}
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.agents-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 500;
+}
+.agent-frame { image-rendering: auto; }
+</style>
+</head>
+<body>
+
+<button id="returnBtn" style="position:fixed;top:20px;right:20px;z-index:9999;padding:10px 24px;font-size:16px;border-radius:8px;border:none;background:#2f80ed;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);">Return to Map</button>
+
+<div class="scene" id="scene">
+  <img class="bg" src="assets/cutout.png" alt="company 2 cutout">
+
+  <div class="item" data-id="coo-01"
+       data-x="182.79" data-y="462.29" data-w="55" data-h="121" data-scale="1.05">
+    <img src="assets/coo-01.png">
+  </div>
+  <div class="item" data-id="coo-02"
+       data-x="423.04" data-y="436.07" data-w="111" data-h="100" data-scale="1">
+    <img src="assets/coo-02.png">
+  </div>
+  <div class="item" data-id="coo-09"
+       data-x="589.82" data-y="251.05" data-w="196" data-h="180" data-scale="1">
+    <img src="assets/coo-09.png">
+  </div>
+  <div class="item" data-id="coo-10"
+       data-x="826.10" data-y="307.51" data-w="107" data-h="156" data-scale="1">
+    <img src="assets/coo-10.png">
+  </div>
+  <div class="item" data-id="coo-08"
+       data-x="257.13" data-y="367.45" data-w="1098" data-h="415" data-scale="0.83">
+    <img src="assets/coo-08.png">
+  </div>
+  <div class="item" data-id="coo-07"
+       data-x="614.15" data-y="580.27" data-w="207" data-h="202" data-scale="0.85">
+    <img src="assets/coo-07.png">
+  </div>
+  <div class="item" data-id="coo-04"
+       data-x="886.91" data-y="774.85" data-w="143" data-h="117" data-scale="1">
+    <img src="assets/coo-04.png">
+  </div>
+  <div class="item" data-id="coo-05"
+       data-x="762.69" data-y="780.93" data-w="237" data-h="200" data-scale="0.93">
+    <img src="assets/coo-05.png">
+  </div>
+  <div class="item" data-id="coo-06"
+       data-x="742.71" data-y="833.92" data-w="127" data-h="155" data-scale="1">
+    <img src="assets/coo-06.png">
+  </div>
+  <div class="item" data-id="coo-03"
+       data-x="448.61" data-y="677.70" data-w="217" data-h="200" data-scale="0.93">
+    <img src="assets/coo-03.png">
+  </div>
+
+  <svg class="agents-overlay" id="agents-overlay"
+       viewBox="0 0 1448 1086" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg">
+    <g id="company-characters"></g>
+  </svg>
+</div>
+
+<script>
+// ========== Return to Map ==========
+document.getElementById('returnBtn').addEventListener('click', function() {
+  window.location.href = window.location.origin + '/main_map.html';
+});
+
+// ========== Global State ==========
+const VIEW_W = 1448, VIEW_H = 1086;
+const STORAGE_KEY = "company2_scene_UI_layout_v1";
+const ROUTES_KEY  = "company2_scene_UI_routes";
+
+const EMBEDDED_LAYOUT = {
+  "coo-01": { "x": 182.79, "y": 462.29, "w": 55, "h": 121, "scale": 1.05 },
+  "coo-02": { "x": 423.04, "y": 436.07, "w": 111, "h": 100, "scale": 1 },
+  "coo-09": { "x": 589.82, "y": 251.05, "w": 196, "h": 180, "scale": 1 },
+  "coo-10": { "x": 826.10, "y": 307.51, "w": 107, "h": 156, "scale": 1 },
+  "coo-08": { "x": 257.13, "y": 367.45, "w": 1098, "h": 415, "scale": 0.83, "rotation": -1 },
+  "coo-07": { "x": 614.15, "y": 580.27, "w": 207, "h": 202, "scale": 0.85 },
+  "coo-04": { "x": 886.91, "y": 774.85, "w": 143, "h": 117, "scale": 1 },
+  "coo-05": { "x": 762.69, "y": 780.93, "w": 237, "h": 200, "scale": 0.93 },
+  "coo-06": { "x": 742.71, "y": 833.92, "w": 127, "h": 155, "scale": 1 },
+  "coo-03": { "x": 448.61, "y": 677.70, "w": 217, "h": 200, "scale": 0.93 }
+};//__EMBEDDED_LAYOUT_END
+const EMBEDDED_ROUTES = [
+  {
+    "name": "Employee A",
+    "x": 701,
+    "y": 805,
+    "scale": 0.43,
+    "fixedRoute": [
+      [701, 805],
+      [508, 689]
+    ],
+    "linear": false
+  },
+  {
+    "name": "Employee B",
+    "x": 1241,
+    "y": 643,
+    "scale": 0.32,
+    "fixedRoute": [
+      [1241, 643],
+      [1094, 778]
+    ],
+    "linear": false
+  }
+];//__EMBEDDED_ROUTES_END
+
+// ========== Layer System ==========
+function applyLayer(el, x, y, w, h, scale, rot) {
+  el.dataset.x = x; el.dataset.y = y;
+  el.dataset.w = w; el.dataset.h = h;
+  el.dataset.scale = scale;
+  if (rot !== undefined && rot !== null) el.dataset.rotation = rot;
+  const finalW = w * scale;
+  const finalH = h * scale;
+  el.style.left   = (x / VIEW_W * 100).toFixed(4) + "%";
+  el.style.top    = (y / VIEW_H * 100).toFixed(4) + "%";
+  el.style.width  = (finalW / VIEW_W * 100).toFixed(4) + "%";
+  el.style.height = (finalH / VIEW_H * 100).toFixed(4) + "%";
+  el.style.transform = rot ? `rotate(${rot}deg)` : "";
+}
+
+document.querySelectorAll(".item").forEach(el => {
+  applyLayer(el,
+    parseFloat(el.dataset.x), parseFloat(el.dataset.y),
+    parseFloat(el.dataset.w), parseFloat(el.dataset.h),
+    parseFloat(el.dataset.scale),
+    el.dataset.rotation ? parseFloat(el.dataset.rotation) : 0);
+});
+
+// ========== Load Positions ==========
+function loadPositions() {
+  let raw;
+  if (EMBEDDED_LAYOUT && typeof EMBEDDED_LAYOUT === 'object') {
+    raw = JSON.stringify(EMBEDDED_LAYOUT);
+  } else {
+    raw = localStorage.getItem(STORAGE_KEY);
+  }
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      document.querySelectorAll(".item").forEach(el => {
+        const d = data[el.dataset.id];
+        if (d) applyLayer(el, d.x, d.y, d.w, d.h, d.scale, d.rotation || 0);
+      });
+    } catch(e) {}
+  }
+
+  let savedRoutes;
+  if (Array.isArray(EMBEDDED_ROUTES)) {
+    savedRoutes = JSON.stringify(EMBEDDED_ROUTES);
+  } else {
+    savedRoutes = localStorage.getItem(ROUTES_KEY);
+  }
+  if (savedRoutes) {
+    try {
+      const routeData = JSON.parse(savedRoutes);
+      function restore(agents) {
+        routeData.forEach(r => {
+          const ag = agents.find(a => a.name === r.name);
+          if (!ag || !r.fixedRoute) return;
+          if (typeof r.scale === 'number' && r.scale > 0) ag.scale = r.scale;
+          ag.fixedRoute = r.fixedRoute.map(p => [...p]);
+          ag.linear = false; // always loop in browse mode
+          ag.atEnd = false;
+          ag.fixedRouteIndex = 0;
+          ag.target = null;
+          ag.pauseUntil = 0;
+          ag.x = ag.fixedRoute[0][0];
+          ag.y = ag.fixedRoute[0][1];
+          placeAgent(ag);
+        });
+      }
+      if (window.__companyAgents) restore(window.__companyAgents);
+      else document.addEventListener('company:agentsReady', e => restore(e.detail.agents), { once: true });
+    } catch(e) {}
+  }
+}
+
+// ========== Walk System ==========
+const WALK_CONFIG = { frameMs: 90, pauseMs: [400, 1200] };
+
+function makeSprite(folder) {
+  const dirs = {
+    front: Array.from({length:12},(_,i)=>`${folder}/walk_front_${String(i+1).padStart(2,"0")}.png`),
+    back:  Array.from({length:12},(_,i)=>`${folder}/walk_back_${String(i+1).padStart(2,"0")}.png`),
+    left:  Array.from({length:12},(_,i)=>`${folder}/walk_left_${String(i+1).padStart(2,"0")}.png`),
+    right: Array.from({length:12},(_,i)=>`${folder}/walk_right_${String(i+1).padStart(2,"0")}.png`),
+  };
+  return { box:512, footFrac:0.795, midFrac:0.50, dirs, dirMap:{front:"front",back:"back",left:"left",right:"right"}, idle:dirs.front[0] };
+}
+const WALK_1 = makeSprite("../../person/walk_1");
+const WALK_2 = makeSprite("../../person/walk_2");
+
+function preloadSpriteImages() {
+  const urls = new Set();
+  [WALK_1, WALK_2].forEach(sp => {
+    urls.add(sp.idle);
+    Object.values(sp.dirs).forEach(frames => frames.forEach(u => urls.add(u)));
+  });
+  return Promise.all([...urls].map(src => new Promise(res => {
+    const img = new Image(); img.onload = res; img.onerror = res; img.src = src;
+  })));
+}
+
+function getDirection(dx, dy) {
+  const u = dx - dy, v = dx + dy;
+  if (Math.abs(u) >= Math.abs(v)) return u >= 0 ? "front" : "back";
+  return v >= 0 ? "right" : "left";
+}
+
+function buildAgent({ name, sprite, x, y, speed, scale }) {
+  const ns = "http://www.w3.org/2000/svg";
+  const g = document.createElementNS(ns, "g");
+  g.setAttribute("class", "agent");
+  g.dataset.name = name;
+  const img = document.createElementNS(ns, "image");
+  img.setAttribute("class", "agent-frame");
+  const W = sprite.box * scale;
+  img.setAttribute("width", W); img.setAttribute("height", W);
+  img.setAttributeNS("http://www.w3.org/1999/xlink", "href", sprite.idle);
+  g.appendChild(img);
+  document.getElementById("company-characters").appendChild(g);
+  return {
+    name, sprite, x, y, speed, scale, W,
+    dir:"front", frameIdx:0, frameClock:0, currentHref:null,
+    fixedRoute:null, fixedRouteIndex:0, linear:false, atEnd:false,
+    target:null, pauseUntil:0, el:g, img:img,
+  };
+}
+
+function placeAgent(ag) {
+  const W = ag.sprite.box * ag.scale;
+  ag.W = W;
+  ag.img.setAttribute("width", W); ag.img.setAttribute("height", W);
+  ag.img.setAttribute("x", ag.x - W * ag.sprite.midFrac);
+  ag.img.setAttribute("y", ag.y - W * ag.sprite.footFrac);
+}
+
+function setFrame(ag, walking, dtMs) {
+  if (walking) {
+    ag.frameClock += dtMs;
+    if (ag.frameClock >= WALK_CONFIG.frameMs) {
+      const steps = Math.floor(ag.frameClock / WALK_CONFIG.frameMs);
+      ag.frameClock %= WALK_CONFIG.frameMs;
+      ag.frameIdx = (ag.frameIdx + steps) % 12;
+    }
+  } else {
+    ag.frameIdx = 0; ag.frameClock = 0;
+  }
+  const frames = ag.sprite.dirs[ag.sprite.dirMap[ag.dir]] || ag.sprite.dirs.front;
+  const f = frames[ag.frameIdx];
+  if (ag.currentHref !== f) {
+    ag.currentHref = f;
+    ag.img.setAttributeNS("http://www.w3.org/1999/xlink", "href", f);
+  }
+  ag.img.removeAttribute("transform");
+  ag.img.setAttribute("x", ag.x - ag.W * ag.sprite.midFrac);
+  ag.img.setAttribute("y", ag.y - ag.W * ag.sprite.footFrac);
+}
+
+function nextTarget(ag) {
+  if (!ag.fixedRoute || ag.fixedRoute.length === 0) return null;
+  const pt = ag.fixedRoute[ag.fixedRouteIndex];
+  ag.fixedRouteIndex++;
+  if (ag.fixedRouteIndex >= ag.fixedRoute.length) {
+    ag.fixedRouteIndex = 0; // always loop
+  }
+  return { x: pt[0], y: pt[1] };
+}
+
+// ========== Create NPCs ==========
+const agents = [];
+
+const NPC_DEFS = [
+  { name:"Employee A", sprite:WALK_1, route:[[660,896],[777,767]], scale:0.35 },
+  { name:"Employee B", sprite:WALK_2, route:[[1241,643],[1094,778]], scale:0.35 },
+];
+NPC_DEFS.forEach(z => {
+  const ag = buildAgent({ name:z.name, sprite:z.sprite, x:z.route[0][0], y:z.route[0][1], speed:85, scale:z.scale });
+  ag.fixedRoute = z.route.map(p=>[...p]);
+  ag.linear = false;
+  placeAgent(ag);
+  agents.push(ag);
+});
+
+window.__companyAgents = agents;
+
+// ========== Main Loop ==========
+let lastT = performance.now();
+function tick(now) {
+  const dtMs = Math.min(now - lastT, 50);
+  lastT = now;
+  const dt = dtMs / 1000;
+
+  for (const ag of agents) {
+    if (!ag.target) {
+      if (ag.pauseUntil > now) { setFrame(ag, false, dtMs); continue; }
+      const nt = nextTarget(ag);
+      if (!nt) { setFrame(ag, false, dtMs); continue; }
+      ag.target = nt;
+    }
+
+    const dx = ag.target.x - ag.x;
+    const dy = ag.target.y - ag.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 4) {
+      ag.x = ag.target.x; ag.y = ag.target.y;
+      ag.target = null;
+      const [lo, hi] = WALK_CONFIG.pauseMs;
+      ag.pauseUntil = now + (lo + Math.random()*(hi-lo));
+      setFrame(ag, false, dtMs);
+      continue;
+    }
+    const step = Math.min(dist, ag.speed * dt);
+    ag.x += dx/dist * step;
+    ag.y += dy/dist * step;
+    ag.dir = getDirection(dx, dy);
+    placeAgent(ag);
+    setFrame(ag, true, dtMs);
+  }
+
+  // z-sort
+  const g = document.getElementById("company-characters");
+  const sorted = [...agents].sort((a,b) => a.y - b.y);
+  const key = sorted.map(a => a.name).join("|");
+  if (key !== window.__zKey) { window.__zKey = key; sorted.forEach(ag => g.appendChild(ag.el)); }
+
+  requestAnimationFrame(tick);
+}
+
+preloadSpriteImages().then(() => {
+  lastT = performance.now();
+  requestAnimationFrame(tick);
+});
+
+document.dispatchEvent(new CustomEvent("company:agentsReady", { detail: { agents } }));
+loadPositions();
+</script>
+</body>
+</html>

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Government Scene - Browse</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #111827; }
+body { display: flex; justify-content: center; align-items: center; }
+
+.scene {
+  position: relative;
+  width: min(95vw, calc(95vh * (1408 / 1117)));
+  aspect-ratio: 1408 / 1117;
+  background: #111827;
+}
+.scene .bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.item {
+  position: absolute;
+  user-select: none;
+}
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.agents-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 500;
+}
+.agents-overlay .agent { pointer-events: none; }
+.agent-frame { image-rendering: auto; }
+
+.btn-return {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  padding: 10px 24px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  background: #2f80ed;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  font-family: "Microsoft YaHei", sans-serif;
+  transition: background 0.15s;
+}
+.btn-return:hover { background: #1a6dd4; }
+</style>
+</head>
+<body>
+
+<button class="btn-return" onclick="window.location.href = window.location.origin + '/main_map.html'">Return to Map</button>
+
+<div class="scene" id="scene">
+  <img class="bg" src="assets/cutout.png" alt="government cutout">
+
+  <div class="item" data-id="gov-10"
+       data-x="474.518" data-y="500.985" data-w="520" data-h="335" data-scale="1.85">
+    <img src="assets/gov-10.png">
+  </div>
+  <div class="item" data-id="gov-08"
+       data-x="396.231" data-y="366.017" data-w="308" data-h="276" data-scale="0.8">
+    <img src="assets/gov-08.png">
+  </div>
+  <div class="item" data-id="gov-09"
+       data-x="182.743" data-y="486.327" data-w="178" data-h="168" data-scale="1">
+    <img src="assets/gov-09.png">
+  </div>
+  <div class="item" data-id="gov-11"
+       data-x="817.410" data-y="316.168" data-w="223" data-h="277" data-scale="1">
+    <img src="assets/gov-11.png">
+  </div>
+  <div class="item" data-id="gov-05"
+       data-x="809.046" data-y="624.815" data-w="227" data-h="228" data-scale="0.86">
+    <img src="assets/gov-05.png">
+  </div>
+  <div class="item" data-id="gov-02"
+       data-x="1015.633" data-y="484.809" data-w="347" data-h="237" data-scale="0.9">
+    <img src="assets/gov-02.png">
+  </div>
+  <div class="item" data-id="gov-01"
+       data-x="496.440" data-y="179.109" data-w="440" data-h="342" data-scale="0.58">
+    <img src="assets/gov-01.png">
+  </div>
+  <div class="item" data-id="gov-03"
+       data-x="686.356" data-y="695.964" data-w="268" data-h="267" data-scale="0.89">
+    <img src="assets/gov-03.png">
+  </div>
+  <div class="item" data-id="gov-04"
+       data-x="883.528" data-y="538.716" data-w="313" data-h="278" data-scale="0.76">
+    <img src="assets/gov-04.png">
+  </div>
+  <div class="item" data-id="gov-07"
+       data-x="655.813" data-y="484.575" data-w="142" data-h="130" data-scale="1">
+    <img src="assets/gov-07.png">
+  </div>
+  <div class="item" data-id="gov-06"
+       data-x="475.952" data-y="497.103" data-w="302" data-h="227" data-scale="0.49">
+    <img src="assets/gov-06.png">
+  </div>
+
+  <!-- NPC walk layer -->
+  <svg class="agents-overlay" id="agents-overlay"
+       viewBox="0 0 1408 1117" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg">
+    <g id="gov-characters"></g>
+  </svg>
+</div>
+
+<script>
+const VIEW_W = 1408;
+const VIEW_H = 1117;
+
+const EMBEDDED_LAYOUT = {
+  "gov-10": {
+    "x": 470.27618311074093,
+    "y": 485.4659363595461,
+    "w": 520,
+    "h": 335,
+    "scale": 1.85
+  },
+  "gov-08": {
+    "x": 419.5053630387578,
+    "y": 361.95116732490123,
+    "w": 308,
+    "h": 276,
+    "scale": 0.8
+  },
+  "gov-09": {
+    "x": 187.62723459948245,
+    "y": 484.2585612158176,
+    "w": 178,
+    "h": 168,
+    "scale": 1
+  },
+  "gov-11": {
+    "x": 815.7317389967974,
+    "y": 323.4346847972804,
+    "w": 223,
+    "h": 277,
+    "scale": 1
+  },
+  "gov-05": {
+    "x": 812.3502213034295,
+    "y": 613.0400499925012,
+    "w": 227,
+    "h": 228,
+    "scale": 0.86
+  },
+  "gov-02": {
+    "x": 1036.0429028228086,
+    "y": 493.8517447382893,
+    "w": 347,
+    "h": 237,
+    "scale": 0.9
+  },
+  "gov-01": {
+    "x": 479.4163340174704,
+    "y": 165.8419507073939,
+    "w": 440,
+    "h": 342,
+    "scale": 0.58
+  },
+  "gov-03": {
+    "x": 702.7108065875448,
+    "y": 697.4073861420786,
+    "w": 268,
+    "h": 267,
+    "scale": 0.89
+  },
+  "gov-04": {
+    "x": 920.4600443697512,
+    "y": 540.8412953057041,
+    "w": 313,
+    "h": 278,
+    "scale": 0.79
+  },
+  "gov-07": {
+    "x": 671.8841924705276,
+    "y": 482.4716292556117,
+    "w": 142,
+    "h": 130,
+    "scale": 1.19
+  },
+  "gov-06": {
+    "x": 497.2097970393726,
+    "y": 490.94464580312945,
+    "w": 302,
+    "h": 227,
+    "scale": 0.58
+  }
+};
+
+const EMBEDDED_ROUTES = [
+  {
+    "name": "公务员A",
+    "x": 306.5456667531834,
+    "y": 635.9152136055609,
+    "fixedRoute": [
+      [300, 634],
+      [557, 801],
+      [762, 658],
+      [570, 713]
+    ],
+    "fixedRouteIndex": 1,
+    "linear": false,
+    "atEnd": false
+  },
+  {
+    "name": "公务员B",
+    "x": 819.499350449512,
+    "y": 558.7619103831545,
+    "fixedRoute": [
+      [808, 493],
+      [945, 580],
+      [840, 676]
+    ],
+    "fixedRouteIndex": 1,
+    "linear": false,
+    "atEnd": false
+  }
+];
+
+function applyLayer(el, x, y, w, h, scale) {
+  // Center-origin scaling (matches PixelCity getInteriorLayerTransform)
+  const finalW = w * scale;
+  const finalH = h * scale;
+  const finalX = x + (w - finalW) / 2;
+  const finalY = y + (h - finalH) / 2;
+  el.style.left   = (finalX / VIEW_W * 100).toFixed(4) + "%";
+  el.style.top    = (finalY / VIEW_H * 100).toFixed(4) + "%";
+  el.style.width  = (finalW / VIEW_W * 100).toFixed(4) + "%";
+  el.style.height = (finalH / VIEW_H * 100).toFixed(4) + "%";
+  el.dataset.x = x;
+  el.dataset.y = y;
+  el.dataset.w = w;
+  el.dataset.h = h;
+  el.dataset.scale = scale;
+}
+
+function initLayers() {
+  document.querySelectorAll(".item").forEach((el) => {
+    applyLayer(el,
+      parseFloat(el.dataset.x),
+      parseFloat(el.dataset.y),
+      parseFloat(el.dataset.w),
+      parseFloat(el.dataset.h),
+      parseFloat(el.dataset.scale));
+  });
+  loadPositions();
+}
+
+function loadPositions() {
+  if (EMBEDDED_LAYOUT && typeof EMBEDDED_LAYOUT === 'object') {
+    const data = EMBEDDED_LAYOUT;
+    document.querySelectorAll(".item").forEach((el) => {
+      const d = data[el.dataset.id];
+      if (!d) return;
+      applyLayer(el, d.x, d.y, d.w, d.h, d.scale);
+    });
+  }
+
+  if (Array.isArray(EMBEDDED_ROUTES)) {
+    const routeData = EMBEDDED_ROUTES;
+    function restoreRoutes(agents) {
+      routeData.forEach(r => {
+        const ag = agents.find(a => a.name === r.name);
+        if (!ag || !r.fixedRoute || !Array.isArray(r.fixedRoute) || r.fixedRoute.length === 0) return;
+        ag.fixedRoute = r.fixedRoute.map(p => [...p]);
+        ag.linear = false; // always loop in browse mode
+        ag.atEnd = false;
+        const idx = typeof r.fixedRouteIndex === 'number' ? r.fixedRouteIndex : 0;
+        ag.fixedRouteIndex = Math.max(0, Math.min(idx, ag.fixedRoute.length - 1));
+        ag.x = typeof r.x === 'number' ? r.x : ag.fixedRoute[0][0];
+        ag.y = typeof r.y === 'number' ? r.y : ag.fixedRoute[0][1];
+        ag.target = null;
+        ag.pauseUntil = 0;
+        placeAgent(ag);
+      });
+    }
+    if (window.__govAgents) {
+      restoreRoutes(window.__govAgents);
+    } else {
+      document.addEventListener('gov:agentsReady', e => restoreRoutes(e.detail.agents), { once: true });
+    }
+  }
+}
+
+initLayers();
+</script>
+
+<!-- Walk system -->
+<script>
+(function () {
+  const VIEW_W = 1408, VIEW_H = 1117;
+
+  const WALK_CONFIG = {
+    frameMs: 90,
+    pauseMs: [400, 1200],
+  };
+
+  function makeSprite(folder) {
+    const dirs = {
+      front: Array.from({length:12},(_,i)=>`${folder}/walk_front_${String(i+1).padStart(2,"0")}.png`),
+      back:  Array.from({length:12},(_,i)=>`${folder}/walk_back_${String(i+1).padStart(2,"0")}.png`),
+      left:  Array.from({length:12},(_,i)=>`${folder}/walk_left_${String(i+1).padStart(2,"0")}.png`),
+      right: Array.from({length:12},(_,i)=>`${folder}/walk_right_${String(i+1).padStart(2,"0")}.png`),
+    };
+    return {
+      box: 512,
+      footFrac: 0.795,
+      midFrac: 0.50,
+      dirs,
+      dirMap: { front:"front", back:"back", left:"left", right:"right" },
+      idle: dirs.front[0],
+    };
+  }
+  const WALK_4 = makeSprite("../../person/walk_4");
+  const WALK_5 = makeSprite("../../person/walk_5");
+
+  const WALK_ZONES = [
+    { name:"公务员A", sprite:WALK_4,
+      route:[[480, 880],[820, 920],[1050, 920],[900, 1020],[520, 1000]],
+      color:"#ff6600" },
+    { name:"公务员B", sprite:WALK_5,
+      route:[[200, 920],[470, 950],[700, 990],[450, 1040],[180, 1000]],
+      color:"#8b5cf6" },
+  ];
+
+  function getDirection(dx, dy) {
+    const u = dx - dy, v = dx + dy;
+    if (Math.abs(u) >= Math.abs(v)) return u >= 0 ? "front" : "back";
+    return v >= 0 ? "right" : "left";
+  }
+
+  function buildAgent({ name, sprite, x, y, speed, scale, color }) {
+    const ns = "http://www.w3.org/2000/svg";
+    const g  = document.createElementNS(ns, "g");
+    g.setAttribute("class", "agent");
+    g.dataset.name = name;
+
+    const img = document.createElementNS(ns, "image");
+    img.setAttribute("class", "agent-frame");
+    const W = sprite.box * scale;
+    img.setAttribute("width",  W);
+    img.setAttribute("height", W);
+    img.setAttributeNS("http://www.w3.org/1999/xlink", "href", sprite.idle);
+    g.appendChild(img);
+
+    document.getElementById("gov-characters").appendChild(g);
+
+    return {
+      name, sprite, color,
+      x, y, speed, scale,
+      W,
+      dir: "front",
+      frameIdx: 0,
+      lastFrameMs: 0,
+      walking: false,
+      fixedRoute: null,
+      fixedRouteIndex: 0,
+      linear: false,
+      atEnd: false,
+      target: null,
+      pauseUntil: 0,
+      el: g,
+      img: img,
+    };
+  }
+
+  function placeAgent(ag) {
+    const W = ag.sprite.box * ag.scale;
+    ag.W = W;
+    ag.img.setAttribute("width",  W);
+    ag.img.setAttribute("height", W);
+    const left = ag.x - W * ag.sprite.midFrac;
+    const top  = ag.y - W * ag.sprite.footFrac;
+    ag.img.setAttribute("x", left);
+    ag.img.setAttribute("y", top);
+  }
+  window.placeAgent = placeAgent;
+
+  function setFrame(ag, walking, dtMs) {
+    ag.lastFrameMs += dtMs;
+    if (walking) {
+      if (ag.lastFrameMs >= WALK_CONFIG.frameMs) {
+        const steps = Math.floor(ag.lastFrameMs / WALK_CONFIG.frameMs);
+        ag.frameIdx = (ag.frameIdx + steps) % 12;
+        ag.lastFrameMs = ag.lastFrameMs % WALK_CONFIG.frameMs;
+      }
+    } else {
+      ag.frameIdx = 0;
+      ag.lastFrameMs = 0;
+    }
+    const mapped = ag.sprite.dirMap[ag.dir];
+    let dirKey = mapped;
+    let mirror = false;
+    if (typeof mapped === "object" && mapped !== null) {
+      dirKey = mapped.dir;
+      mirror = !!mapped.mirror;
+    }
+    const frames = ag.sprite.dirs[dirKey] || ag.sprite.dirs.front;
+    const f = frames[ag.frameIdx];
+    if (ag.currentHref !== f) {
+      ag.currentHref = f;
+      ag.img.setAttributeNS("http://www.w3.org/1999/xlink", "href", f);
+    }
+    const left = ag.x - ag.W * ag.sprite.midFrac;
+    const top  = ag.y - ag.W * ag.sprite.footFrac;
+    if (mirror) {
+      ag.img.setAttribute("transform",
+        `translate(${left + ag.W},${top}) scale(-1,1)`);
+      ag.img.setAttribute("x", 0);
+      ag.img.setAttribute("y", 0);
+    } else {
+      ag.img.removeAttribute("transform");
+      ag.img.setAttribute("x", left);
+      ag.img.setAttribute("y", top);
+    }
+  }
+
+  function nextTarget(ag) {
+    if (!ag.fixedRoute || ag.fixedRoute.length === 0) return null;
+    if (ag.linear && ag.atEnd) return null;
+    const pt = ag.fixedRoute[ag.fixedRouteIndex];
+    ag.fixedRouteIndex++;
+    if (ag.fixedRouteIndex >= ag.fixedRoute.length) {
+      if (ag.linear) {
+        ag.atEnd = true;
+      } else {
+        ag.fixedRouteIndex = 0;
+      }
+    }
+    return { x: pt[0], y: pt[1] };
+  }
+
+  // Create only NPCs (no Player)
+  const agents = [];
+
+  WALK_ZONES.forEach((z, i) => {
+    agents.push(buildAgent({
+      name: z.name, sprite: z.sprite,
+      x: z.route[0][0], y: z.route[0][1],
+      speed: i === 0 ? 90 : 85,
+      scale: 0.375, color: z.color,
+    }));
+  });
+
+  WALK_ZONES.forEach((z, i) => {
+    agents[i].fixedRoute = z.route.map(p => [...p]);
+    agents[i].linear = false; // loop
+  });
+  agents.forEach(ag => { ag.fixedRouteIndex = 0; placeAgent(ag); });
+
+  window.__govAgents = agents;
+
+  // Main animation loop
+  let lastT = performance.now();
+  let lastAgentOrderKey = "";
+  function tick(now) {
+    const dtMs = Math.min(now - lastT, 50);
+    lastT = now;
+    const dt = dtMs / 1000;
+
+    for (const ag of agents) {
+      if (ag.atEnd && ag.linear && !ag.target) {
+        setFrame(ag, false, dtMs);
+        continue;
+      }
+      if (!ag.target) {
+        if (ag.pauseUntil > now) {
+          setFrame(ag, false, dtMs);
+          continue;
+        }
+        const nt = nextTarget(ag);
+        if (!nt) { setFrame(ag, false, dtMs); continue; }
+        ag.target = nt;
+      }
+      const dx = ag.target.x - ag.x;
+      const dy = ag.target.y - ag.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 4) {
+        ag.x = ag.target.x; ag.y = ag.target.y;
+        ag.target = null;
+        const [lo, hi] = WALK_CONFIG.pauseMs;
+        ag.pauseUntil = now + (lo + Math.random()*(hi-lo));
+        setFrame(ag, false, dtMs);
+        continue;
+      }
+      const step = Math.min(dist, ag.speed * dt);
+      ag.x += dx/dist * step;
+      ag.y += dy/dist * step;
+      ag.dir = getDirection(dx, dy);
+      placeAgent(ag);
+      setFrame(ag, true, dtMs);
+    }
+
+    const g = document.getElementById("gov-characters");
+    const sorted = [...agents].sort((a,b) => a.y - b.y);
+    const orderKey = sorted.map(a => a.name).join("|");
+    if (orderKey !== lastAgentOrderKey) {
+      lastAgentOrderKey = orderKey;
+      sorted.forEach(ag => g.appendChild(ag.el));
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  function preloadSpriteImages() {
+    const urls = new Set();
+    [WALK_4, WALK_5].forEach(sp => {
+      if (sp.idle) urls.add(sp.idle);
+      Object.values(sp.dirs || {}).forEach(arr => arr.forEach(u => urls.add(u)));
+    });
+    return Promise.all([...urls].map(src => new Promise(res => {
+      const img = new Image();
+      img.onload = res; img.onerror = res; img.src = src;
+    })));
+  }
+  preloadSpriteImages().then(() => {
+    requestAnimationFrame((t) => { lastT = t; tick(t); });
+  });
+
+  document.dispatchEvent(new CustomEvent("gov:agentsReady", { detail: { agents } }));
+})();
+</script>
+</body>
+</html>

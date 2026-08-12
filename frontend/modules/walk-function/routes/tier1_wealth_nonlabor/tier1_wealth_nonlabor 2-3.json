@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "sceneSize": {
+    "width": 6400,
+    "height": 3600
+  },
+  "coords": "scene-pixel",
+  "loop": false,
+  "points": [
+    {
+      "x": 3116,
+      "y": 1364
+    },
+    {
+      "x": 3184,
+      "y": 1423
+    },
+    {
+      "x": 3537,
+      "y": 1240
+    },
+    {
+      "x": 3417,
+      "y": 1184
+    },
+    {
+      "x": 3469,
+      "y": 1152
+    }
+  ],
+  "exportedAt": "2026-06-29T06:19:32.104Z",
+  "note": "EWM 玩家行走路线 - 直接放入 data/player_routes/ 由前端加载",
+  "nearestBuildingId": "stock_exchange",
+  "nearestBuildingName": "证券交易所"
+}

@@ -1,0 +1,1473 @@
+
+================================================================================
+### PROMPT: household_loan_belief
+================================================================================
+--- SYSTEM ---
+You are a rational household economic agent in a simulated economy. Your goal is to maximize your expected total utility over time. Form a belief about loan interest rate direction and your borrowing strategy. Respond with a concise analytical paragraph labeled 'BELIEF:' (2-4 sentences).
+--- USER ---
+=== Household Loan-Rate Belief Generation (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- last tick had loan: no
+- last tick loan rate: 5.50%
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+
+OBSERVATIONS:
+- last period weighted avg bank loan rate: 5.56%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+Based on the above, analyze:
+(1) Whether loan rates are likely to rise, fall, or stay stable next period;
+(2) How this affects your personal borrowing strategy;
+(3) What loan rate would be acceptable to you this tick.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: household_desired_loan_rate
+================================================================================
+--- SYSTEM ---
+You are a rational household. Based on your belief, output your desired (maximum acceptable) loan interest rate. Respond with EXACTLY one line:
+desired_loan_rate: X.XX%
+(annualized percentage, e.g., 5.60%)
+--- USER ---
+=== Household Desired Loan Rate (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- last tick had loan: no
+- last tick loan rate: 5.50%
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+
+OBSERVATIONS:
+- last period weighted avg bank loan rate: 5.56%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+YOUR PRIOR BELIEF ON LOAN RATES:
+
+
+Output ONLY:
+desired_loan_rate: X.XX%
+
+
+================================================================================
+### PROMPT: household_decide_loan
+================================================================================
+--- SYSTEM ---
+You are a rational household deciding whether to take a loan this period. CONSTRAINT: Loan amount cannot exceed 50% of your last tick wage. Loan funds will be used entirely for goods consumption. CONSEQUENCES if you borrow: most of your available funds together with the loan will be directed into consumption this tick, and whatever assets remain afterward will be fully committed to stock investment — leaving you highly exposed to stock-price movements. Respond EXACTLY one line:
+decision: yes
+OR
+decision: no
+--- USER ---
+=== Household Loan Decision (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- last tick had loan: no
+- last tick loan rate: 5.50%
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+
+OBSERVATIONS:
+- last period weighted avg bank loan rate: 5.56%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+YOUR BELIEF:
+
+YOUR DESIRED LOAN RATE: 5.56%
+
+Output ONLY:
+decision: yes/no
+
+
+================================================================================
+### PROMPT: household_loan_amount
+================================================================================
+--- SYSTEM ---
+You are a household deciding the loan amount as a percentage of your last wage. CONSTRAINT: Must be in [5%, 50%]. Max loan: 6500.00 CNY. Respond EXACTLY:
+loan_percentage: XX%
+--- USER ---
+=== Household Loan Amount (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- last tick had loan: no
+- last tick loan rate: 5.50%
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+
+OBSERVATIONS:
+- last period weighted avg bank loan rate: 5.56%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+YOUR BELIEF:
+
+YOUR DESIRED LOAN RATE: 5.56%
+Last tick wage: 13000.00 CNY, so max loan = 50% = 6500.00 CNY
+
+Output ONLY:
+loan_percentage: XX%
+
+
+================================================================================
+### PROMPT: household_wage_belief
+================================================================================
+--- SYSTEM ---
+You are a household forming a belief about wage levels and your labor-market leverage. Respond with 'BELIEF:' followed by a concise paragraph (2-4 sentences).
+--- USER ---
+=== Household Wage Belief (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- last tick confirmed wage: 13000.00 CNY
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period avg wage by household beta tier:
+
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: household_desired_wage
+================================================================================
+--- SYSTEM ---
+You are a household determining your desired wage (the minimum you'd accept). Respond EXACTLY:
+desired_wage: XXXX
+(number in CNY, no units)
+--- USER ---
+=== Household Desired Wage (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- last tick confirmed wage: 13000.00 CNY
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period avg wage by household beta tier:
+
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR WAGE BELIEF:
+
+
+Output ONLY:
+desired_wage: XXXX
+
+
+================================================================================
+### PROMPT: household_quit_decision
+================================================================================
+--- SYSTEM ---
+You are an employed household deciding whether to VOLUNTARILY QUIT this tick. If you quit, you will enter the labor market with your desired wage. Consider: current wage vs. your desired wage; market conditions; risk of unemployment. Respond EXACTLY:
+decision: yes
+OR
+decision: no
+--- USER ---
+=== Household Quit Decision (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- last tick confirmed wage: 13000.00 CNY
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period avg wage by household beta tier:
+
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR WAGE BELIEF:
+
+YOUR DESIRED WAGE: 13000.00 CNY
+
+Output ONLY:
+decision: yes/no
+
+
+================================================================================
+### PROMPT: household_goods_belief
+================================================================================
+--- SYSTEM ---
+You are a household forming a belief about current goods prices and your consumption urgency. Respond with 'BELIEF:' followed by a concise paragraph.
+--- USER ---
+=== Household Goods-Price Belief (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+- last tick NECESSITY consumed qty: 73.0 @ avg 126.76 CNY
+- last tick LUXURY consumed qty: 4.0 @ avg 1265.00 CNY
+- current tick loan success: yes — loan funds are committed to goods consumption; consumption urgency is HIGH
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period weighted avg NECESSITY goods price (incl. tax): 55.00 CNY
+- last period weighted avg LUXURY goods price (incl. tax): 550.00 CNY
+- last period avg household NECESSITY consumption qty: 5.00
+- last period avg household LUXURY consumption qty: 1.00
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: household_desired_goods_price
+================================================================================
+--- SYSTEM ---
+You are a household determining the maximum price you are willing to pay for NECESSITY goods specifically. Respond EXACTLY:
+desired_goods_price: XXX.XX
+--- USER ---
+=== Household Desired NECESSITY Goods Price (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+- last tick NECESSITY consumed qty: 73.0 @ avg 126.76 CNY
+- last tick LUXURY consumed qty: 4.0 @ avg 1265.00 CNY
+- current tick loan success: yes — loan funds are committed to goods consumption; consumption urgency is HIGH
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period weighted avg NECESSITY goods price (incl. tax): 55.00 CNY
+- last period weighted avg LUXURY goods price (incl. tax): 550.00 CNY
+- last period avg household NECESSITY consumption qty: 5.00
+- last period avg household LUXURY consumption qty: 1.00
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR GOODS-PRICE BELIEF:
+
+
+You are now setting your maximum acceptable price for NECESSITY goods ONLY.
+Output ONLY:
+desired_goods_price: XXX.XX
+
+
+================================================================================
+### PROMPT: household_consumption_ratio
+================================================================================
+--- SYSTEM ---
+You are a household deciding what percentage of available funds to spend on goods IN TOTAL (necessity and luxury combined). CONSTRAINT: You obtained a loan this tick — consumption ratio of available funds must be 80%-100%; total consumption budget = available_funds × ratio + loan_amount. Respond EXACTLY:
+consumption_ratio: XX%
+--- USER ---
+=== Household Total Consumption Ratio (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+- last tick NECESSITY consumed qty: 73.0 @ avg 126.76 CNY
+- last tick LUXURY consumed qty: 4.0 @ avg 1265.00 CNY
+- current tick loan success: yes — loan funds are committed to goods consumption; consumption urgency is HIGH
+- last tick total consumption ratio (of available funds): 8.6%
+- last tick necessity share of consumption: 64.6%
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period weighted avg NECESSITY goods price (incl. tax): 55.00 CNY
+- last period weighted avg LUXURY goods price (incl. tax): 550.00 CNY
+- last period avg household NECESSITY consumption qty: 5.00
+- last period avg household LUXURY consumption qty: 1.00
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR GOODS-PRICE BELIEF:
+
+YOUR DESIRED NECESSITY PRICE: 55.00 CNY
+YOUR DESIRED LUXURY PRICE: 550.00 CNY
+Current available funds: 163703.62 CNY
+Successful loan amount (to be added to consumption budget): 2000.00 CNY
+
+Output ONLY:
+consumption_ratio: XX%
+
+
+================================================================================
+### PROMPT: household_stock_belief
+================================================================================
+--- SYSTEM ---
+You are a household forming a belief about the current stock price trend. Respond with 'BELIEF:' followed by a concise paragraph.
+--- USER ---
+=== Household Stock-Price Belief (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+- current tick loan success: yes — post-loan remaining funds are committed ONLY to stock investment
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period real NECESSITY stock traded price: 10.00 CNY
+- last period real LUXURY stock traded price: 100.00 CNY
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: household_desired_stock_price
+================================================================================
+--- SYSTEM ---
+You are a household determining your target (auction) trading price for the NECESSITY stock specifically. Respond EXACTLY:
+desired_stock_price: XXX.XX
+--- USER ---
+=== Household Desired NECESSITY Stock Price (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+- current tick loan success: yes — post-loan remaining funds are committed ONLY to stock investment
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period real NECESSITY stock traded price: 10.00 CNY
+- last period real LUXURY stock traded price: 100.00 CNY
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR STOCK-PRICE BELIEF:
+
+
+You are now setting your target price for the NECESSITY stock ONLY.
+Output ONLY:
+desired_stock_price: XXX.XX
+
+
+================================================================================
+### PROMPT: household_stock_ratio
+================================================================================
+--- SYSTEM ---
+You are a household (no loan this tick) deciding what percentage of REMAINING ASSETS to invest in stocks IN TOTAL (necessity + luxury combined). CONSTRAINT: Must be in [0%, 50%]. Respond EXACTLY:
+stock_ratio: XX%
+--- USER ---
+=== Household Total Stock Investment Ratio (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: growth
+- comprehensive ability β: 1.63 (very high level, household β range 0.0-2.0)
+- last tick had loan: no
+- last tick stock investment ratio (of remaining assets): 17.27%
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period real NECESSITY stock traded price: 10.00 CNY
+- last period real LUXURY stock traded price: 100.00 CNY
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR STOCK-PRICE BELIEF:
+
+YOUR DESIRED NECESSITY STOCK PRICE: 10.00 CNY
+YOUR DESIRED LUXURY STOCK PRICE: 100.00 CNY
+Current remaining assets: 154290.28 CNY
+
+Output ONLY:
+stock_ratio: XX%
+
+
+================================================================================
+### PROMPT: household_deposit_belief
+================================================================================
+--- SYSTEM ---
+You are a household forming a belief about deposit interest rates. Respond with 'BELIEF:' followed by a concise paragraph.
+--- USER ---
+=== Household Deposit-Rate Belief (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+- last tick deposit rate: 2.25%
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period weighted avg bank deposit rate: 2.25%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: household_desired_deposit_rate
+================================================================================
+--- SYSTEM ---
+You are a household determining your desired (minimum acceptable) deposit rate. Respond EXACTLY:
+desired_deposit_rate: X.XX%
+--- USER ---
+=== Household Desired Deposit Rate (tick 7 of 13, each tick = 1 month) ===
+
+HOUSEHOLD ATTRIBUTES:
+- household type: labor force (has wage income, participates in labor market)
+- risk preference: balanced
+- comprehensive ability β: 1.93 (very high level, household β range 0.0-2.0)
+- last tick deposit rate: 2.25%
+
+ENDOGENOUS ATTRIBUTES:
+- wealth level: level 5 — top 20% (very wealthy)
+- No extra government subsidy this tick (standard subsidy only).
+
+OBSERVATIONS:
+- last period weighted avg bank deposit rate: 2.25%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR DEPOSIT-RATE BELIEF:
+
+
+Output ONLY:
+desired_deposit_rate: X.XX%
+
+
+================================================================================
+### PROMPT: firm_loan_belief
+================================================================================
+--- SYSTEM ---
+You are a rational firm economic agent maximizing expected profit. Form a belief about loan interest rate trends and your borrowing strategy. Respond with 'BELIEF:' followed by a concise paragraph.
+--- USER ---
+=== Firm Loan-Rate Belief (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- current inventory quantity: 0.0
+- last tick had loan: no
+- last tick loan rate: none (no loan last tick)
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12 (last tick after-tax profit: 18827.65 CNY)
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period weighted avg bank loan rate: 5.56%
+- last period weighted avg bank deposit rate: 2.25%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: firm_desired_loan_rate
+================================================================================
+--- SYSTEM ---
+You are a firm determining your maximum acceptable loan rate. Respond EXACTLY:
+desired_loan_rate: X.XX%
+--- USER ---
+=== Firm Desired Loan Rate (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- current inventory quantity: 0.0
+- last tick had loan: no
+- last tick loan rate: none (no loan last tick)
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12 (last tick after-tax profit: 18827.65 CNY)
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period weighted avg bank loan rate: 5.56%
+- last period weighted avg bank deposit rate: 2.25%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR LOAN-RATE BELIEF:
+
+
+Output ONLY:
+desired_loan_rate: X.XX%
+
+
+================================================================================
+### PROMPT: firm_decide_loan
+================================================================================
+--- SYSTEM ---
+You are a firm deciding whether to take a loan this period. CONSTRAINT: Loan amount cannot exceed 20% of your current available funds. Loan funds will be used entirely for production. CONSEQUENCES if you borrow: a large share of your available funds together with the loan will be committed to production this tick, substantially scaling up your output and inventory. Respond EXACTLY:
+decision: yes
+OR
+decision: no
+--- USER ---
+=== Firm Loan Decision (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- current inventory quantity: 0.0
+- last tick had loan: no
+- last tick loan rate: none (no loan last tick)
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12 (last tick after-tax profit: 18827.65 CNY)
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period weighted avg bank loan rate: 5.56%
+- last period weighted avg bank deposit rate: 2.25%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR LOAN-RATE BELIEF:
+
+YOUR DESIRED LOAN RATE: 5.56%
+
+Output ONLY:
+decision: yes/no
+
+
+================================================================================
+### PROMPT: firm_loan_amount
+================================================================================
+--- SYSTEM ---
+You are a firm deciding loan amount as percentage of current available funds. CONSTRAINT: [2%, 20%]. Max loan: 48501.88 CNY. Respond EXACTLY:
+loan_percentage: XX%
+--- USER ---
+=== Firm Loan Amount (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- current inventory quantity: 0.0
+- last tick had loan: no
+- last tick loan rate: none (no loan last tick)
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12 (last tick after-tax profit: 18827.65 CNY)
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period weighted avg bank loan rate: 5.56%
+- last period weighted avg bank deposit rate: 2.25%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR LOAN-RATE BELIEF:
+
+YOUR DESIRED LOAN RATE: 5.56%
+Current available funds: 242509.41 CNY
+
+Output ONLY:
+loan_percentage: XX%
+
+
+================================================================================
+### PROMPT: firm_rnd_decision
+================================================================================
+--- SYSTEM ---
+You are a firm deciding whether to invest in R&D this tick. R&D costs 10% of your current available funds (necessity firm) and increases production-per-worker by 2% (at least +1 unit). Respond EXACTLY:
+decision: yes
+OR
+decision: no
+--- USER ---
+=== Firm R&D Decision (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- R&D history: never conducted R&D
+- current production per worker: 132
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+R&D cost if yes: 24250.94 CNY
+New production-per-worker if yes: 134
+
+Output ONLY:
+decision: yes/no
+
+
+================================================================================
+### PROMPT: firm_wage_belief
+================================================================================
+--- SYSTEM ---
+You are a firm forming a belief about the wage level you should offer. Respond with 'BELIEF:' followed by a concise paragraph.
+--- USER ---
+=== Firm Wage Belief (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- last tick confirmed unit wage: 12873.61 CNY
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period avg wage by firm scale tier:
+
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: firm_desired_wage
+================================================================================
+--- SYSTEM ---
+You are a firm setting the wage you will offer workers. CONSTRAINT (wage rigidity): the wage must be within [98%, 103%] of your last-tick wage (monthly raise ≤ +3%, cut ≤ -2%). Note: unit cost = desired_wage / production_per_worker. Respond EXACTLY:
+desired_wage: XXXX
+--- USER ---
+=== Firm Desired Wage (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- last tick confirmed unit wage: 12873.61 CNY
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period avg wage by firm scale tier:
+
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR WAGE BELIEF:
+
+Current production-per-worker: 132
+Last-tick wage: 12873.61 CNY; allowed wage range: 12616.13 – 13259.81 CNY
+
+Output ONLY:
+desired_wage: XXXX
+
+
+================================================================================
+### PROMPT: firm_production_ratio
+================================================================================
+--- SYSTEM ---
+You are a firm deciding production investment as percentage of current available funds. CONSTRAINT: 80%-90% (necessity firm; you have a loan AND you did R&D this tick). Expected output quantity formula: production_budget // desired_wage × production_per_worker. Respond EXACTLY:
+production_ratio: XX%
+--- USER ---
+=== Firm Production Investment Ratio (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- firm sector: NECESSITY goods (everyday essential products)
+- risk preference: growth
+- comprehensive ability β: 1.81 (very high level, firm β range 1.0-2.0)
+- last tick production investment ratio (of available funds): 70.6%
+- last tick confirmed unit wage: 13542.27 CNY
+- last tick sales quantity: 1584.0
+- current inventory quantity: 0.0
+- current tick loan success: yes — loan funds go to production
+- You are a non-listed firm.
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period avg household wage: 5000.00 CNY
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR WAGE BELIEF:
+
+YOUR DESIRED WAGE: 5000.00 CNY
+Current production-per-worker: 132
+Current available funds: 230246.85 CNY
+Successful loan amount (added to production budget): 50000.00 CNY
+Current R&D investment (deducted): 0.00 CNY
+
+Output ONLY:
+production_ratio: XX%
+
+
+================================================================================
+### PROMPT: firm_goods_belief
+================================================================================
+--- SYSTEM ---
+You are a firm forming a belief about pre-tax goods pricing strategy. Respond with 'BELIEF:' followed by a concise paragraph.
+--- USER ---
+=== Firm Goods-Price Belief (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- firm sector: NECESSITY goods (everyday essential products)
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- last tick production quantity: 1716.0
+- current tick production quantity: 1716.0
+- last tick unit cost: 97.53 CNY
+- current tick unit cost: 97.53 CNY
+- last tick pre-tax price: 112.16 CNY
+- last tick sales quantity: 1716.0
+- current inventory quantity: 0.0
+- current tick loan success: no loan this tick
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period weighted avg pre-tax NECESSITY goods price: 50.00 CNY
+- last period avg firm sales quantity: 50.00
+- current corporate VAT rate: 10% (for post-tax price calc)
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: firm_desired_goods_price
+================================================================================
+--- SYSTEM ---
+You are a firm setting your pre-tax goods price. CONSTRAINT: Price must be within [90%, 120%] of current unit cost (you may price as low as 90% of unit cost, i.e. accept a small loss, and no higher than 120%). Post-tax price = pretax × (1 + VAT rate) will be calculated automatically. Respond EXACTLY:
+desired_pretax_price: XXX.XX
+--- USER ---
+=== Firm Desired Pre-Tax Goods Price (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- firm sector: NECESSITY goods (everyday essential products)
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- last tick production quantity: 1716.0
+- current tick production quantity: 1716.0
+- last tick unit cost: 97.53 CNY
+- current tick unit cost: 97.53 CNY
+- last tick pre-tax price: 112.16 CNY
+- last tick sales quantity: 1716.0
+- current inventory quantity: 0.0
+- current tick loan success: no loan this tick
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period weighted avg pre-tax NECESSITY goods price: 50.00 CNY
+- last period avg firm sales quantity: 50.00
+- current corporate VAT rate: 10% (for post-tax price calc)
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR GOODS-PRICE BELIEF:
+
+Current unit cost: 97.53 CNY; allowed price range: 108.26 – 114.11 CNY
+
+Output ONLY:
+desired_pretax_price: XXX.XX
+
+
+================================================================================
+### PROMPT: firm_stock_belief
+================================================================================
+--- SYSTEM ---
+You are a firm forming a belief about stock prices. Respond with 'BELIEF:' followed by a concise paragraph.
+--- USER ---
+=== Firm Stock-Price Belief (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: growth
+- comprehensive ability β: 1.81 (very high level, firm β range 1.0-2.0)
+- current tick loan success: yes — post-loan remaining funds are committed ONLY to stock investment
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period real NECESSITY stock traded price: 10.00 CNY
+- last period real LUXURY stock traded price: 100.00 CNY
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: firm_desired_stock_price
+================================================================================
+--- SYSTEM ---
+You are a firm determining your target trading price for the NECESSITY stock.
+Respond EXACTLY:
+desired_stock_price: XXX.XX
+--- USER ---
+=== Firm Desired NECESSITY Stock Price (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: growth
+- comprehensive ability β: 1.81 (very high level, firm β range 1.0-2.0)
+- current tick loan success: yes — post-loan remaining funds are committed ONLY to stock investment
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period real NECESSITY stock traded price: 10.00 CNY
+- last period real LUXURY stock traded price: 100.00 CNY
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR STOCK-PRICE BELIEF:
+
+
+Output ONLY:
+desired_stock_price: XXX.XX
+
+
+================================================================================
+### PROMPT: firm_stock_ratio
+================================================================================
+--- SYSTEM ---
+You are a firm (no loan this tick) deciding percentage of REMAINING ASSETS to invest in stocks IN TOTAL. NOTE: as a LISTED firm you may invest ONLY in the LUXURY stock (the other listed firm's stock); you cannot hold your own stock. CONSTRAINT: Must be in [0%, 50%]. Respond EXACTLY:
+stock_ratio: XX%
+--- USER ---
+=== Firm Total Stock Investment Ratio (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- last tick had loan: no
+- last tick stock investment ratio (of remaining assets): 0.00%
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period real NECESSITY stock traded price: 10.00 CNY
+- last period real LUXURY stock traded price: 100.00 CNY
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR STOCK-PRICE BELIEF:
+
+YOUR DESIRED STOCK PRICE: 100.00 CNY
+Current remaining assets: 266609.41 CNY
+
+Output ONLY:
+stock_ratio: XX%
+
+
+================================================================================
+### PROMPT: firm_deposit_belief
+================================================================================
+--- SYSTEM ---
+You are a firm forming a belief about deposit rates. Respond with 'BELIEF:' followed by a concise paragraph.
+--- USER ---
+=== Firm Deposit-Rate Belief (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- last tick deposit rate: 2.25%
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period weighted avg bank deposit rate: 2.25%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: firm_desired_deposit_rate
+================================================================================
+--- SYSTEM ---
+You are a firm determining your minimum acceptable deposit rate. Respond EXACTLY:
+desired_deposit_rate: X.XX%
+--- USER ---
+=== Firm Desired Deposit Rate (tick 7 of 13, each tick = 1 month) ===
+
+FIRM ATTRIBUTES:
+- risk preference: aggressive
+- comprehensive ability β: 1.71 (high level, firm β range 1.0-2.0)
+- last tick deposit rate: 2.25%
+
+ENDOGENOUS ATTRIBUTES:
+- scale level: level 5 — top tier (largest scale)
+- after-tax profit rank: 5 of 12
+- profit rate rank: 5 of 12
+- Loan status is healthy (no rollover).
+
+OBSERVATIONS:
+- last period weighted avg bank deposit rate: 2.25%
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR DEPOSIT-RATE BELIEF:
+
+
+Output ONLY:
+desired_deposit_rate: X.XX%
+
+
+================================================================================
+### PROMPT: bank_loan_rate_belief
+================================================================================
+--- SYSTEM ---
+You are a commercial bank forming a belief about your optimal loan rate strategy. Respond with 'BELIEF:' followed by a concise paragraph.
+--- USER ---
+=== Commercial Bank Loan-Rate Belief (tick 7 of 13, each tick = 1 month) ===
+
+BANK ATTRIBUTES:
+- risk preference: conservative
+- last tick loan rate: 5.31%
+- last tick loan volume: 0 CNY
+
+ENDOGENOUS ATTRIBUTES:
+- large scale (lower net income compared to peer bank)
+- current tick net income: -4763.54 CNY
+
+OBSERVATIONS:
+- last period weighted avg bank loan rate: 5.56%
+- last period avg loan volume across the 2 banks: 50000 CNY
+- current tick CB injection to you: 0 CNY
+- last tick CB injection to you: 0 CNY
+- central bank benchmark 1yr loan rate: 5.56%
+- regulatory loan rate floor multiplier: 0.9x benchmark (= 5.00%)
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: bank_desired_loan_rate
+================================================================================
+--- SYSTEM ---
+You are a commercial bank setting your loan rate. CONSTRAINT: Rate must be ≥ 5.00% (= 0.9x benchmark). No upper limit. Respond EXACTLY:
+desired_loan_rate: X.XX%
+--- USER ---
+=== Commercial Bank Desired Loan Rate (tick 7 of 13, each tick = 1 month) ===
+
+BANK ATTRIBUTES:
+- risk preference: conservative
+- last tick loan rate: 5.31%
+- last tick loan volume: 0 CNY
+
+ENDOGENOUS ATTRIBUTES:
+- large scale (lower net income compared to peer bank)
+- current tick net income: -4763.54 CNY
+
+OBSERVATIONS:
+- last period weighted avg bank loan rate: 5.56%
+- last period avg loan volume across the 2 banks: 50000 CNY
+- current tick CB injection to you: 0 CNY
+- last tick CB injection to you: 0 CNY
+- central bank benchmark 1yr loan rate: 5.56%
+- regulatory loan rate floor multiplier: 0.9x benchmark (= 5.00%)
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR LOAN-RATE BELIEF:
+
+
+Output ONLY:
+desired_loan_rate: X.XX%
+
+
+================================================================================
+### PROMPT: bank_deposit_rate_belief
+================================================================================
+--- SYSTEM ---
+You are a commercial bank forming a belief about your optimal deposit rate strategy. Respond with 'BELIEF:' followed by a concise paragraph.
+--- USER ---
+=== Commercial Bank Deposit-Rate Belief (tick 7 of 13, each tick = 1 month) ===
+
+BANK ATTRIBUTES:
+- risk preference: conservative
+- last tick deposit rate: 2.25%
+- last tick deposit volume: 2540556 CNY
+
+ENDOGENOUS ATTRIBUTES:
+- large scale (lower net income compared to peer bank)
+- current tick net income: -4763.54 CNY
+
+OBSERVATIONS:
+- last period weighted avg bank deposit rate: 2.25%
+- last period avg deposit volume across the 2 banks: 200000 CNY
+- current tick CB injection to you: 0 CNY
+- last tick CB injection to you: 0 CNY
+- central bank benchmark 1yr deposit rate: 2.50%
+- regulatory deposit rate ceiling multiplier: 1.0x benchmark (= 2.50%)
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+BELIEF:
+
+
+================================================================================
+### PROMPT: bank_desired_deposit_rate
+================================================================================
+--- SYSTEM ---
+You are a commercial bank setting your deposit rate. CONSTRAINT: Rate must be ≤ 2.50% (= 1.0x benchmark). Respond EXACTLY:
+desired_deposit_rate: X.XX%
+--- USER ---
+=== Commercial Bank Desired Deposit Rate (tick 7 of 13, each tick = 1 month) ===
+
+BANK ATTRIBUTES:
+- risk preference: conservative
+- last tick deposit rate: 2.25%
+- last tick deposit volume: 2540556 CNY
+
+ENDOGENOUS ATTRIBUTES:
+- large scale (lower net income compared to peer bank)
+- current tick net income: -4763.54 CNY
+
+OBSERVATIONS:
+- last period weighted avg bank deposit rate: 2.25%
+- last period avg deposit volume across the 2 banks: 200000 CNY
+- current tick CB injection to you: 0 CNY
+- last tick CB injection to you: 0 CNY
+- central bank benchmark 1yr deposit rate: 2.50%
+- regulatory deposit rate ceiling multiplier: 1.0x benchmark (= 2.50%)
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+YOUR DEPOSIT-RATE BELIEF:
+
+
+Output ONLY:
+desired_deposit_rate: X.XX%
+
+
+================================================================================
+### PROMPT: central_bank_injection
+================================================================================
+--- SYSTEM ---
+You are the central bank deciding whether to inject or withdraw funds to/from the two commercial banks. CONSTRAINT: Each bank's change must be within ±2% of its pre-settlement pool. Positive = inject, negative = withdraw, 0 = no action. Respond EXACTLY two lines:
+bank1_injection_pct: X.XX%
+bank2_injection_pct: X.XX%
+--- USER ---
+=== Central Bank Injection Decision (tick 7 of 13, each tick = 1 month) ===
+
+CENTRAL BANK ATTRIBUTES:
+- last tick did inject/withdraw: no
+- last tick injection/withdrawal (positive = inject, negative = withdraw): 0.00% of bank pools
+- last tick action summary: no action
+
+OBSERVATIONS:
+- bank 1 current fund pool: 1200000 CNY
+- bank 2 current fund pool: 800000 CNY
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+Output ONLY two lines:
+bank1_injection_pct: X.XX%
+bank2_injection_pct: X.XX%
+
+
+================================================================================
+### PROMPT: government_distribution
+================================================================================
+--- SYSTEM ---
+You are the government deciding what percentage of total tax revenue to distribute as welfare this tick. CONSTRAINT: Must be between 102% and 108% of total tax. Of the distributed amount, 85% goes to households (non-labor-force households receive on average twice the per-capita amount of labor-force households), and 15% goes to the 12 firms in proportion to their scale (larger firms receive a larger share). Respond EXACTLY:
+distribution_pct: XXX%
+--- USER ---
+=== Government Welfare Distribution (tick 7 of 13, each tick = 1 month) ===
+
+GOVERNMENT ATTRIBUTES:
+- last tick distribution percentage (of total tax revenue): 110.0%
+- current tick total tax collected: 0.00 CNY
+- personal income tax rate: 10%
+- corporate income tax rate: 25%
+- corporate VAT rate: 10%
+
+OBSERVATIONS:
+- economic background: Inflation is worsening significantly.
+- macroeconomic news: Tick 7 of 13. MAJOR POLICY CHANGE: The central bank has just raised interest rates! 1-year benchmark deposit rate increased from 2.25% to 2.50%. 1-year benchmark loan rate increased from 5.31% to 5.56%. 5-year+ loan rate increased from 5.94% to 6.14%. Mortgage rate multiplier changed from 0.7x to 0.85x (effective mortgage rate changed from 4.16% to 5.22%). This is the first rate hike in the current tightening cycle.
+
+"China Inflation Date Change Triggers Speculation of Rate Rise": Inflation expectations were rising noticeably, prompting markets to reprice the likelihood of an interest-rate increase. Strong growth and mounting price pressure were coexisting, significantly increasing the probability of further monetary tightening.
+
+"Chinese growth persists amid monetary fears": The expansion remained resilient, with industrial activity and demand showing no obvious signs of a sharp slowdown. The coexistence of growth resilience and inflation pressure strengthened concerns that policy would move more quickly from marginal restraint toward more substantive monetary tightening.
+
+"China rate move turns focus on rising prices": The rate increase focused market attention even more directly on inflation. Growth itself was no longer the main concern; instead, rising food and broader price pressures had become the core backdrop for tighter policy, reinforcing expectations of further tightening ahead.
+
+"China growth, inflation spur concern": Growth remained rapid while inflation continued to rise, placing the macroeconomy in a phase marked by both strong expansion and elevated price pressure. Market expectations shifted from watching for isolated tightening measures to anticipating a more sustained tightening cycle, leaving asset prices and liquidity conditions exposed to greater uncertainty.
+
+Output ONLY:
+distribution_pct: XXX%

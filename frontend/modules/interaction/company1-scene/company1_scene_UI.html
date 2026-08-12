@@ -1,0 +1,969 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Company 1 Scene - Work</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #111827; }
+body { display: flex; justify-content: center; align-items: center; }
+
+.scene {
+  position: relative;
+  width: min(95vw, calc(95vh * (1242 / 941)));
+  aspect-ratio: 1242 / 941;
+  background: #111827;
+}
+.scene .bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.item {
+  position: absolute;
+  user-select: none;
+}
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.toolbar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  max-width: 60vw;
+  justify-content: flex-end;
+  font-family: "Microsoft YaHei", sans-serif;
+}
+.toolbar button {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  background: #475569;
+  color: #fff;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.toolbar button:hover { background: #334155; }
+.btn-plan { background: #f59e0b; color: #fff; }
+.btn-plan.active { background: #d97706; box-shadow: 0 0 0 3px rgba(245,158,11,0.4); }
+.btn-agent-select { background: #6366f1; color: #fff; }
+.btn-agent-select.selected { background: #4338ca; box-shadow: 0 0 0 3px rgba(99,102,241,0.4); }
+.btn-plan-confirm { background: #10b981; color: #fff; }
+.btn-plan-loop    { background: #8b5cf6; color: #fff; }
+.btn-plan-clear   { background: #6b7280; color: #fff; }
+
+.agents-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 500;
+}
+.agents-overlay .agent.player-highlight {
+  filter: drop-shadow(0 0 6px rgba(255,69,0,0.8)) drop-shadow(0 0 12px rgba(255,69,0,0.5));
+  animation: playerGlow 2s ease-in-out infinite;
+}
+@keyframes playerGlow {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(255,69,0,0.7)) drop-shadow(0 0 10px rgba(255,69,0,0.4)); }
+  50% { filter: drop-shadow(0 0 9px rgba(255,69,0,1)) drop-shadow(0 0 18px rgba(255,69,0,0.6)); }
+}
+.agent-frame { image-rendering: auto; }
+.route-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+.scene.plan-mode { cursor: crosshair !important; }
+.scene.plan-mode .item { cursor: crosshair !important; }
+
+.plan-hint {
+  position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.72); color: #fff; padding: 8px 18px;
+  border-radius: 20px; font-size: 13px; pointer-events: none;
+  z-index: 9999; white-space: nowrap; transition: opacity 0.2s;
+  font-family: "Microsoft YaHei", sans-serif;
+}
+.plan-hint.hidden { opacity: 0; }
+
+/* 对话气泡 */
+.work-dialogue {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 16px;
+  padding: 32px 48px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  z-index: 10000;
+  font-family: "Microsoft YaHei", sans-serif;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.work-dialogue.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.work-dialogue .work-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+.work-dialogue .work-desc {
+  font-size: 14px;
+  color: #6b7280;
+}
+.work-dialogue .work-dots {
+  display: inline-block;
+  min-width: 24px;
+  text-align: left;
+}
+/* 隐藏 demo 调试 UI */
+.plan-hint, .toolbar .btn-plan, .toolbar .btn-agent-select,
+.toolbar .btn-plan-confirm, .toolbar .btn-plan-loop,
+.toolbar .btn-plan-clear,
+.toolbar button[onclick="savePositions()"],
+.toolbar button[onclick="copySnapshotJSON()"] { display: none !important; }
+.item { pointer-events: none !important; cursor: default !important; }
+.agent { pointer-events: none !important; }
+.size-panel, .toolbar { display: none !important; }
+
+/* 黑屏淡出 — 由独立模块控制 */
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button class="btn-plan" id="btnPlan" onclick="togglePlanMode()">Plan Route</button>
+  <button class="btn-agent-select" id="btnAgent1" onclick="planSelectAgent(0)" style="display:none">Employee A</button>
+  <button class="btn-agent-select" id="btnAgent2" onclick="planSelectAgent(1)" style="display:none">Employee B</button>
+  <button class="btn-agent-select" id="btnAgent3" onclick="planSelectAgent(2)" style="display:none">Player</button>
+  <button class="btn-plan-confirm" id="btnPlanConfirm" onclick="confirmPlan(false)" style="display:none">✓ One-time</button>
+  <button class="btn-plan-loop"    id="btnPlanLoop"    onclick="confirmPlan(true)"  style="display:none">↺ Loop Walk</button>
+  <button class="btn-plan-clear"   id="btnPlanClear"   onclick="clearPlan()"        style="display:none">✕ Clear Route</button>
+  <button onclick="savePositions()">Save Positions</button>
+  <button onclick="copySnapshotJSON()" style="background:#0ea5e9;color:#fff;">📋 Copy Snapshot JSON</button>
+  <button onclick="resetPositions()">Reset</button>
+</div>
+
+<div class="plan-hint hidden" id="planHint"></div>
+
+<div class="work-dialogue" id="workDialogue">
+  <div class="work-title" id="workTitle">Working<span class="work-dots" id="workDots"></span></div>
+  <div class="work-desc" id="workDesc">Please wait, you are working hard...</div>
+</div>
+
+<div class="scene" id="scene">
+  <img class="bg" src="assets/cutout.png" alt="company 1 cutout">
+
+  <div class="item" data-id="coo-08"
+       data-x="524.22" data-y="617.74" data-w="114" data-h="172" data-scale="2">
+    <img src="assets/coo-08.png">
+  </div>
+  <div class="item" data-id="coo-09"
+       data-x="500.54" data-y="193.44" data-w="382" data-h="274" data-scale="0.37">
+    <img src="assets/coo-09.png">
+  </div>
+  <div class="item" data-id="coo-01"
+       data-x="152.27" data-y="328.72" data-w="222" data-h="170" data-scale="1.3">
+    <img src="assets/coo-01.png">
+  </div>
+  <div class="item" data-id="coo-02"
+       data-x="632.52" data-y="190.53" data-w="118" data-h="132" data-scale="1.61">
+    <img src="assets/coo-02.png">
+  </div>
+  <div class="item" data-id="coo-10"
+       data-x="660.88" data-y="751.16" data-w="158" data-h="165" data-scale="1">
+    <img src="assets/coo-10.png">
+  </div>
+  <div class="item" data-id="coo-07"
+       data-x="811.16" data-y="404.29" data-w="124" data-h="171" data-scale="2">
+    <img src="assets/coo-07.png">
+  </div>
+  <div class="item" data-id="coo-11"
+       data-x="1087.63" data-y="488.49" data-w="206" data-h="206" data-scale="0.48">
+    <img src="assets/coo-11.png">
+  </div>
+  <div class="item" data-id="coo-03-2"
+       data-x="310.29" data-y="458.78" data-w="135" data-h="153" data-scale="1.57">
+    <img src="assets/coo-03.png">
+  </div>
+  <div class="item" data-id="coo-05"
+       data-x="523.12" data-y="273.23" data-w="103" data-h="186" data-scale="2">
+    <img src="assets/coo-05.png">
+  </div>
+  <div class="item" data-id="coo-06"
+       data-x="647.31" data-y="381.61" data-w="83" data-h="192" data-scale="3.15">
+    <img src="assets/coo-06.png">
+  </div>
+
+  <svg class="agents-overlay" id="agents-overlay"
+       viewBox="0 0 1242 941" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg">
+    <g id="company-characters"></g>
+  </svg>
+  <svg class="agents-overlay" id="plan-overlay"
+       viewBox="0 0 1242 941" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg"
+       style="pointer-events:none; z-index:501;">
+    <g id="plan-preview-layer"></g>
+  </svg>
+</div>
+
+<script>
+// ========== 全局状态 ==========
+const VIEW_W = 1242, VIEW_H = 941;
+const STORAGE_KEY = "company1_scene_UI_layout_v1";
+const ROUTES_KEY  = "company1_scene_UI_routes";
+
+const EMBEDDED_LAYOUT = {
+  "coo-08": { "x": 513.2080437319224, "y": 608.3400741569898, "w": 114, "h": 172, "scale": 2 },
+  "coo-09": { "x": 500.5351968638146, "y": 193.44058391241313, "w": 382, "h": 274, "scale": 0.37 },
+  "coo-01": { "x": 152.27, "y": 328.72, "w": 222, "h": 170, "scale": 1.3 },
+  "coo-02": { "x": 632.52, "y": 190.53, "w": 118, "h": 132, "scale": 1.61 },
+  "coo-10": { "x": 652.149733620321, "y": 738.5198431123949, "w": 158, "h": 165, "scale": 1 },
+  "coo-07": { "x": 793.5948773805825, "y": 406.8117779856413, "w": 124, "h": 171, "scale": 2 },
+  "coo-11": { "x": 1087.6291119822738, "y": 488.49392591111337, "w": 206, "h": 206, "scale": 0.48 },
+  "coo-03-2": { "x": 310.29, "y": 458.78, "w": 135, "h": 153, "scale": 1.57 },
+  "coo-05": { "x": 523.1157320606784, "y": 273.22541618757185, "w": 103, "h": 186, "scale": 2 },
+  "coo-06": { "x": 642.1359181328688, "y": 366.7564644609012, "w": 83, "h": 192, "scale": 3.15 }
+};//__EMBEDDED_LAYOUT_END
+const EMBEDDED_ROUTES = [
+  {
+    "name": "Employee A",
+    "x": 437,
+    "y": 735,
+    "scale": 0.26,
+    "fixedRoute": [
+      [
+        865,
+        436
+      ],
+      [
+        437,
+        735
+      ]
+    ],
+    "linear": false
+  },
+  {
+    "name": "Employee B",
+    "x": 523.5093378299092,
+    "y": 368.5411401020401,
+    "scale": 0.31,
+    "fixedRoute": [
+      [
+        586,
+        323
+      ],
+      [
+        221,
+        589
+      ]
+    ],
+    "linear": false
+  },
+  {
+    "name": "Player",
+    "x": 651,
+    "y": 699,
+    "scale": 0.3,
+    "fixedRoute": [
+      [
+        456,
+        755
+      ],
+      [
+        564,
+        674
+      ],
+      [
+        613,
+        702
+      ],
+      [
+        651,
+        699
+      ]
+    ],
+    "linear": true
+  }
+];//__EMBEDDED_ROUTES_END
+
+// 玩家状态机：idle | walking_in | working | walking_out | done
+var playerPhase = 'idle';
+var planModeActive = false;
+
+// ========== 图层系统 ==========
+function applyLayer(el, x, y, w, h, scale) {
+  el.dataset.x = x; el.dataset.y = y;
+  el.dataset.w = w; el.dataset.h = h;
+  el.dataset.scale = scale;
+  const finalW = w * scale;
+  const finalH = h * scale;
+  el.style.left   = (x / VIEW_W * 100).toFixed(4) + "%";
+  el.style.top    = (y / VIEW_H * 100).toFixed(4) + "%";
+  el.style.width  = (finalW / VIEW_W * 100).toFixed(4) + "%";
+  el.style.height = (finalH / VIEW_H * 100).toFixed(4) + "%";
+}
+
+document.querySelectorAll(".item").forEach(el => {
+  applyLayer(el,
+    parseFloat(el.dataset.x), parseFloat(el.dataset.y),
+    parseFloat(el.dataset.w), parseFloat(el.dataset.h),
+    parseFloat(el.dataset.scale));
+});
+
+// ========== 保存/重置/快照 ==========
+function savePositions() {
+  const data = {};
+  document.querySelectorAll(".item").forEach(el => {
+    data[el.dataset.id] = {
+      x: parseFloat(el.dataset.x), y: parseFloat(el.dataset.y),
+      w: parseFloat(el.dataset.w), h: parseFloat(el.dataset.h),
+      scale: parseFloat(el.dataset.scale),
+    };
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  const agents = window.__companyAgents || [];
+  const agentRoutes = agents.map(ag => ({
+    name: ag.name, x: ag.x, y: ag.y, scale: ag.scale,
+    fixedRoute: ag.fixedRoute ? ag.fixedRoute.map(p => [...p]) : null,
+    linear: ag.linear,
+  }));
+  localStorage.setItem(ROUTES_KEY, JSON.stringify(agentRoutes));
+  flashHint('Positions and routes saved');
+}
+
+function resetPositions() {
+  if (!confirm('Reset all positions and character routes?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(ROUTES_KEY);
+  location.reload();
+}
+
+function copySnapshotJSON() {
+  savePositions();
+  const layoutRaw = localStorage.getItem(STORAGE_KEY);
+  const routesRaw = localStorage.getItem(ROUTES_KEY);
+  if (!layoutRaw && !routesRaw) {
+    alert('No snapshot to copy.');
+    return;
+  }
+  const layoutJson = layoutRaw ? JSON.stringify(JSON.parse(layoutRaw), null, 2) : 'null';
+  const routesJson = routesRaw ? JSON.stringify(JSON.parse(routesRaw), null, 2) : 'null';
+
+  let modal = document.getElementById('snapshotModal');
+  if (modal) modal.remove();
+  modal = document.createElement('div');
+  modal.id = 'snapshotModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-family:"Microsoft YaHei",sans-serif;';
+  modal.innerHTML =
+    '<div style="background:#fff;border-radius:10px;padding:18px 22px;max-width:780px;width:90vw;max-height:90vh;overflow:auto;">' +
+      '<h3 style="margin:0 0 8px;font-size:17px;">📋 Copy Snapshot JSON</h3>' +
+      '<p style="margin:0 0 14px;color:#4b5563;font-size:13px;">Paste into source EMBEDDED_LAYOUT / EMBEDDED_ROUTES null position.</p>' +
+      '<div style="margin-bottom:12px;"><label style="font-size:13px;font-weight:600;">EMBEDDED_LAYOUT =</label>' +
+        '<button class="snap-copy" data-target="snapLayoutArea" style="float:right;padding:4px 14px;font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;">Copy</button>' +
+        '<textarea id="snapLayoutArea" readonly style="width:100%;height:150px;font-family:Consolas,monospace;font-size:12px;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;margin-top:4px;"></textarea></div>' +
+      '<div style="margin-bottom:14px;"><label style="font-size:13px;font-weight:600;">EMBEDDED_ROUTES =</label>' +
+        '<button class="snap-copy" data-target="snapRoutesArea" style="float:right;padding:4px 14px;font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;">Copy</button>' +
+        '<textarea id="snapRoutesArea" readonly style="width:100%;height:150px;font-family:Consolas,monospace;font-size:12px;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;margin-top:4px;"></textarea></div>' +
+      '<div style="text-align:right;"><button id="snapClose" style="padding:8px 22px;font-size:13px;background:#6b7280;color:#fff;border:none;border-radius:6px;cursor:pointer;">Close</button></div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  document.getElementById('snapLayoutArea').value = layoutJson;
+  document.getElementById('snapRoutesArea').value = routesJson;
+  modal.querySelectorAll('.snap-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ta = document.getElementById(btn.dataset.target);
+      ta.select();
+      try { document.execCommand('copy'); } catch(_) {}
+      btn.textContent = 'Copied ✓'; btn.style.background = '#10b981';
+      setTimeout(() => { btn.textContent = 'Copy'; btn.style.background = '#3b82f6'; }, 1500);
+    });
+  });
+  modal.querySelector('#snapClose').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function loadPositions() {
+  let raw;
+  if (EMBEDDED_LAYOUT && typeof EMBEDDED_LAYOUT === 'object') {
+    raw = JSON.stringify(EMBEDDED_LAYOUT);
+  } else {
+    raw = localStorage.getItem(STORAGE_KEY);
+  }
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      document.querySelectorAll(".item").forEach(el => {
+        const d = data[el.dataset.id];
+        if (d) applyLayer(el, d.x, d.y, d.w, d.h, d.scale);
+      });
+    } catch(e) {}
+  }
+
+  let savedRoutes;
+  if (Array.isArray(EMBEDDED_ROUTES)) {
+    savedRoutes = JSON.stringify(EMBEDDED_ROUTES);
+  } else {
+    savedRoutes = localStorage.getItem(ROUTES_KEY);
+  }
+  if (savedRoutes) {
+    try {
+      const routeData = JSON.parse(savedRoutes);
+      function restore(agents) {
+        routeData.forEach(r => {
+          const ag = agents.find(a => a.name === r.name);
+          if (!ag || !r.fixedRoute) return;
+          if (typeof r.scale === 'number' && r.scale > 0) ag.scale = r.scale;
+          ag.fixedRoute = r.fixedRoute.map(p => [...p]);
+          ag.linear = !!r.linear;
+          ag.atEnd = false;
+          ag.fixedRouteIndex = 0;
+          ag.target = null;
+          ag.pauseUntil = 0;
+          // 始终从路线起点开始
+          ag.x = ag.fixedRoute[0][0];
+          ag.y = ag.fixedRoute[0][1];
+          ag._endHandled = false;
+          placeAgent(ag);
+        });
+      }
+      if (window.__companyAgents) restore(window.__companyAgents);
+      else document.addEventListener('company:agentsReady', e => restore(e.detail.agents), { once: true });
+    } catch(e) {}
+  }
+}
+
+function flashHint(msg) {
+  const h = document.getElementById('planHint');
+  h.textContent = msg;
+  h.classList.remove('hidden');
+  clearTimeout(window.__hintTimer);
+  window.__hintTimer = setTimeout(() => h.classList.add('hidden'), 1800);
+}
+
+// ========== 行走系统 ==========
+const WALK_CONFIG = { frameMs: 90, pauseMs: [400, 1200] };
+
+function makeSprite(folder) {
+  const dirs = {
+    front: Array.from({length:12},(_,i)=>`${folder}/walk_front_${String(i+1).padStart(2,"0")}.png`),
+    back:  Array.from({length:12},(_,i)=>`${folder}/walk_back_${String(i+1).padStart(2,"0")}.png`),
+    left:  Array.from({length:12},(_,i)=>`${folder}/walk_left_${String(i+1).padStart(2,"0")}.png`),
+    right: Array.from({length:12},(_,i)=>`${folder}/walk_right_${String(i+1).padStart(2,"0")}.png`),
+  };
+  return { box:512, footFrac:0.795, midFrac:0.50, dirs, dirMap:{front:"front",back:"back",left:"left",right:"right"}, idle:dirs.front[0] };
+}
+const WALK_4 = makeSprite("../../person/walk_4");
+const WALK_5 = makeSprite("../../person/walk_5");
+
+const _urlParams = new URLSearchParams(window.location.search);
+const _playerSpriteId = (function() {
+  const fromUrl = _urlParams.get("sprite");
+  if (fromUrl) return fromUrl;
+  try {
+    const st = JSON.parse(sessionStorage.getItem("EWMInitialState") || "null");
+    if (st && st.player && st.player.spriteId) return st.player.spriteId;
+  } catch(e) {}
+  return null;
+})();
+const PLAYER_SPRITE = _playerSpriteId ? makeSprite("../../person/" + _playerSpriteId) : WALK_5;
+
+function preloadSpriteImages() {
+  const urls = new Set();
+  [WALK_4, WALK_5, PLAYER_SPRITE].forEach(sp => {
+    urls.add(sp.idle);
+    Object.values(sp.dirs).forEach(frames => frames.forEach(u => urls.add(u)));
+  });
+  return Promise.all([...urls].map(src => new Promise(res => {
+    const img = new Image(); img.onload = res; img.onerror = res; img.src = src;
+  })));
+}
+
+function getDirection(dx, dy) {
+  const u = dx - dy, v = dx + dy;
+  if (Math.abs(u) >= Math.abs(v)) return u >= 0 ? "front" : "back";
+  return v >= 0 ? "right" : "left";
+}
+
+function buildAgent({ name, sprite, x, y, speed, scale }) {
+  const ns = "http://www.w3.org/2000/svg";
+  const g = document.createElementNS(ns, "g");
+  g.setAttribute("class", "agent");
+  g.dataset.name = name;
+  const img = document.createElementNS(ns, "image");
+  img.setAttribute("class", "agent-frame");
+  const W = sprite.box * scale;
+  img.setAttribute("width", W); img.setAttribute("height", W);
+  img.setAttributeNS("http://www.w3.org/1999/xlink", "href", sprite.idle);
+  g.appendChild(img);
+  document.getElementById("company-characters").appendChild(g);
+  return {
+    name, sprite, x, y, speed, scale, W,
+    dir:"front", frameIdx:0, frameClock:0, currentHref:null,
+    fixedRoute:null, fixedRouteIndex:0, linear:false, atEnd:false,
+    target:null, pauseUntil:0, el:g, img:img,
+  };
+}
+
+function placeAgent(ag) {
+  const W = ag.sprite.box * ag.scale;
+  ag.W = W;
+  ag.img.setAttribute("width", W); ag.img.setAttribute("height", W);
+  ag.img.setAttribute("x", ag.x - W * ag.sprite.midFrac);
+  ag.img.setAttribute("y", ag.y - W * ag.sprite.footFrac);
+}
+
+function setFrame(ag, walking, dtMs) {
+  if (walking) {
+    ag.frameClock += dtMs;
+    if (ag.frameClock >= WALK_CONFIG.frameMs) {
+      const steps = Math.floor(ag.frameClock / WALK_CONFIG.frameMs);
+      ag.frameClock %= WALK_CONFIG.frameMs;
+      ag.frameIdx = (ag.frameIdx + steps) % 12;
+    }
+  } else {
+    ag.frameIdx = 0; ag.frameClock = 0;
+  }
+  const frames = ag.sprite.dirs[ag.sprite.dirMap[ag.dir]] || ag.sprite.dirs.front;
+  const f = frames[ag.frameIdx];
+  if (ag.currentHref !== f) {
+    ag.currentHref = f;
+    ag.img.setAttributeNS("http://www.w3.org/1999/xlink", "href", f);
+  }
+  ag.img.removeAttribute("transform");
+  ag.img.setAttribute("x", ag.x - ag.W * ag.sprite.midFrac);
+  ag.img.setAttribute("y", ag.y - ag.W * ag.sprite.footFrac);
+}
+
+function nextTarget(ag) {
+  if (!ag.fixedRoute || ag.fixedRoute.length === 0) return null;
+  if (ag.linear && ag.atEnd) return null;
+  const pt = ag.fixedRoute[ag.fixedRouteIndex];
+  ag.fixedRouteIndex++;
+  if (ag.fixedRouteIndex >= ag.fixedRoute.length) {
+    if (ag.linear) ag.atEnd = true;
+    else ag.fixedRouteIndex = 0;
+  }
+  return { x: pt[0], y: pt[1] };
+}
+
+// ========== 创建角色 ==========
+const agents = [];
+
+// NPC
+const NPC_DEFS = [
+  { name:"Employee A", sprite:WALK_4, route:[[865,436],[437,735]], scale:0.26 },
+  { name:"Employee B", sprite:WALK_5, route:[[586,323],[221,589]], scale:0.31 },
+];
+NPC_DEFS.forEach(z => {
+  const ag = buildAgent({ name:z.name, sprite:z.sprite, x:z.route[0][0], y:z.route[0][1], speed:85, scale:z.scale });
+  ag.fixedRoute = z.route.map(p=>[...p]);
+  ag.linear = false;
+  placeAgent(ag);
+  agents.push(ag);
+});
+
+// 玩家 — 默认路线
+const DEFAULT_PLAYER_ROUTE = [[200,820],[400,700],[620,550]];
+const player = buildAgent({ name:"Player", sprite:PLAYER_SPRITE, x:DEFAULT_PLAYER_ROUTE[0][0], y:DEFAULT_PLAYER_ROUTE[0][1], speed:200, scale:0.30 });
+player.fixedRoute = DEFAULT_PLAYER_ROUTE.map(p=>[...p]);
+player.linear = true;
+placeAgent(player);
+agents.push(player);
+player.el.classList.add("player-highlight");
+(function() {
+  const ag = player, ns = "http://www.w3.org/2000/svg";
+  const arrow = document.createElementNS(ns, "polygon");
+  arrow.setAttribute("points", "-7,-14 7,-14 0,0");
+  arrow.setAttribute("fill", "#ff3030");
+  arrow.setAttribute("stroke", "#fff");
+  arrow.setAttribute("stroke-width", "1.2");
+  ag.el.appendChild(arrow);
+  let phase = 0;
+  (function update() {
+    const x = parseFloat(ag.img.getAttribute("x"));
+    const y = parseFloat(ag.img.getAttribute("y"));
+    const w = parseFloat(ag.img.getAttribute("width"));
+    const bounce = Math.sin(phase) * 5;
+    phase += 0.06;
+    arrow.setAttribute("transform", "translate(" + (x + w/2) + "," + (y - 6 + bounce) + ")");
+    requestAnimationFrame(update);
+  })();
+})();
+
+window.__companyAgents = agents;
+
+// ========== 玩家自动流程 ==========
+// 玩家走完路线(atEnd) → 显示"工作中" → 3秒后"工作结束" → 1.5秒后原路返回
+// playerPhase: idle → walking_in → working → walking_out → done
+
+function startPlayerWalk() {
+  playerPhase = 'walking_in';
+  player.atEnd = false;
+  player._endHandled = false;
+  player.fixedRouteIndex = 0;
+  player.target = null;
+  player.pauseUntil = 0;
+  // 确保玩家从路线起点出发
+  if (player.fixedRoute && player.fixedRoute.length > 0) {
+    player.x = player.fixedRoute[0][0];
+    player.y = player.fixedRoute[0][1];
+    placeAgent(player);
+  }
+}
+
+function onPlayerReachedEnd() {
+  if (playerPhase === 'walking_in') {
+    playerPhase = 'working';
+    showWorkDialogue();
+  } else if (playerPhase === 'walking_out') {
+    playerPhase = 'done';
+    if (typeof window.__onPlayerReturnedToStart === 'function') {
+      window.__onPlayerReturnedToStart();
+    }
+  }
+}
+
+function startReturnWalk() {
+  playerPhase = 'walking_out';
+  // 原路返回 = 反转当前路线
+  const returnRoute = player.fixedRoute.slice().reverse();
+  player.fixedRoute = returnRoute;
+  player.fixedRouteIndex = 0;
+  player.linear = true;
+  player.atEnd = false;
+  player._endHandled = false;
+  player.target = null;
+  player.pauseUntil = 0;
+}
+
+// 对话框
+function showWorkDialogue() {
+  const dlg = document.getElementById('workDialogue');
+  const title = document.getElementById('workTitle');
+  const desc = document.getElementById('workDesc');
+  const dots = document.getElementById('workDots');
+  title.textContent = 'Working';
+  desc.textContent = 'Please wait, you are working hard...';
+  dlg.classList.add('show');
+  let count = 0;
+  const timer = setInterval(() => { count = (count+1)%4; dots.textContent = '.'.repeat(count); }, 500);
+
+  setTimeout(() => {
+    clearInterval(timer);
+    dots.textContent = '';
+    title.textContent = 'Work done!';
+    desc.textContent = 'Well done, this month\'s work is complete.';
+    setTimeout(() => {
+      dlg.classList.remove('show');
+      startReturnWalk();
+    }, 1500);
+  }, 3000);
+}
+
+// ========== 主循环 ==========
+let lastT = performance.now();
+function tick(now) {
+  const dtMs = Math.min(now - lastT, 50);
+  lastT = now;
+  const dt = dtMs / 1000;
+
+  for (const ag of agents) {
+    // 到达终点
+    if (ag.linear && ag.atEnd && !ag.target) {
+      setFrame(ag, false, dtMs);
+      // 玩家到达终点时触发事件（仅在非规划模式下）
+      if (ag === player && !ag._endHandled && !planModeActive) {
+        ag._endHandled = true;
+        setTimeout(() => onPlayerReachedEnd(), 300);
+      }
+      continue;
+    }
+
+    if (!ag.target) {
+      if (ag.pauseUntil > now) { setFrame(ag, false, dtMs); continue; }
+      const nt = nextTarget(ag);
+      if (!nt) { setFrame(ag, false, dtMs); continue; }
+      ag.target = nt;
+    }
+
+    const dx = ag.target.x - ag.x;
+    const dy = ag.target.y - ag.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 4) {
+      ag.x = ag.target.x; ag.y = ag.target.y;
+      ag.target = null;
+      const [lo, hi] = WALK_CONFIG.pauseMs;
+      ag.pauseUntil = now + (lo + Math.random()*(hi-lo));
+      setFrame(ag, false, dtMs);
+      continue;
+    }
+    const step = Math.min(dist, ag.speed * dt);
+    ag.x += dx/dist * step;
+    ag.y += dy/dist * step;
+    ag.dir = getDirection(dx, dy);
+    placeAgent(ag);
+    setFrame(ag, true, dtMs);
+  }
+
+  // z-sort（仅变化时操作 DOM）
+  const g = document.getElementById("company-characters");
+  const sorted = [...agents].sort((a,b) => a.y - b.y);
+  const key = sorted.map(a => a.name).join("|");
+  if (key !== window.__zKey) { window.__zKey = key; sorted.forEach(ag => g.appendChild(ag.el)); }
+
+  requestAnimationFrame(tick);
+}
+
+preloadSpriteImages().then(() => {
+  lastT = performance.now();
+  startPlayerWalk();
+  requestAnimationFrame(tick);
+});
+
+document.dispatchEvent(new CustomEvent("company:agentsReady", { detail: { agents } }));
+loadPositions();
+
+// ========== 路线规划系统 ==========
+(function() {
+  let planMode = false;
+  let planAgentIndex = -1;
+  let planPoints = [];
+  const scene = document.getElementById("scene");
+
+  function domToSVG(clientX, clientY) {
+    const rect = scene.getBoundingClientRect();
+    return [
+      Math.round((clientX - rect.left) / rect.width * VIEW_W),
+      Math.round((clientY - rect.top) / rect.height * VIEW_H),
+    ];
+  }
+
+  function setBtn(id, show) {
+    document.getElementById(id).style.display = show ? "" : "none";
+  }
+
+  window.togglePlanMode = function() {
+    planMode = !planMode;
+    planModeActive = planMode;
+    const btn = document.getElementById("btnPlan");
+    if (planMode) {
+      btn.classList.add("active");
+      scene.classList.add("plan-mode");
+      document.getElementById("agents-overlay").style.visibility = "hidden";
+      setBtn("btnAgent1", true);
+      setBtn("btnAgent2", true);
+      setBtn("btnAgent3", true);
+      flashHint("Select character to plan");
+      planAgentIndex = -1;
+      planPoints = [];
+      renderPreview();
+    } else {
+      btn.classList.remove("active");
+      scene.classList.remove("plan-mode");
+      document.getElementById("agents-overlay").style.visibility = "";
+      ["btnAgent1","btnAgent2","btnAgent3","btnPlanConfirm","btnPlanLoop","btnPlanClear"].forEach(id => setBtn(id, false));
+      ["btnAgent1","btnAgent2","btnAgent3"].forEach(id => document.getElementById(id).classList.remove("selected"));
+      planAgentIndex = -1;
+      planPoints = [];
+      renderPreview();
+    }
+  };
+
+  window.planSelectAgent = function(idx) {
+    if (!planMode) return;
+    planAgentIndex = idx;
+    ["btnAgent1","btnAgent2","btnAgent3"].forEach((id,i) => {
+      document.getElementById(id).classList.toggle("selected", i === idx);
+    });
+    planPoints = [];
+    renderPreview();
+    const names = ["Employee A","Employee B","Player"];
+    flashHint(`Selected ${names[idx]}, click floor to set path points`);
+    setBtn("btnPlanClear", true);
+  };
+
+  window.clearPlan = function() {
+    planPoints = [];
+    renderPreview();
+    setBtn("btnPlanConfirm", false);
+    setBtn("btnPlanLoop", false);
+    flashHint("Cleared");
+  };
+
+  window.confirmPlan = function(loop) {
+    if (planAgentIndex < 0 || planPoints.length < 2) return;
+    const ag = agents[planAgentIndex];
+    if (!ag) return;
+
+    const route = planPoints.map(p => [...p]);
+    // 把人物放到路线起点
+    ag.x = route[0][0];
+    ag.y = route[0][1];
+    ag.fixedRoute = route;
+    ag.fixedRouteIndex = 0;
+    ag.linear = !loop;
+    ag.atEnd = false;
+    ag._endHandled = false;
+    ag.target = null;
+    ag.pauseUntil = 0;
+    placeAgent(ag);
+
+    // 如果是玩家，重置自动流程
+    if (ag === player) {
+      playerPhase = 'walking_in';
+    }
+
+    flashHint(`${ag.name} Route set (${loop?"Loop":"One-time"}, ${route.length} points)`);
+    setTimeout(() => window.togglePlanMode(), 500);
+  };
+
+  scene.addEventListener("click", e => {
+    if (!planMode || planAgentIndex < 0) return;
+    if (e.target.tagName === "BUTTON") return;
+    const [x, y] = domToSVG(e.clientX, e.clientY);
+    planPoints.push([x, y]);
+    renderPreview();
+    if (planPoints.length >= 2) {
+      setBtn("btnPlanConfirm", true);
+      setBtn("btnPlanLoop", true);
+    }
+  });
+
+  function renderPreview() {
+    const layer = document.getElementById("plan-preview-layer");
+    while (layer.firstChild) layer.removeChild(layer.firstChild);
+    if (!planPoints.length) return;
+    const ns = "http://www.w3.org/2000/svg";
+
+    for (let i = 1; i < planPoints.length; i++) {
+      const a = planPoints[i-1], b = planPoints[i];
+      const line = document.createElementNS(ns, "line");
+      line.setAttribute("x1",a[0]); line.setAttribute("y1",a[1]);
+      line.setAttribute("x2",b[0]); line.setAttribute("y2",b[1]);
+      line.setAttribute("stroke","#ff6600"); line.setAttribute("stroke-width","4");
+      line.setAttribute("stroke-dasharray","10 6"); line.setAttribute("class","route-line");
+      layer.appendChild(line);
+    }
+    if (planPoints.length >= 3) {
+      const a = planPoints[planPoints.length-1], b = planPoints[0];
+      const line = document.createElementNS(ns, "line");
+      line.setAttribute("x1",a[0]); line.setAttribute("y1",a[1]);
+      line.setAttribute("x2",b[0]); line.setAttribute("y2",b[1]);
+      line.setAttribute("stroke","#8b5cf6"); line.setAttribute("stroke-width","3");
+      line.setAttribute("stroke-dasharray","6 8"); line.setAttribute("class","route-line");
+      layer.appendChild(line);
+    }
+    planPoints.forEach((p, i) => {
+      const c = document.createElementNS(ns, "circle");
+      c.setAttribute("cx",p[0]); c.setAttribute("cy",p[1]); c.setAttribute("r",10);
+      c.setAttribute("fill", i===0?"#10b981":i===planPoints.length-1?"#ef4444":"#f59e0b");
+      c.setAttribute("stroke","#fff"); c.setAttribute("stroke-width","2");
+      layer.appendChild(c);
+      const t = document.createElementNS(ns, "text");
+      t.setAttribute("x",p[0]); t.setAttribute("y",p[1]+5);
+      t.setAttribute("fill","#fff"); t.setAttribute("font-size","14");
+      t.setAttribute("text-anchor","middle"); t.setAttribute("font-weight","bold");
+      t.textContent = i+1;
+      layer.appendChild(t);
+    });
+  }
+})();
+</script>
+
+<!-- ============================================================
+     黑屏过渡 + 返回地图接口
+     ============================================================ -->
+<style>
+.fade-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99999;
+  transition: opacity 1.5s ease-in;
+}
+.fade-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+</style>
+
+<div class="fade-overlay" id="fadeOverlay"></div>
+
+<script>
+(function () {
+  const overlay = document.getElementById('fadeOverlay');
+
+  function fadeToBlack(callback) {
+    if (!overlay) {
+      if (callback) callback();
+      return;
+    }
+    let finished = false;
+    function finish() {
+      if (finished) return;
+      finished = true;
+      overlay.removeEventListener('transitionend', handler);
+      if (callback) callback();
+    }
+    function handler() {
+      finish();
+    }
+    overlay.classList.add('active');
+    overlay.addEventListener('transitionend', handler);
+    window.setTimeout(finish, 1800);
+  }
+
+  function readInteriorContext() {
+    try {
+      return JSON.parse(sessionStorage.getItem('EWMCurrentInteriorScene') || '{}') || {};
+    } catch (error) {
+      console.warn('[EWMCurrentInteriorScene] parse failed', error);
+      return {};
+    }
+  }
+
+  window.returnToMap = function returnToMap() {
+    const context = readInteriorContext();
+    sessionStorage.setItem('EWMInteriorResult', JSON.stringify({
+      completed: true,
+      taskId: context.taskId || 'company1_work',
+      entityId: context.entityId || 'company1',
+      sceneId: context.sceneId || 'company1_scene',
+      label: context.label || 'Company',
+      completedAt: new Date().toISOString()
+    }));
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'scene-done', scene: 'company1' }, '*');
+    }
+    window.location.href = window.location.origin + '/main_map.html';
+  };
+
+  window.__onPlayerReturnedToStart = function () {
+    fadeToBlack(function () {
+      window.returnToMap();
+    });
+  };
+})();
+</script>
+</body>
+</html>

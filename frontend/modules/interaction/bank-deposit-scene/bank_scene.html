@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Scene</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #e8e4de; }
+body { display: flex; justify-content: center; align-items: center; }
+.scene {
+  position: relative;
+  width: min(95vw, calc(95vh * 1.333));
+  aspect-ratio: 4 / 3;
+}
+.scene .bg {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.item {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+}
+.item.selected { outline: 2px dashed #4a90d9; outline-offset: 2px; }
+.item:active { cursor: grabbing; }
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(4px 6px 6px rgba(40,30,10,0.18));
+}
+.toolbar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.toolbar button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: "Microsoft YaHei", sans-serif;
+  transition: transform 0.1s;
+}
+.toolbar button:active { transform: scale(0.95); }
+.btn-save { background: #4a90d9; color: #fff; }
+.btn-reset { background: #e06050; color: #fff; }
+.btn-plan { background: #f59e0b; color: #fff; }
+.btn-plan.active { background: #d97706; box-shadow: 0 0 0 3px rgba(245,158,11,0.4); }
+.btn-agent-select { background: #6366f1; color: #fff; }
+.btn-agent-select.selected { background: #4338ca; box-shadow: 0 0 0 3px rgba(99,102,241,0.4); }
+.btn-plan-confirm { background: #10b981; color: #fff; }
+.btn-plan-loop    { background: #8b5cf6; color: #fff; }
+.btn-plan-clear   { background: #6b7280; color: #fff; }
+/* 规划模式：场景光标变十字 */
+.scene.plan-mode { cursor: crosshair !important; }
+.scene.plan-mode .item { cursor: crosshair !important; }
+/* 路线规划浮层提示 */
+.plan-hint {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.72);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: "Microsoft YaHei", sans-serif;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.plan-hint.hidden { opacity: 0; }
+.size-panel {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: rgba(255,255,255,0.95);
+  border-radius: 10px;
+  padding: 12px 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: none;
+  align-items: center;
+  gap: 12px;
+  font-family: "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+}
+.size-panel.show { display: flex; }
+.size-panel label { color: #333; white-space: nowrap; }
+.size-panel input[type="range"] {
+  width: 200px;
+  accent-color: #4a90d9;
+}
+.size-panel .size-val {
+  min-width: 40px;
+  text-align: center;
+  color: #666;
+}
+.toast {
+  position: fixed;
+  top: 50px;
+  right: 12px;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+.hint {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #999;
+  font-family: "Microsoft YaHei", sans-serif;
+  z-index: 9998;
+}
+/* ─── 小人行走图层（仿照 family draft）─── */
+.agents-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 500;   /* 高于所有家具(.item z-index 10~48)：人物图层始终盖在物体之上 */
+}
+.agents-overlay .agent { pointer-events: auto; cursor: pointer; }
+.agent-frame { image-rendering: auto; }
+.floor-poly { fill: rgba(74,144,217,.06); stroke: #4a90d9; stroke-width: 2; stroke-dasharray: 10 8; }
+.route-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+/* ===== 玩家决策侧栏样式（合并自 player_decision_ui.html）===== */
+.sidebar-shell {
+    position: fixed; left: 0; top: 0; bottom: 0; z-index: 9000;
+    width: min(560px, 92vw); background: #f0f4f8;
+    border-right: 1px solid #cbd5e1; box-shadow: 8px 0 30px rgba(15,23,42,.12);
+    transition: width .25s ease, box-shadow .25s ease;
+    font-family: -apple-system, "Microsoft YaHei", sans-serif; color: #1a202c;
+}
+.sidebar-shell.collapsed {
+    width: 58px; box-shadow: 3px 0 14px rgba(15,23,42,.08);
+}
+.sidebar-scroll {
+    height: 100%; overflow-y: auto; overflow-x: hidden;
+    transition: opacity .18s ease, visibility .18s ease;
+}
+.sidebar-shell.collapsed .sidebar-scroll {
+    opacity: 0; visibility: hidden; pointer-events: none;
+}
+.sidebar-collapse-btn {
+    position: absolute; top: 16px; right: -18px; z-index: 9010;
+    width: 36px; height: 36px; border: 1px solid #cbd5e1; border-radius: 50%;
+    background: #fff; color: #334155; cursor: pointer; font-size: 18px; font-weight: 700;
+    line-height: 1; box-shadow: 0 4px 12px rgba(15,23,42,.16);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s, color .2s, transform .2s;
+}
+.sidebar-collapse-btn:hover { background: #eff6ff; color: #2563eb; }
+.sidebar-shell.collapsed .sidebar-collapse-btn { transform: rotate(180deg); }
+.sidebar-collapsed-label {
+    display: none; position: absolute; left: 50%; top: 70px;
+    transform: translateX(-50%); writing-mode: vertical-rl; letter-spacing: 2px;
+    color: #475569; font-size: 13px; font-weight: 700; white-space: nowrap;
+}
+.sidebar-shell.collapsed .sidebar-collapsed-label { display: block; }
+.task-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: #fff; border-bottom: 1px solid #e2e8f0;
+    padding: 14px 20px; box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.task-bar-inner {
+    max-width: 900px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.task-steps { display: flex; gap: 4px; align-items: center; }
+.task-step {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 6px; font-size: 12px;
+    color: #94a3b8; font-weight: 600; transition: all .2s;
+}
+.task-step.active { background: #eff6ff; color: #3b82f6; }
+.task-step.done { color: #10b981; }
+.task-step .step-icon { font-size: 16px; }
+.task-step .step-num {
+    width: 20px; height: 20px; border-radius: 50%; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: #e2e8f0; color: #64748b;
+}
+.task-step.active .step-num { background: #3b82f6; color: #fff; }
+.task-step.done .step-num { background: #10b981; color: #fff; }
+.task-connector { width: 20px; height: 2px; background: #e2e8f0; }
+.task-connector.done { background: #10b981; }
+.panel-toggle {
+    padding: 8px 14px; border-radius: 6px; border: 1px solid #e2e8f0;
+    background: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
+    color: #475569; transition: all .2s;
+}
+.panel-toggle:hover { border-color: #3b82f6; color: #3b82f6; }
+.decision-page { display: none; padding: 30px 20px; max-width: 1000px; margin: 0 auto; }
+.decision-page.active { display: block; }
+.station-header {
+    text-align: center; margin-bottom: 28px; padding: 20px;
+    background: linear-gradient(135deg, #eff6ff, #f8fafc);
+    border-radius: 14px; border: 1px solid #e2e8f0;
+}
+.station-header .station-icon { font-size: 36px; margin-bottom: 8px; }
+.station-header h2 { font-size: 22px; margin-bottom: 4px; }
+.station-header p { font-size: 13px; color: #64748b; }
+.decision-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+.info-panel { flex: 1; min-width: 320px; }
+.form-panel { flex: 1; min-width: 320px; }
+.info-card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+    margin-bottom: 14px; overflow: hidden;
+}
+.info-card-title {
+    padding: 10px 16px; font-size: 13px; font-weight: 700;
+    background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #475569;
+}
+.info-card-body { padding: 12px 16px; }
+.info-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+.info-row .lbl { color: #64748b; }
+.info-row .val { font-weight: 600; color: #1e293b; }
+.info-note {
+    font-size: 12px; color: #64748b; line-height: 1.6;
+    padding: 8px 12px; background: #f8fafc; border-radius: 6px; margin-top: 8px;
+}
+.form-card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 20px; margin-bottom: 14px;
+}
+.form-card h3 { font-size: 15px; margin-bottom: 16px; color: #1e293b; }
+.form-group { margin-bottom: 18px; }
+.form-group label {
+    display: block; font-size: 13px; font-weight: 600; color: #334155;
+    margin-bottom: 6px;
+}
+.form-group .hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+.form-input {
+    width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0;
+    border-radius: 8px; font-size: 14px; transition: border-color .2s;
+}
+.form-input:focus { outline: none; border-color: #3b82f6; }
+.form-slider { width: 100%; margin: 8px 0; }
+.slider-val { font-size: 14px; font-weight: 700; color: #3b82f6; }
+.form-toggle { display: flex; gap: 10px; }
+.toggle-btn {
+    flex: 1; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px;
+    background: #fff; cursor: pointer; text-align: center; font-size: 14px;
+    font-weight: 600; transition: all .2s;
+}
+.toggle-btn:hover { border-color: #93c5fd; }
+.toggle-btn.selected { border-color: #3b82f6; background: #eff6ff; color: #3b82f6; }
+.toggle-btn.selected-no { border-color: #ef4444; background: #fef2f2; color: #ef4444; }
+
+.submit-wrap { text-align: center; margin-top: 24px; }
+.submit-btn {
+    padding: 14px 48px; border: none; border-radius: 10px;
+    font-size: 16px; font-weight: 700; cursor: pointer;
+    background: #3b82f6; color: #fff; transition: all .2s;
+}
+.submit-btn:hover { background: #2563eb; transform: translateY(-1px); }
+.submit-btn:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
+.result-box {
+    display: none; margin-top: 20px; padding: 18px 22px; border-radius: 12px;
+    border: 2px solid #10b981; background: #f0fdf4;
+}
+.result-box.visible { display: block; }
+.result-box h4 { color: #10b981; font-size: 14px; margin-bottom: 8px; }
+.result-box .result-rows { font-size: 13px; color: #334155; line-height: 1.8; }
+.next-btn {
+    display: none; margin-top: 16px; padding: 12px 36px; border: none;
+    border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
+    background: #10b981; color: #fff; transition: all .2s;
+}
+.next-btn.visible { display: inline-block; }
+.next-btn:hover { background: #059669; }
+.data-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9500;
+    background: rgba(0,0,0,.4); justify-content: center; align-items: center;
+}
+.data-overlay.visible { display: flex; }
+.data-modal {
+    background: #fff; border-radius: 14px; padding: 28px; width: 90%; max-width: 900px;
+    max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.15);
+    position: relative; font-family: -apple-system, "Microsoft YaHei", sans-serif;
+}
+.data-modal h3 { margin-bottom: 16px; font-size: 18px; }
+.data-modal .close-btn {
+    position: absolute; top: 16px; right: 20px; font-size: 20px;
+    cursor: pointer; color: #64748b;
+}
+.panel-columns { display: flex; gap: 20px; margin-top: 12px; }
+.panel-col { flex: 1; }
+.panel-col .col-title { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: #1e293b; }
+.panel-col.self .col-title { color: #0f766e; }
+.panel-col.env .col-title { color: #1d4ed8; }
+.panel-block { background: #f8fafc; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.panel-block h5 { font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+.panel-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 13px; }
+.panel-row .label { color: #64748b; }
+.panel-row .value { color: #1e293b; font-weight: 500; }
+.result-section { max-width: 720px; margin: 24px auto; padding: 0 16px; }
+.section-title { font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; }
+.recap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.recap-item { background: #f8fafc; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 13px; }
+.recap-label { color: #64748b; font-weight: 500; }
+.recap-val { color: #1e293b; font-weight: 600; }
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.compare-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
+.compare-card-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+.compare-subtitle { font-size: 11px; color: #94a3b8; margin-bottom: 10px; }
+.compare-bar-group { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.compare-row { display: flex; align-items: center; gap: 8px; }
+.compare-label { font-size: 12px; color: #64748b; width: 52px; text-align: right; flex-shrink: 0; }
+.bar-wrap { flex: 1; height: 14px; background: #f1f5f9; border-radius: 7px; overflow: hidden; }
+.bar { height: 100%; border-radius: 7px; transition: width .6s ease; }
+.bar-player { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+.bar-agent { background: #94a3b8; }
+.bar-avg { background: #cbd5e1; }
+.compare-num { font-size: 12px; font-weight: 700; width: 48px; text-align: right; flex-shrink: 0; }
+.compare-num.positive { color: #10b981; }
+.compare-num.negative { color: #ef4444; }
+.compare-verdict { font-size: 12px; text-align: center; padding: 6px; border-radius: 6px; margin-top: 4px; }
+.compare-verdict.win { background: #ecfdf5; color: #065f46; }
+.compare-verdict.lose { background: #fef2f2; color: #991b1b; }
+.personality-code { text-align: center; font-size: 36px; margin: 8px 0 4px; letter-spacing: 6px; }
+.personality-name { text-align: center; font-size: 15px; font-weight: 600; color: #4f46e5; margin-bottom: 4px; }
+.personality-desc { text-align: center; font-size: 13px; color: #64748b; margin-bottom: 20px; }
+.dimension-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.dimension-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+.dim-header { margin-bottom: 8px; }
+.dim-label { font-size: 12px; font-weight: 600; color: #475569; }
+.dim-bar-wrap { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.dim-pole { font-size: 12px; color: #94a3b8; }
+.dim-pole.active { color: #1e293b; font-weight: 600; }
+.dim-slider { padding: 4px 0 8px; }
+.dim-track { position: relative; height: 6px; background: #e2e8f0; border-radius: 3px; }
+.dim-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #6366f1, #a78bfa); }
+.dim-fill.right-fill { left: auto; right: 0; background: linear-gradient(270deg, #6366f1, #a78bfa); }
+.dim-dot { position: absolute; top: 50%; width: 14px; height: 14px; background: #fff; border: 3px solid #6366f1; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+.dim-explain { font-size: 11px; color: #64748b; line-height: 1.4; }
+.sidebar-shell .task-bar { position: sticky; top: 0; }
+.sidebar-shell .task-bar-inner { max-width: none; gap: 12px; }
+.sidebar-shell .task-steps { flex-wrap: wrap; }
+.sidebar-shell .decision-page { max-width: none; padding: 22px 18px 34px; }
+.sidebar-shell .decision-layout,
+.sidebar-shell .panel-columns { display: block; }
+.sidebar-shell .compare-grid,
+.sidebar-shell .dimension-grid,
+.sidebar-shell .recap-grid { grid-template-columns: 1fr; }
+.sidebar-shell .info-panel,
+.sidebar-shell .form-panel { min-width: 0; }
+.sidebar-shell .form-panel { margin-top: 14px; }
+@media (max-width: 640px) {
+    .sidebar-shell { width: calc(100vw - 24px); }
+    .sidebar-shell.collapsed { width: 52px; }
+    .sidebar-collapse-btn { right: -15px; width: 32px; height: 32px; }
+    .task-step { padding: 6px 8px; }
+    .task-connector { display: none; }
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar-shell collapsed" id="decision-sidebar">
+<button class="sidebar-collapse-btn" type="button" onclick="toggleSidebar()" aria-label="Toggle sidebar">‹</button>
+<div class="sidebar-collapsed-label">玩家决策</div>
+<div class="sidebar-scroll" id="sidebar-scroll">
+
+<div class="task-bar">
+    <div class="task-bar-inner">
+        <div class="task-steps" id="task-steps">
+            <div class="task-step active" data-step="0">
+                <span class="step-num">1</span><span class="step-icon">🏦</span><span>贷款</span>
+            </div>
+            <div class="task-connector"></div>
+            <div class="task-step" data-step="1">
+                <span class="step-num">2</span><span class="step-icon">👔</span><span>就业</span>
+            </div>
+            <div class="task-connector"></div>
+            <div class="task-step" data-step="2">
+                <span class="step-num">3</span><span class="step-icon">🛒</span><span>消费</span>
+            </div>
+            <div class="task-connector"></div>
+            <div class="task-step" data-step="3">
+                <span class="step-num">4</span><span class="step-icon">📈</span><span>股票</span>
+            </div>
+            <div class="task-connector"></div>
+            <div class="task-step" data-step="4">
+                <span class="step-num">5</span><span class="step-icon">🏦</span><span>存款</span>
+            </div>
+        </div>
+        <button class="panel-toggle" onclick="toggleDataPanel()">查看面板</button>
+    </div>
+</div>
+
+<!-- 站点一：商业银行（贷款） -->
+<div class="decision-page active" id="station-loan">
+    <div class="station-header">
+        <div class="station-icon">🏦</div>
+        <h2>商业银行 — 贷款决策</h2>
+        <p>根据当前经济形势和自身情况，决定是否申请贷款以及贷款条件</p>
+    </div>
+    <div class="decision-layout">
+        <div class="info-panel">
+            <div class="info-card">
+                <div class="info-card-title">自身属性</div>
+                <div class="info-card-body">
+                    <div class="info-row"><span class="lbl">风险偏好</span><span class="val">balanced（理性均衡）</span></div>
+                    <div class="info-row"><span class="lbl">综合能力 β</span><span class="val">1.05</span></div>
+                    <div class="info-row"><span class="lbl">财富等级</span><span class="val">2 档</span></div>
+                    <div class="info-row"><span class="lbl">上期是否有贷款</span><span class="val">否</span></div>
+                    <div class="info-row"><span class="lbl">上期贷款利率</span><span class="val">—</span></div>
+                    <div class="info-row"><span class="lbl">上期工资</span><span class="val">8,000 元</span></div>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-title">市场环境</div>
+                <div class="info-card-body">
+                    <div class="info-row"><span class="lbl">上期平均贷款利率</span><span class="val">5.52%</span></div>
+                    <div class="info-note">经济背景：Inflation is worsening significantly. The central bank raises the benchmark rate by 25 bps.</div>
+                    <div class="info-note" style="margin-top:6px">宏观新闻：央行宣布加息 25 个基点，一年期存款利率由 2.25% 上调至 2.50%。</div>
+                </div>
+            </div>
+        </div>
+        <div class="form-panel">
+            <div class="form-card">
+                <h3>贷款决策</h3>
+                <div class="form-group">
+                    <label>意愿贷款利率</label>
+                    <input type="number" class="form-input" id="loan-rate" step="0.01" placeholder="例：5.30" value="5.30">
+                    <div class="hint">你期望的贷款利率（%），越接近银行报价越容易匹配</div>
+                </div>
+                <div class="form-group">
+                    <label>是否申请贷款？</label>
+                    <div class="form-toggle" id="loan-decision">
+                        <div class="toggle-btn" onclick="toggleSelect(this,'loan-decision','yes')">是，申请贷款</div>
+                        <div class="toggle-btn" onclick="toggleSelect(this,'loan-decision','no')">否，不贷款</div>
+                    </div>
+                </div>
+                <div class="form-group" id="loan-amount-group" style="display:none">
+                    <label>贷款金额比例（占上期工资）</label>
+                    <input type="range" class="form-slider" id="loan-ratio" min="5" max="50" value="25" oninput="updateSlider('loan-ratio','loan-ratio-val')">
+                    <div>当前：<span class="slider-val" id="loan-ratio-val">25%</span>（= 2,000 元）</div>
+                    <div class="hint">约束：5% ~ 50%（即 400 ~ 4,000 元）</div>
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="submit-btn" onclick="submitLoan()">提交贷款决策</button>
+            </div>
+            <div class="result-box" id="loan-result">
+                <h4>撮合结果</h4>
+                <div class="result-rows">
+                    贷款申请：<b>成功</b><br>匹配银行：Bank 1<br>实际贷款利率：5.56%<br>贷款金额：2,000 元
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="next-btn" id="loan-next" onclick="goStation(1)">前往人才市场 →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 站点二：人才市场（工资/离职） -->
+<div class="decision-page" id="station-labor">
+    <div class="station-header">
+        <div class="station-icon">👔</div>
+        <h2>人才市场 — 工资与就业决策</h2>
+        <p>设定你的期望工资，并决定是否继续留在当前岗位</p>
+    </div>
+    <div class="decision-layout">
+        <div class="info-panel">
+            <div class="info-card">
+                <div class="info-card-title">自身属性</div>
+                <div class="info-card-body">
+                    <div class="info-row"><span class="lbl">综合能力 β</span><span class="val">1.05</span></div>
+                    <div class="info-row"><span class="lbl">上期确认工资</span><span class="val">8,000 元</span></div>
+                    <div class="info-row"><span class="lbl">财富等级</span><span class="val">2 档</span></div>
+                    <div class="info-row"><span class="lbl">就业状态</span><span class="val">在职</span></div>
+                    <div class="info-row"><span class="lbl">当前雇主</span><span class="val">企业 3（中型）</span></div>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-title">市场环境</div>
+                <div class="info-card-body">
+                    <div class="info-row"><span class="lbl">上期家庭平均工资</span><span class="val">5,200 元</span></div>
+                    <div class="info-note">经济背景：Inflation is worsening significantly. The central bank raises the benchmark rate by 25 bps.</div>
+                    <div class="info-note" style="margin-top:6px">宏观新闻：央行宣布加息 25 个基点。多家企业缩减招聘规模。</div>
+                </div>
+            </div>
+        </div>
+        <div class="form-panel">
+            <div class="form-card">
+                <h3>就业决策</h3>
+                <div class="form-group">
+                    <label>意愿工资（元）</label>
+                    <input type="number" class="form-input" id="desired-wage" placeholder="例：8500" value="8500">
+                    <div class="hint">最低 1000 元。设定过高会降低匹配成功率</div>
+                </div>
+                <div class="form-group">
+                    <label>是否主动离职？</label>
+                    <div class="form-toggle" id="quit-decision">
+                        <div class="toggle-btn" onclick="toggleSelect(this,'quit-decision','yes')">是，离开当前公司</div>
+                        <div class="toggle-btn" onclick="toggleSelect(this,'quit-decision','no')">否，继续留任</div>
+                    </div>
+                    <div class="hint">离职后将进入人才市场重新匹配</div>
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="submit-btn" onclick="submitLabor()">提交就业决策</button>
+            </div>
+            <div class="result-box" id="labor-result">
+                <h4>匹配结果</h4>
+                <div class="result-rows">
+                    就业状态：<b>在职</b>（选择留任）<br>当前雇主：企业 3<br>当期工资：8,000 元
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="next-btn" id="labor-next" onclick="goStation(2)">前往超市 →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 站点三：超市（商品消费） -->
+<div class="decision-page" id="station-goods">
+    <div class="station-header">
+        <div class="station-icon">🛒</div>
+        <h2>超市 — 商品消费决策</h2>
+        <p>决定消费比例，并在必需品与奢侈品之间分配预算</p>
+    </div>
+    <div class="decision-layout">
+        <div class="info-panel">
+            <div class="info-card">
+                <div class="info-card-title">自身属性</div>
+                <div class="info-card-body">
+                    <div class="info-row"><span class="lbl">风险偏好</span><span class="val">balanced（理性均衡）</span></div>
+                    <div class="info-row"><span class="lbl">综合能力 β</span><span class="val">1.05</span></div>
+                    <div class="info-row"><span class="lbl">财富等级</span><span class="val">2 档</span></div>
+                    <div class="info-row"><span class="lbl">上期必需品消费</span><span class="val">4 件 @ 40 元</span></div>
+                    <div class="info-row"><span class="lbl">上期奢侈品消费</span><span class="val">1 件 @ 120 元</span></div>
+                    <div class="info-row"><span class="lbl">本期贷款状态</span><span class="val" style="color:#10b981">成功（高紧迫性）</span></div>
+                    <div class="info-row"><span class="lbl">总可用资金</span><span class="val">35,000 元</span></div>
+                    <div class="info-row"><span class="lbl">贷款金额</span><span class="val">2,000 元</span></div>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-title">市场环境</div>
+                <div class="info-card-body">
+                    <div class="info-row"><span class="lbl">上期必需品均价</span><span class="val">42.50 元/件</span></div>
+                    <div class="info-row"><span class="lbl">上期奢侈品均价</span><span class="val">125.00 元/件</span></div>
+                    <div class="info-row"><span class="lbl">上期家庭平均消费量</span><span class="val">4.8 件</span></div>
+                    <div class="info-note">经济背景：Inflation is worsening significantly. The central bank raises the benchmark rate by 25 bps.</div>
+                </div>
+            </div>
+        </div>
+        <div class="form-panel">
+            <div class="form-card">
+                <h3>消费决策</h3>
+                <div class="form-group">
+                    <label>意愿必需品价格（元/件）</label>
+                    <input type="number" class="form-input" id="goods-price-necessity" step="0.1" placeholder="例：40.00" value="40">
+                    <div class="hint">你愿意接受的必需品单价</div>
+                </div>
+                <div class="form-group">
+                    <label>意愿奢侈品价格（元/件）</label>
+                    <input type="number" class="form-input" id="goods-price-luxury" step="0.1" placeholder="例：115.00" value="115">
+                    <div class="hint">你愿意接受的奢侈品单价</div>
+                </div>
+                <div class="form-group">
+                    <label>消费比例（占总可用资金）</label>
+                    <input type="range" class="form-slider" id="consume-ratio" min="80" max="100" value="85" oninput="updateConsumeSlider()">
+                    <div>当前：<span class="slider-val" id="consume-ratio-val">85%</span></div>
+                    <div class="hint" id="consume-hint">约束：80% ~ 100%（贷款成功）<br>消费预算 = 35,000 × 85% + 2,000 = 31,750 元</div>
+                </div>
+                <div class="form-group">
+                    <label>必需品消费占比</label>
+                    <input type="range" class="form-slider" id="necessity-ratio" min="0" max="100" value="60" oninput="updateNecessitySlider()">
+                    <div>必需品 <span class="slider-val" id="necessity-ratio-val">60%</span> ｜ 奢侈品 <span class="slider-val" id="luxury-ratio-val">40%</span></div>
+                    <div class="hint" id="necessity-hint">必需品预算：19,050 元 ｜ 奢侈品预算：12,700 元</div>
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="submit-btn" onclick="submitGoods()">提交消费决策</button>
+            </div>
+            <div class="result-box" id="goods-result">
+                <h4>消费结果</h4>
+                <div class="result-rows">
+                    必需品：购买 <b>450 件</b> @ 42.30 元<br>奢侈品：购买 <b>100 件</b> @ 122.00 元<br>实际消费总额：31,250 元<br>消费后剩余资产：5,750 元
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="next-btn" id="goods-next" onclick="goStation(3)">前往证券交易所 →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 站点四：证券交易所（股票投资） -->
+<div class="decision-page" id="station-stock">
+    <div class="station-header">
+        <div class="station-icon">📈</div>
+        <h2>证券交易所 — 股票投资决策</h2>
+        <p>决定投资比例，并在必需品股票与奢侈品股票之间分配资金</p>
+    </div>
+    <div class="decision-layout">
+        <div class="info-panel">
+            <div class="info-card">
+                <div class="info-card-title">自身属性</div>
+                <div class="info-card-body">
+                    <div class="info-row"><span class="lbl">风险偏好</span><span class="val">balanced（理性均衡）</span></div>
+                    <div class="info-row"><span class="lbl">综合能力 β</span><span class="val">1.05</span></div>
+                    <div class="info-row"><span class="lbl">财富等级</span><span class="val">2 档</span></div>
+                    <div class="info-row"><span class="lbl">本期贷款状态</span><span class="val" style="color:#10b981">成功</span></div>
+                    <div class="info-row"><span class="lbl">上期股票投资比例</span><span class="val">15.2%</span></div>
+                    <div class="info-row"><span class="lbl">持有必需品股票</span><span class="val">20 股</span></div>
+                    <div class="info-row"><span class="lbl">持有奢侈品股票</span><span class="val">10 股</span></div>
+                    <div class="info-row"><span class="lbl">消费后剩余资产</span><span class="val">5,750 元</span></div>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-title">市场环境</div>
+                <div class="info-card-body">
+                    <div class="info-row"><span class="lbl">必需品股票上期成交价</span><span class="val">80.00 元/股</span></div>
+                    <div class="info-row"><span class="lbl">奢侈品股票上期成交价</span><span class="val">120.00 元/股</span></div>
+                    <div class="info-note">经济背景：Inflation is worsening significantly. The central bank raises the benchmark rate by 25 bps.</div>
+                </div>
+            </div>
+        </div>
+        <div class="form-panel">
+            <div class="form-card">
+                <h3>股票投资决策</h3>
+                <div class="form-group">
+                    <label>意愿必需品股票价格（元/股）</label>
+                    <input type="number" class="form-input" id="stock-price-necessity" step="0.1" placeholder="例：82" value="82">
+                    <div class="hint">必需品上市公司股票挂单价</div>
+                </div>
+                <div class="form-group">
+                    <label>意愿奢侈品股票价格（元/股）</label>
+                    <input type="number" class="form-input" id="stock-price-luxury" step="0.1" placeholder="例：125" value="125">
+                    <div class="hint">奢侈品上市公司股票挂单价</div>
+                </div>
+                <div class="form-group" id="stock-ratio-group">
+                    <label>股票投资比例（占剩余资产）</label>
+                    <div style="padding:10px 14px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;font-size:13px;color:#166534;">
+                        贷款成功 → 投资比例强制 100%，无需设定
+                    </div>
+                    <div class="hint" style="margin-top:8px">投资总额 = 5,750 元 × 100% = 5,750 元</div>
+                </div>
+                <div class="form-group">
+                    <label>必需品股票投资占比</label>
+                    <input type="range" class="form-slider" id="stock-necessity-ratio" min="0" max="100" value="50" oninput="updateStockSplitSlider()">
+                    <div>必需品股票 <span class="slider-val" id="stock-nec-val">50%</span> ｜ 奢侈品股票 <span class="slider-val" id="stock-lux-val">50%</span></div>
+                    <div class="hint" id="stock-split-hint">必需品股票投资：2,875 元 ｜ 奢侈品股票投资：2,875 元</div>
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="submit-btn" onclick="submitStock()">提交股票决策</button>
+            </div>
+            <div class="result-box" id="stock-result">
+                <h4>集合竞价结果</h4>
+                <div class="result-rows">
+                    必需品股票出清价：<b>81.00 元/股</b>，买入 15 股<br>奢侈品股票出清价：<b>122.00 元/股</b>，买入 10 股<br>当前持有：必需品 35 股 + 奢侈品 20 股<br>股票投资后剩余资产：2,920 元
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="next-btn" id="stock-next" onclick="goStation(4)">前往商业银行（存款）→</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 站点五：商业银行（存款） -->
+<div class="decision-page" id="station-deposit">
+    <div class="station-header">
+        <div class="station-icon">🏦</div>
+        <h2>商业银行 — 存款决策</h2>
+        <p>设定你期望的存款利率，剩余资产将全额存入匹配的银行</p>
+    </div>
+    <div class="decision-layout">
+        <div class="info-panel">
+            <div class="info-card">
+                <div class="info-card-title">自身属性</div>
+                <div class="info-card-body">
+                    <div class="info-row"><span class="lbl">风险偏好</span><span class="val">balanced（理性均衡）</span></div>
+                    <div class="info-row"><span class="lbl">综合能力 β</span><span class="val">1.05</span></div>
+                    <div class="info-row"><span class="lbl">财富等级</span><span class="val">2 档</span></div>
+                    <div class="info-row"><span class="lbl">上期存款利率</span><span class="val">2.20%</span></div>
+                    <div class="info-row"><span class="lbl">当前剩余资产</span><span class="val">2,998 元</span></div>
+                </div>
+            </div>
+            <div class="info-card">
+                <div class="info-card-title">市场环境</div>
+                <div class="info-card-body">
+                    <div class="info-row"><span class="lbl">上期平均存款利率</span><span class="val">2.22%</span></div>
+                    <div class="info-note">经济背景：Inflation is worsening significantly. The central bank raises the benchmark rate by 25 bps.</div>
+                    <div class="info-note" style="margin-top:6px">宏观新闻：央行上调存款利率至 2.50%，市场流动性收紧。</div>
+                </div>
+            </div>
+        </div>
+        <div class="form-panel">
+            <div class="form-card">
+                <h3>存款决策</h3>
+                <div class="form-group">
+                    <label>意愿存款利率（%）</label>
+                    <input type="number" class="form-input" id="deposit-rate" step="0.01" placeholder="例：2.40" value="2.40">
+                    <div class="hint">越接近银行报价越容易匹配到该银行</div>
+                </div>
+                <div style="padding:12px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;font-size:13px;color:#475569;margin-top:8px;">
+                    存款金额：<b>2,998 元</b>（全额自动存入，无需设定）
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="submit-btn" onclick="submitDeposit()">提交存款决策</button>
+            </div>
+            <div class="result-box" id="deposit-result">
+                <h4>存款结果</h4>
+                <div class="result-rows">
+                    匹配银行：<b>Bank 0（保守型）</b><br>实际存款利率：2.50%<br>存款金额：2,998 元
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="next-btn" id="deposit-next" onclick="finishAll()">完成本月全部决策 ✓</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 完成页面：结果比较 + 经济人格 -->
+<div class="decision-page" id="station-done">
+    <div class="station-header" style="background:linear-gradient(135deg,#f0fdf4,#ecfeff);">
+        <div class="station-icon">🎉</div>
+        <h2>本月决策全部完成</h2>
+        <p>以下是你的表现对比与经济人格分析</p>
+    </div>
+    <div class="result-section">
+        <h3 class="section-title">决策回顾</h3>
+        <div class="recap-grid">
+            <div class="recap-item"><span class="recap-label">贷款</span><span class="recap-val">成功，2,000 元 @ 5.56%</span></div>
+            <div class="recap-item"><span class="recap-label">就业</span><span class="recap-val">留任，工资 8,000 元</span></div>
+            <div class="recap-item"><span class="recap-label">消费</span><span class="recap-val">580 件，共 31,350 元</span></div>
+            <div class="recap-item"><span class="recap-label">股票</span><span class="recap-val">买入 26 股 @ 102 元</span></div>
+            <div class="recap-item"><span class="recap-label">存款</span><span class="recap-val">2,998 元 → Bank 0 @ 2.50%</span></div>
+        </div>
+    </div>
+    <div class="result-section">
+        <h3 class="section-title">表现对比</h3>
+        <div class="compare-grid">
+            <div class="compare-card">
+                <div class="compare-card-title">资产变化</div>
+                <div class="compare-bar-group">
+                    <div class="compare-row"><span class="compare-label">你</span><div class="bar-wrap"><div class="bar bar-player" style="width:65%"></div></div><span class="compare-num positive">+3.2%</span></div>
+                    <div class="compare-row"><span class="compare-label">原 Agent</span><div class="bar-wrap"><div class="bar bar-agent" style="width:50%"></div></div><span class="compare-num positive">+1.8%</span></div>
+                    <div class="compare-row"><span class="compare-label">同层均值</span><div class="bar-wrap"><div class="bar bar-avg" style="width:45%"></div></div><span class="compare-num positive">+1.5%</span></div>
+                </div>
+                <div class="compare-verdict win">你超越了原 Agent 和同层平均！</div>
+            </div>
+            <div class="compare-card">
+                <div class="compare-card-title">当期幸福感</div>
+                <div class="compare-subtitle">由消费数量 × 消费多样性决定</div>
+                <div class="compare-bar-group">
+                    <div class="compare-row"><span class="compare-label">你</span><div class="bar-wrap"><div class="bar bar-player" style="width:72%"></div></div><span class="compare-num">72 分</span></div>
+                    <div class="compare-row"><span class="compare-label">原 Agent</span><div class="bar-wrap"><div class="bar bar-agent" style="width:60%"></div></div><span class="compare-num">60 分</span></div>
+                    <div class="compare-row"><span class="compare-label">同层均值</span><div class="bar-wrap"><div class="bar bar-avg" style="width:55%"></div></div><span class="compare-num">55 分</span></div>
+                </div>
+                <div class="compare-verdict win">幸福感高于同层 31%！</div>
+            </div>
+        </div>
+    </div>
+    <div class="result-section">
+        <h3 class="section-title">你的经济人格</h3>
+        <div class="personality-code">S-R-C-F</div>
+        <div class="personality-name">「消费 · 激进 · 逆势 · 精致」</div>
+        <div class="personality-desc">活在当下的逆向投资者，偏好精致消费，敢于押注不同方向</div>
+        <div class="dimension-grid">
+            <div class="dimension-card">
+                <div class="dim-header"><span class="dim-label">维度一：时间偏好</span></div>
+                <div class="dim-bar-wrap"><span class="dim-pole left active">🔥 S 消费</span><span class="dim-pole right">🌱 A 储蓄</span></div>
+                <div class="dim-slider"><div class="dim-track"><div class="dim-fill" style="width:75%"></div><div class="dim-dot" style="left:75%"></div></div></div>
+                <div class="dim-explain">你的消费比例（85%）高于同层均值（62%），明显偏向即时消费</div>
+            </div>
+            <div class="dimension-card">
+                <div class="dim-header"><span class="dim-label">维度二：风险态度</span></div>
+                <div class="dim-bar-wrap"><span class="dim-pole left active">⚡ R 激进</span><span class="dim-pole right">🛡️ P 保守</span></div>
+                <div class="dim-slider"><div class="dim-track"><div class="dim-fill" style="width:68%"></div><div class="dim-dot" style="left:68%"></div></div></div>
+                <div class="dim-explain">你选择贷款 + 股票全额投入，综合风险指数高于同层 68% 的 agent</div>
+            </div>
+            <div class="dimension-card">
+                <div class="dim-header"><span class="dim-label">维度三：市场立场</span></div>
+                <div class="dim-bar-wrap"><span class="dim-pole left active">🔮 C 逆势</span><span class="dim-pole right">🌊 T 顺势</span></div>
+                <div class="dim-slider"><div class="dim-track"><div class="dim-fill" style="width:62%"></div><div class="dim-dot" style="left:62%"></div></div></div>
+                <div class="dim-explain">你的商品/股票定价低于市场均值 5.6%，呈现逆势买入倾向</div>
+            </div>
+            <div class="dimension-card">
+                <div class="dim-header"><span class="dim-label">维度四：消费品味</span></div>
+                <div class="dim-bar-wrap"><span class="dim-pole left">🛒 U 实用</span><span class="dim-pole right active">🎨 F 精致</span></div>
+                <div class="dim-slider"><div class="dim-track"><div class="dim-fill right-fill" style="width:70%"></div><div class="dim-dot" style="left:30%"></div></div></div>
+                <div class="dim-explain">奢侈品消费占比 42%，高于同层均值 28%，偏好精致消费</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+</aside>
+
+<div class="data-overlay" id="data-overlay" onclick="closeDataPanel(event)">
+    <div class="data-modal">
+        <span class="close-btn" onclick="closeDataPanel()">✕</span>
+        <h3>角色数据面板</h3>
+        <div class="panel-columns">
+            <div class="panel-col self">
+                <h4 class="col-title">自身属性</h4>
+                <div class="panel-block">
+                    <h5>身份信息</h5>
+                    <div class="panel-row"><span class="label">身份</span><span class="value">劳动力</span></div>
+                    <div class="panel-row"><span class="label">财富水平</span><span class="value">2 档（基层）</span></div>
+                    <div class="panel-row"><span class="label">风险偏好</span><span class="value">balanced（λ=1.4）</span></div>
+                    <div class="panel-row"><span class="label">Beta</span><span class="value">1.05</span></div>
+                    <div class="panel-row"><span class="label">Lambda</span><span class="value">1.4</span></div>
+                </div>
+                <div class="panel-block">
+                    <h5>就业信息</h5>
+                    <div class="panel-row"><span class="label">在职状态</span><span class="value" id="dp-employed">在职</span></div>
+                    <div class="panel-row"><span class="label">雇主</span><span class="value" id="dp-employer">企业 3（中型）</span></div>
+                    <div class="panel-row"><span class="label">上期工资</span><span class="value" id="dp-wage">8,000 元</span></div>
+                </div>
+                <div class="panel-block">
+                    <h5>收入与资金</h5>
+                    <div class="panel-row"><span class="label">当期个税</span><span class="value">800 元</span></div>
+                    <div class="panel-row"><span class="label">R&D 奖金</span><span class="value">0 元</span></div>
+                    <div class="panel-row"><span class="label">政府补贴</span><span class="value">500 元</span></div>
+                    <div class="panel-row"><span class="label">总可用资金</span><span class="value">35,000 元</span></div>
+                    <div class="panel-row"><span class="label">当期总资产</span><span class="value">52,000 元</span></div>
+                </div>
+                <div class="panel-block">
+                    <h5>存款</h5>
+                    <div class="panel-row"><span class="label">上期存款</span><span class="value" id="dp-deposit">25,000 元</span></div>
+                    <div class="panel-row"><span class="label">上期存款利率</span><span class="value">2.20%</span></div>
+                    <div class="panel-row"><span class="label">存款银行</span><span class="value" id="dp-dep-bank">Bank 0（保守型）</span></div>
+                </div>
+                <div class="panel-block">
+                    <h5>股票</h5>
+                    <div class="panel-row"><span class="label">持有股数</span><span class="value" id="dp-shares">30 股</span></div>
+                    <div class="panel-row"><span class="label">上期投资额</span><span class="value">3,000 元</span></div>
+                    <div class="panel-row"><span class="label">上期投资比例</span><span class="value" id="dp-stock-trade">15.2%</span></div>
+                </div>
+                <div class="panel-block">
+                    <h5>消费</h5>
+                    <div class="panel-row"><span class="label">上期消费量</span><span class="value" id="dp-consume">5 件</span></div>
+                    <div class="panel-row"><span class="label">上期消费均价</span><span class="value">55.00 元/件</span></div>
+                    <div class="panel-row"><span class="label">上期消费比例</span><span class="value" id="dp-remain">45.0%</span></div>
+                </div>
+                <div class="panel-block">
+                    <h5>贷款</h5>
+                    <div class="panel-row"><span class="label">上期贷款</span><span class="value" id="dp-loan">无</span></div>
+                </div>
+                <div class="panel-block">
+                    <h5>按揭</h5>
+                    <div class="panel-row"><span class="label">按揭银行</span><span class="value">Bank 1</span></div>
+                    <div class="panel-row"><span class="label">初始本金</span><span class="value">400,000 元</span></div>
+                    <div class="panel-row"><span class="label">剩余本金</span><span class="value">385,000 元</span></div>
+                    <div class="panel-row"><span class="label">当期月供</span><span class="value">2,457 元</span></div>
+                    <div class="panel-row"><span class="label">当期利息</span><span class="value">1,675 元</span></div>
+                </div>
+            </div>
+            <div class="panel-col env">
+                <h4 class="col-title">环境属性</h4>
+                <div class="panel-block">
+                    <h5>宏观叙事</h5>
+                    <div class="panel-row"><span class="label">经济背景</span></div>
+                    <div style="font-size:12px;color:#475569;margin:4px 0 8px;">Inflation is worsening significantly. The central bank raises the benchmark rate by 25 bps.</div>
+                    <div class="panel-row"><span class="label">宏观新闻</span></div>
+                    <div style="font-size:12px;color:#475569;margin:4px 0;">央行宣布加息 25 个基点，一年期存款利率由 2.25% 上调至 2.50%。</div>
+                </div>
+                <div class="panel-block">
+                    <h5>基准利率</h5>
+                    <div class="panel-row"><span class="label">1年期存款利率</span><span class="value">2.50%</span></div>
+                    <div class="panel-row"><span class="label">1年期贷款利率</span><span class="value">5.56%</span></div>
+                    <div class="panel-row"><span class="label">房贷执行利率</span><span class="value">5.22%</span></div>
+                </div>
+                <div class="panel-block">
+                    <h5>上期市场数据</h5>
+                    <div class="panel-row"><span class="label">股票成交价</span><span class="value">100.00 元/股</span></div>
+                    <div class="panel-row"><span class="label">含税商品均价</span><span class="value">55.30 元/件</span></div>
+                    <div class="panel-row"><span class="label">家庭平均消费量</span><span class="value">4.8 件</span></div>
+                    <div class="panel-row"><span class="label">家庭平均工资</span><span class="value">5,200 元</span></div>
+                    <div class="panel-row"><span class="label">就业率</span><span class="value">88%</span></div>
+                    <div class="panel-row"><span class="label">平均贷款利率</span><span class="value">5.60%</span></div>
+                    <div class="panel-row"><span class="label">平均存款利率</span><span class="value">2.22%</span></div>
+                </div>
+                <div class="panel-block">
+                    <h5>雇主信息</h5>
+                    <div class="panel-row"><span class="label">雇主规模</span><span class="value">3 级</span></div>
+                    <div class="panel-row"><span class="label">员工总数</span><span class="value">12 人</span></div>
+                    <div class="panel-row"><span class="label">单员工产量</span><span class="value">10 件/人</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="submit-wrap">
+            <button class="submit-btn" style="background:#64748b" onclick="closeDataPanel()">关闭面板</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ─── 玩家决策侧栏逻辑（合并自 player_decision_ui.html）───
+const STATIONS = ['station-loan','station-labor','station-goods','station-stock','station-deposit','station-done'];
+let currentStation = 0;
+
+function toggleSidebar() {
+    document.getElementById('decision-sidebar').classList.toggle('collapsed');
+}
+
+function goStation(idx) {
+    STATIONS.forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById(STATIONS[idx]).classList.add('active');
+    currentStation = idx;
+    updateTaskBar();
+    document.getElementById('sidebar-scroll').scrollTo(0, 0);
+}
+
+function updateTaskBar() {
+    const steps = document.querySelectorAll('.task-step');
+    const connectors = document.querySelectorAll('.task-connector');
+    steps.forEach((s, i) => {
+        s.classList.remove('active', 'done');
+        if (i < currentStation) s.classList.add('done');
+        else if (i === currentStation) s.classList.add('active');
+    });
+    connectors.forEach((c, i) => { c.classList.toggle('done', i < currentStation); });
+}
+
+function toggleSelect(el, groupId, value) {
+    const group = document.getElementById(groupId);
+    group.querySelectorAll('.toggle-btn').forEach(b => { b.classList.remove('selected', 'selected-no'); });
+    if (value === 'yes') el.classList.add('selected');
+    else el.classList.add('selected-no');
+    group.dataset.value = value;
+    if (groupId === 'loan-decision') {
+        document.getElementById('loan-amount-group').style.display = value === 'yes' ? 'block' : 'none';
+    }
+}
+
+function updateSlider(sliderId, valId) {
+    const v = document.getElementById(sliderId).value;
+    const amount = Math.round(8000 * v / 100);
+    document.getElementById(valId).textContent = v + '%（= ' + amount.toLocaleString() + ' 元）';
+}
+
+function updateConsumeSlider() {
+    const v = document.getElementById('consume-ratio').value;
+    const budget = Math.round(35000 * v / 100 + 2000);
+    document.getElementById('consume-ratio-val').textContent = v + '%';
+    document.getElementById('consume-hint').innerHTML =
+        '约束：80% ~ 100%（贷款成功）<br>消费预算 = 35,000 × ' + v + '% + 2,000 = ' + budget.toLocaleString() + ' 元';
+    updateNecessitySlider();
+}
+
+function updateNecessitySlider() {
+    const consumeV = document.getElementById('consume-ratio').value;
+    const budget = Math.round(35000 * consumeV / 100 + 2000);
+    const necV = document.getElementById('necessity-ratio').value;
+    const luxV = 100 - necV;
+    const necBudget = Math.round(budget * necV / 100);
+    const luxBudget = budget - necBudget;
+    document.getElementById('necessity-ratio-val').textContent = necV + '%';
+    document.getElementById('luxury-ratio-val').textContent = luxV + '%';
+    document.getElementById('necessity-hint').textContent =
+        '必需品预算：' + necBudget.toLocaleString() + ' 元 ｜ 奢侈品预算：' + luxBudget.toLocaleString() + ' 元';
+}
+
+function updateStockSplitSlider() {
+    const totalInvest = 5750;
+    const necV = document.getElementById('stock-necessity-ratio').value;
+    const luxV = 100 - necV;
+    const necAmount = Math.round(totalInvest * necV / 100);
+    const luxAmount = totalInvest - necAmount;
+    document.getElementById('stock-nec-val').textContent = necV + '%';
+    document.getElementById('stock-lux-val').textContent = luxV + '%';
+    document.getElementById('stock-split-hint').textContent =
+        '必需品股票投资：' + necAmount.toLocaleString() + ' 元 ｜ 奢侈品股票投资：' + luxAmount.toLocaleString() + ' 元';
+}
+
+function submitLoan() {
+    document.getElementById('loan-result').classList.add('visible');
+    document.getElementById('loan-next').classList.add('visible');
+}
+function submitLabor() {
+    document.getElementById('labor-result').classList.add('visible');
+    document.getElementById('labor-next').classList.add('visible');
+}
+function submitGoods() {
+    document.getElementById('goods-result').classList.add('visible');
+    document.getElementById('goods-next').classList.add('visible');
+    document.getElementById('dp-consume').textContent = '580 件，31,350 元';
+    document.getElementById('dp-remain').textContent = '5,650 元';
+}
+function submitStock() {
+    document.getElementById('stock-result').classList.add('visible');
+    document.getElementById('stock-next').classList.add('visible');
+    document.getElementById('dp-shares').textContent = '56 股';
+    document.getElementById('dp-stock-trade').textContent = '买入 26 股 @ 102 元';
+}
+function submitDeposit() {
+    document.getElementById('deposit-result').classList.add('visible');
+    document.getElementById('deposit-next').classList.add('visible');
+    document.getElementById('dp-deposit').textContent = '2,998 元 @ 2.50%';
+    document.getElementById('dp-dep-bank').textContent = 'Bank 0';
+}
+function finishAll() { goStation(5); }
+
+function toggleDataPanel() {
+    document.getElementById('data-overlay').classList.add('visible');
+}
+function closeDataPanel(e) {
+    if (!e || e.target === document.getElementById('data-overlay')) {
+        document.getElementById('data-overlay').classList.remove('visible');
+    }
+}
+</script>
+
+<div class="toolbar">
+  <button class="btn-save" onclick="savePositions()">保存位置</button>
+  <button onclick="copySnapshotJSON()" style="background:#0ea5e9;color:#fff;">📋 复制快照 JSON</button>
+  <button class="btn-reset" onclick="resetPositions()">重置位置</button>
+  <button class="btn-plan" id="btnPlan" onclick="togglePlanMode()">规划路线</button>
+  <button class="btn-agent-select" id="btnAgent1" onclick="planSelectAgent(0)" style="display:none">客户A</button>
+  <button class="btn-agent-select" id="btnAgent2" onclick="planSelectAgent(1)" style="display:none">客户B</button>
+  <button class="btn-plan-confirm" id="btnPlanConfirm" onclick="confirmPlan(false)" style="display:none">✓ 单次执行</button>
+  <button class="btn-plan-loop" id="btnPlanLoop" onclick="confirmPlan(true)" style="display:none">↺ 闭环行走</button>
+  <button class="btn-plan-clear" id="btnPlanClear" onclick="clearPlan()" style="display:none">✕ 清除路线</button>
+</div>
+<div class="plan-hint hidden" id="planHint"></div>
+<div class="toast" id="toast"></div>
+
+<div class="size-panel" id="sizePanel">
+  <label id="sizeLabel">选中元素</label>
+  <input type="range" id="sizeSlider" min="1" max="60" step="0.5" value="10">
+  <span class="size-val" id="sizeVal">10%</span>
+</div>
+<div class="hint">点击元素选中后，用底部滑动条调整大小</div>
+
+<div class="scene" id="scene">
+  <img class="bg" src="images/background.png" alt="背景">
+
+  <!-- 双人柜台1 -->
+  <div class="item" id="el-counter-double1" data-name="双人柜台1" style="width:15%; left:42.17%; top:28.33%; z-index:20;">
+    <img src="cutouts/1.png">
+  </div>
+
+  <!-- 双人柜台2 -->
+  <div class="item" id="el-counter-double2" data-name="双人柜台2" style="width:15%; left:57.41%; top:38.96%; z-index:19;">
+    <img src="cutouts/16.png">
+  </div>
+
+  <!-- ATM机 -->
+  <div class="item" id="el-atm" data-name="ATM机" style="width:6%; left:39.66%; top:13.64%; z-index:15;">
+    <img src="cutouts/3.png">
+  </div>
+
+  <!-- 单人柜台 -->
+  <div class="item" id="el-counter-single" data-name="单人柜台" style="width:10%; left:38.14%; top:46.08%; z-index:35;">
+    <img src="cutouts/2.png">
+  </div>
+
+  <!-- 左沙发 -->
+  <div class="item" id="el-sofa-left" data-name="左沙发" style="width:9.5%; left:51.52%; top:66.52%; z-index:30;">
+    <img src="cutouts/4.png">
+  </div>
+
+  <!-- 右沙发 -->
+  <div class="item" id="el-sofa-right" data-name="右沙发" style="width:9.5%; left:17.30%; top:39.78%; z-index:45;">
+    <img src="cutouts/4.png">
+  </div>
+
+  <!-- 左茶几 -->
+  <div class="item" id="el-table-left" data-name="左茶几" style="width:10%; left:58.23%; top:73.09%; z-index:32;">
+    <img src="cutouts/5.png">
+  </div>
+
+  <!-- 右茶几 -->
+  <div class="item" id="el-table-right" data-name="右茶几" style="width:10%; left:22.73%; top:45.53%; z-index:48;">
+    <img src="cutouts/6.png">
+  </div>
+
+  <!-- 金色隔离栏 -->
+  <div class="item" id="el-barrier" data-name="隔离栏" style="width:16%; left:50.24%; top:49.75%; z-index:36;">
+    <img src="cutouts/7.png">
+  </div>
+
+  <!-- 告示牌 -->
+  <div class="item" id="el-sign" data-name="告示牌" style="width:3.5%; left:31.05%; top:61.97%; z-index:37;">
+    <img src="cutouts/8.png">
+  </div>
+
+  <!-- 植物 左上 -->
+  <div class="item" id="el-plant-lt" data-name="植物左上" style="width:5.5%; left:8.20%; top:42.52%; z-index:16;">
+    <img src="cutouts/9.png">
+  </div>
+
+  <!-- 植物 右上 -->
+  <div class="item" id="el-plant-rt" data-name="植物右上" style="width:4%; left:31.01%; top:26.03%; z-index:22;">
+    <img src="cutouts/10.png">
+  </div>
+
+  <!-- 植物 右下 -->
+  <div class="item" id="el-plant-rb" data-name="植物右下" style="width:5.5%; left:49.83%; top:77.91%; z-index:44;">
+    <img src="cutouts/11.png">
+  </div>
+
+  <!-- 植物 左前 -->
+  <div class="item" id="el-plant-lf" data-name="植物左前" style="width:5.5%; left:73.88%; top:42.85%; z-index:42;">
+    <img src="cutouts/9.png">
+  </div>
+
+  <!-- 保险柜 -->
+  <div class="item" id="el-safe" data-name="保险柜" style="width:9.5%; left:84.55%; top:43.89%; z-index:24;">
+    <img src="cutouts/12.png">
+  </div>
+
+  <!-- 宣传架 -->
+  <div class="item" id="el-rack" data-name="宣传架" style="width:4.5%; left:25.86%; top:57.20%; z-index:34;">
+    <img src="cutouts/13.png">
+  </div>
+
+  <!-- 垃圾桶 -->
+  <div class="item" id="el-bin" data-name="垃圾桶" style="width:2%; left:70.13%; top:52.00%; z-index:43;">
+    <img src="cutouts/14.png">
+  </div>
+
+  <!-- 银行标志 -->
+  <div class="item" id="el-logo" data-name="银行标志" style="width:4%; left:63.96%; top:24.66%; z-index:10;">
+    <img src="cutouts/15.png">
+  </div>
+
+  <!-- 小人行走图层：viewBox 1000x750 与 4:3 场景等比，坐标即百分比×10 / ×7.5 -->
+  <svg class="agents-overlay" id="agents-overlay" viewBox="0 0 1000 750" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <g id="floor-debug" style="display:none"></g>
+    <g id="bank-characters"></g>
+  </svg>
+  <!-- 路线规划预览层：独立 SVG，不干扰人物层 -->
+  <svg class="agents-overlay" id="plan-overlay" viewBox="0 0 1000 750" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; z-index:501;">
+    <g id="plan-preview-layer"></g>
+  </svg>
+</div>
+
+<script>
+// === 嵌入式快照（点"📋 复制快照 JSON"把数据粘到这里两个 null 位置；保留 sentinel 注释） ===
+const EMBEDDED_LAYOUT = {
+  "el-counter-double1": {
+    "left": "40.92%",
+    "top": "27.01%",
+    "width": "15%"
+  },
+  "el-counter-double2": {
+    "left": "57.37%",
+    "top": "37.61%",
+    "width": "15%"
+  },
+  "el-atm": {
+    "left": "39.72%",
+    "top": "13.55%",
+    "width": "6%"
+  },
+  "el-counter-single": {
+    "left": "39.18%",
+    "top": "47.81%",
+    "width": "10%"
+  },
+  "el-sofa-left": {
+    "left": "50.82%",
+    "top": "70.52%",
+    "width": "9.5%"
+  },
+  "el-sofa-right": {
+    "left": "18.12%",
+    "top": "35.46%",
+    "width": "10%"
+  },
+  "el-table-left": {
+    "left": "56.59%",
+    "top": "76.42%",
+    "width": "10%"
+  },
+  "el-table-right": {
+    "left": "22.32%",
+    "top": "41.28%",
+    "width": "10%"
+  },
+  "el-barrier": {
+    "left": "57.55%",
+    "top": "58.33%",
+    "width": "16%"
+  },
+  "el-sign": {
+    "left": "30.00%",
+    "top": "62.56%",
+    "width": "3.5%"
+  },
+  "el-plant-lt": {
+    "left": "8.22%",
+    "top": "42.55%",
+    "width": "5.5%"
+  },
+  "el-plant-rt": {
+    "left": "30.96%",
+    "top": "25.98%",
+    "width": "4%"
+  },
+  "el-plant-rb": {
+    "left": "49.86%",
+    "top": "78.02%",
+    "width": "5.5%"
+  },
+  "el-plant-lf": {
+    "left": "73.87%",
+    "top": "42.95%",
+    "width": "5.5%"
+  },
+  "el-safe": {
+    "left": "84.55%",
+    "top": "43.99%",
+    "width": "9.5%"
+  },
+  "el-rack": {
+    "left": "25.80%",
+    "top": "57.69%",
+    "width": "4.5%"
+  },
+  "el-bin": {
+    "left": "70.09%",
+    "top": "52.04%",
+    "width": "2%"
+  },
+  "el-logo": {
+    "left": "63.91%",
+    "top": "24.70%",
+    "width": "4%"
+  }
+};  //__EMBEDDED_LAYOUT_END
+const EMBEDDED_ROUTES = [
+  {
+    "name": "person1",
+    "x": 307,
+    "y": 409,
+    "fixedRoute": [
+      [
+        381,
+        578
+      ],
+      [
+        469,
+        514
+      ],
+      [
+        307,
+        409
+      ],
+      [
+        399,
+        323
+      ],
+      [
+        582,
+        398
+      ]
+    ],
+    "linear": false,
+    "atEnd": false
+  },
+  {
+    "name": "person2",
+    "x": 731.6865547433047,
+    "y": 494.0382908682196,
+    "fixedRoute": [
+      [
+        718,
+        485
+      ],
+      [
+        771,
+        520
+      ],
+      [
+        840,
+        485
+      ],
+      [
+        785,
+        433
+      ]
+    ],
+    "linear": false,
+    "atEnd": false
+  }
+];  //__EMBEDDED_ROUTES_END
+
+(function() {
+  const scene = document.getElementById('scene');
+  const sizePanel = document.getElementById('sizePanel');
+  const sizeSlider = document.getElementById('sizeSlider');
+  const sizeVal = document.getElementById('sizeVal');
+  const sizeLabel = document.getElementById('sizeLabel');
+  let active = null, startX = 0, startY = 0, origLeft = 0, origTop = 0;
+  let selected = null;
+  let dragged = false;
+
+  document.querySelectorAll('.item').forEach(el => {
+    el.addEventListener('mousedown', begin);
+    el.addEventListener('touchstart', begin, {passive: false});
+  });
+
+  function begin(e) {
+    e.preventDefault();
+    active = this;
+    dragged = false;
+    active.style.zIndex = 999;
+    const pt = e.touches ? e.touches[0] : e;
+    startX = pt.clientX;
+    startY = pt.clientY;
+    origLeft = active.offsetLeft;
+    origTop = active.offsetTop;
+  }
+
+  document.addEventListener('mousemove', move);
+  document.addEventListener('touchmove', move, {passive: false});
+  function move(e) {
+    if (!active) return;
+    e.preventDefault();
+    const pt = e.touches ? e.touches[0] : e;
+    const dx = pt.clientX - startX;
+    const dy = pt.clientY - startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragged = true;
+    active.style.left = (origLeft + dx) + 'px';
+    active.style.top = (origTop + dy) + 'px';
+  }
+
+  document.addEventListener('mouseup', end);
+  document.addEventListener('touchend', end);
+  function end() {
+    if (active) {
+      active.style.zIndex = '';
+      if (!dragged) selectItem(active);
+      active = null;
+    }
+  }
+
+  scene.addEventListener('mousedown', function(e) {
+    if (e.target === scene || e.target.classList.contains('bg')) {
+      deselectAll();
+    }
+  });
+
+  function selectItem(el) {
+    deselectAll();
+    selected = el;
+    el.classList.add('selected');
+    sizePanel.classList.add('show');
+    const w = parseFloat(el.style.width);
+    sizeSlider.value = w;
+    sizeVal.textContent = w.toFixed(1) + '%';
+    sizeLabel.textContent = el.dataset.name || el.id;
+  }
+
+  function deselectAll() {
+    if (selected) selected.classList.remove('selected');
+    selected = null;
+    sizePanel.classList.remove('show');
+    sizeSlider.min = 1;
+    sizeSlider.max = 60;
+    sizeSlider.step = 0.5;
+  }
+
+  // 跨 IIFE 通信：让人物选中时通知本 IIFE 清掉物体选中
+  document.addEventListener('bank:deselectItem', deselectAll);
+
+  sizeSlider.addEventListener('input', function() {
+    if (!selected) return;
+    const v = parseFloat(this.value);
+    selected.style.width = v + '%';
+    sizeVal.textContent = v.toFixed(1) + '%';
+  });
+
+  loadPositions();
+})();
+
+function savePositions() {
+  const scene = document.getElementById('scene');
+  const rect = scene.getBoundingClientRect();
+  const data = {};
+  document.querySelectorAll('.item').forEach(el => {
+    const leftPct = (el.offsetLeft / rect.width * 100).toFixed(2) + '%';
+    const topPct = (el.offsetTop / rect.height * 100).toFixed(2) + '%';
+    el.style.left = leftPct;
+    el.style.top = topPct;
+    data[el.id] = { left: leftPct, top: topPct, width: el.style.width };
+  });
+  localStorage.setItem('bank_scene_positions', JSON.stringify(data));
+
+  // 同时保存每个人物的规划路线
+  const agents = window.__bankAgents || [];
+  const agentRoutes = agents.map(ag => ({
+    name:       ag.name,
+    x:          ag.x,
+    y:          ag.y,
+    fixedRoute: ag.fixedRoute ? ag.fixedRoute.map(p => [...p]) : null,
+    linear:     ag.linear,
+    atEnd:      ag.atEnd
+  }));
+  localStorage.setItem('bank_scene_routes', JSON.stringify(agentRoutes));
+
+  showToast('位置、大小及路线已保存');
+}
+
+function resetPositions() {
+  localStorage.removeItem('bank_scene_positions');
+  localStorage.removeItem('bank_scene_routes');
+  location.reload();
+}
+
+function loadPositions() {
+  // EMBEDDED 优先：嵌入快照非空时一定生效，覆盖 localStorage；为 null 时才回退 localStorage
+  let saved;
+  if (EMBEDDED_LAYOUT && typeof EMBEDDED_LAYOUT === 'object') {
+    saved = JSON.stringify(EMBEDDED_LAYOUT);
+  } else {
+    saved = localStorage.getItem('bank_scene_positions');
+  }
+  if (saved) {
+    const data = JSON.parse(saved);
+    Object.keys(data).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.left = data[id].left;
+        el.style.top = data[id].top;
+        if (data[id].width) el.style.width = data[id].width;
+      }
+    });
+  }
+
+  // 路线恢复：在行走系统就绪后注入
+  // 路线恢复（EMBEDDED 优先）
+  let savedRoutes;
+  if (Array.isArray(EMBEDDED_ROUTES)) {
+    savedRoutes = JSON.stringify(EMBEDDED_ROUTES);
+  } else {
+    savedRoutes = localStorage.getItem('bank_scene_routes');
+  }
+  if (savedRoutes) {
+    const routeData = JSON.parse(savedRoutes);
+    // 若 agents 已就绪直接恢复，否则等待事件
+    function restoreRoutes(agents) {
+      routeData.forEach(r => {
+        const ag = agents.find(a => a.name === r.name);
+        if (!ag || !r.fixedRoute) return;
+        ag.x               = r.x;
+        ag.y               = r.y;
+        ag.fixedRoute      = r.fixedRoute.map(p => [...p]);
+        ag.linear          = r.linear;
+        ag.atEnd           = r.atEnd;
+        ag.fixedRouteIndex = 0;
+        ag.target          = null;
+        ag.pauseUntil      = 0;
+      });
+    }
+    if (window.__bankAgents) {
+      restoreRoutes(window.__bankAgents);
+    } else {
+      document.addEventListener('bank:agentsReady', e => restoreRoutes(e.detail.agents), { once: true });
+    }
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// === 复制快照 JSON — 弹窗显示当前 layout/routes，复制后手动粘到 EMBEDDED_* 位置 ===
+function copySnapshotJSON() {
+  if (typeof savePositions === 'function') savePositions();
+  const layoutRaw = localStorage.getItem('bank_scene_positions');
+  const routesRaw = localStorage.getItem('bank_scene_routes');
+  if (!layoutRaw && !routesRaw) {
+    alert('当前没有任何可复制的快照。请先调整布局或路线后再点击。');
+    return;
+  }
+  const layoutJson = layoutRaw ? JSON.stringify(JSON.parse(layoutRaw), null, 2) : 'null';
+  const routesJson = routesRaw ? JSON.stringify(JSON.parse(routesRaw), null, 2) : 'null';
+  showSnapshotModal(layoutJson, routesJson);
+}
+
+function showSnapshotModal(layoutJson, routesJson) {
+  let modal = document.getElementById('snapshotModal');
+  if (modal) modal.remove();
+  modal = document.createElement('div');
+  modal.id = 'snapshotModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-family:"Microsoft YaHei",sans-serif;';
+  modal.innerHTML =
+    '<div style="background:#fff;border-radius:10px;padding:18px 22px;max-width:780px;width:90vw;max-height:90vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,.3);">' +
+      '<h3 style="margin:0 0 8px;font-size:17px;color:#1f2937;">📋 复制快照 JSON</h3>' +
+      '<p style="margin:0 0 14px;color:#4b5563;font-size:13px;line-height:1.6;">分别复制下面两段，粘到本 HTML 源码顶部 <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">EMBEDDED_LAYOUT</code> / <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">EMBEDDED_ROUTES</code> 两个 <code>null</code> 的位置（保留尾部 <code>;</code> 和 <code>//__EMBEDDED_*_END</code> 注释）。然后把整个场景文件夹打包发出，对方解压双击 html 就是当前状态。</p>' +
+      '<div style="margin-bottom:12px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<label style="font-size:13px;color:#374151;font-weight:600;">EMBEDDED_LAYOUT =</label>' +
+          '<button class="snap-copy" data-target="snapLayoutArea" style="padding:4px 14px;font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;">复制</button>' +
+        '</div>' +
+        '<textarea id="snapLayoutArea" readonly style="width:100%;height:170px;font-family:Consolas,Menlo,monospace;font-size:12px;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>' +
+      '</div>' +
+      '<div style="margin-bottom:14px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<label style="font-size:13px;color:#374151;font-weight:600;">EMBEDDED_ROUTES =</label>' +
+          '<button class="snap-copy" data-target="snapRoutesArea" style="padding:4px 14px;font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;">复制</button>' +
+        '</div>' +
+        '<textarea id="snapRoutesArea" readonly style="width:100%;height:170px;font-family:Consolas,Menlo,monospace;font-size:12px;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>' +
+      '</div>' +
+      '<div style="text-align:right;">' +
+        '<button id="snapClose" style="padding:8px 22px;font-size:13px;background:#6b7280;color:#fff;border:none;border-radius:6px;cursor:pointer;">关闭</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  document.getElementById('snapLayoutArea').value = layoutJson;
+  document.getElementById('snapRoutesArea').value = routesJson;
+  modal.querySelectorAll('.snap-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ta = document.getElementById(btn.dataset.target);
+      ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      const orig = btn.textContent;
+      btn.textContent = '已复制 ✓';
+      btn.style.background = '#10b981';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = '#3b82f6'; }, 1500);
+    });
+  });
+  modal.querySelector('#snapClose').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+</script>
+
+<!-- ════════ 小人行走系统（简化版：固定路线 + 四方向精灵，无碰撞）════════ -->
+
+<script>
+(() => {
+  const svgNS = "http://www.w3.org/2000/svg";
+  const charactersLayer = document.querySelector("#bank-characters");
+  const floorDebugLayer = document.querySelector("#floor-debug");
+  const scene = document.getElementById("scene");
+
+  // 坐标系：viewBox 1000x750，与 4:3 背景等比拉伸。x = left% × 10，y = top% × 7.5。
+  // 简化行走系统：沿预定义路线直线移动，四方向真精灵，无碰撞检测。
+  const WALK_CONFIG = {
+    floorPolygon: [[470, 158], [924, 428], [524, 698], [52, 353]],
+    frameMs: 60,
+    pauseMs: [400, 1200]
+  };
+
+  // ─── 三个角色的四方向行走精灵 ───
+  // 每个精灵用不同渲染脚本生成，方向约定可能不一致：
+  //   render_isometric.py：相机绕物体旋转，文件名 ↔ 实际方向可能颠倒
+  //   render_walk.py：物体旋转、相机固定，文件名通常正确
+  // 通过 dirMap 把"引擎方向"重映射到"精灵文件夹的实际方向"
+  // dirMap 默认为单位映射（front→front, back→back, left→left, right→right）
+  // 如果某个精灵显示方向不对，调整对应键值即可（比如 front 与 back 互换）
+
+  // walk_1: 12帧×4方向, 文件名 walk_{dir}_{01-12}.png
+  // 帧方向已与新的对角方向系对齐，dirMap 用单位映射即可
+  const WALK_1_SPRITE = {
+    box: 135, footFrac: 0.826, midFrac: 0.499,
+    dirs: {
+      front: Array.from({ length: 12 }, (_, i) => `agent_person/walk/walk_1/walk_front_${String(i+1).padStart(2,"0")}.png`),
+      back:  Array.from({ length: 12 }, (_, i) => `agent_person/walk/walk_1/walk_back_${String(i+1).padStart(2,"0")}.png`),
+      left:  Array.from({ length: 12 }, (_, i) => `agent_person/walk/walk_1/walk_left_${String(i+1).padStart(2,"0")}.png`),
+      right: Array.from({ length: 12 }, (_, i) => `agent_person/walk/walk_1/walk_right_${String(i+1).padStart(2,"0")}.png`)
+    },
+    dirMap: { front: "front", back: "back", left: "left", right: "right" }
+  };
+  WALK_1_SPRITE.idle = WALK_1_SPRITE.dirs.front[0];
+
+  // walk_2: 12帧×4方向, 文件名 walk_{dir}_{01-12}.png
+  const WALK_2_SPRITE = {
+    box: 135, footFrac: 0.826, midFrac: 0.499,
+    dirs: {
+      front: Array.from({ length: 12 }, (_, i) => `agent_person/walk/walk_2/walk_front_${String(i+1).padStart(2,"0")}.png`),
+      back:  Array.from({ length: 12 }, (_, i) => `agent_person/walk/walk_2/walk_back_${String(i+1).padStart(2,"0")}.png`),
+      left:  Array.from({ length: 12 }, (_, i) => `agent_person/walk/walk_2/walk_left_${String(i+1).padStart(2,"0")}.png`),
+      right: Array.from({ length: 12 }, (_, i) => `agent_person/walk/walk_2/walk_right_${String(i+1).padStart(2,"0")}.png`)
+    },
+    dirMap: { front: "front", back: "back", left: "left", right: "right" }
+  };
+  WALK_2_SPRITE.idle = WALK_2_SPRITE.dirs.front[0];
+
+  // walk_client1: 12帧×4方向, 文件名 walk_{dir}_{0-11}.png（保留供日后扩展，当前未使用）
+
+  // 可用精灵池（分配给 AI 巡逻角色）
+  const SPRITE_POOL = [WALK_1_SPRITE, WALK_2_SPRITE];
+
+  // ─── 两个绿色方框行走区域（viewBox 1000×750 坐标）───
+  // 路线规则：所有线段必须严格沿 45° 对角线方向，对应新角标方向系：
+  //   东北段(NE) → front   ｜ 东南段(SE) → right
+  //   西北段(NW) → left    ｜ 西南段(SW) → back
+  // 巡逻路线选址原则：
+  //   1. 完全位于地板蓝色多边形内
+  //   2. 路线包络盒不与任何家具的精确轮廓相交（已用 alpha mask 自动验证）
+  //   3. 菱形 r=45：四段长度相等，每段刚好对应一个对角方向
+  const WALK_ZONES = [
+    { name: "左区路径", x: 120, y: 260, w: 660, h: 240,
+      // 沿橙色路线从左下角走到右上角（线性路径，不闭环；走完停在原地）
+      // 4 段大波：NE→SE→NE→SE，整体方向 NE，与图片中橙色线条吻合
+      route: [
+        [180, 420],  // 起点：左下（人物起始位置）
+        [320, 280],  // NE：第一波峰（向右上）
+        [480, 440],  // SE：波谷（向右下）
+        [640, 280],  // NE：第二波峰（向右上）
+        [720, 360]   // SE：终点（停在此处）
+      ],
+      linear: true,
+      color: "#ff6600"
+    },
+    { name: "右区", x: 738, y: 408, w: 100, h: 100,
+      // 菱形巡逻：东(SE)→南(SW)→西(NW)→北(NE)，中心(788,456) 半径 45
+      route: [[833, 456], [788, 501], [743, 456], [788, 411]],
+      color: "#cc00ff"
+    }
+  ];
+
+  // ─── SVG 工具 ───
+  function svgElement(tag, attrs = {}) {
+    const el = document.createElementNS(svgNS, tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+  }
+
+  // ─── 几何判断：点是否在多边形内（射线法） ───
+  function pointInPolygon(x, y, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i][0], yi = poly[i][1];
+      const xj = poly[j][0], yj = poly[j][1];
+      const intersect = ((yi > y) !== (yj > y)) &&
+        (x < (xj - xi) * (y - yi) / (yj - yi + 1e-9) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  // ─── 碰撞画布：把场景里的 .item 抠图素材按场景比例画到一张离屏 canvas，
+  //     角色脚点用 alpha 通道采样判断是否压到了非透明像素，得到精确轮廓碰撞。
+  const obstacleCanvas = document.createElement("canvas");
+  obstacleCanvas.width = 1000;
+  obstacleCanvas.height = 750;
+  const obstacleCtx = obstacleCanvas.getContext("2d", { willReadFrequently: true });
+  let obstacleAlpha = null;          // Uint8ClampedArray 长度 = 1000 * 750
+  let obstacleCanvasReady = false;
+  let obstacleBoxes = [];            // 碰撞退化方案使用的物体外框（粗略矩形）
+  let obstacleContourPath = "";      // 每个 .item 的精确轮廓拼接成一条 SVG path d
+  // alpha 阈值：>= 这个值视为障碍像素（PNG 抠图边缘有羽化，调高一点避免误判）
+  const OBSTACLE_ALPHA_THRESHOLD = 80;
+  // 单个 item 的轮廓采样最大边长（viewBox 单位）。越大越精细，但 SVG path 会越长。
+  const CONTOUR_SAMPLE_LIMIT = 160;
+
+  // ─── 从 imgEl 的 alpha 通道用 marching squares 提取精确轮廓，返回 SVG path d 片段。
+  // (x, y, w, h) 是该 item 在 viewBox(1000×750) 坐标系中的位置和尺寸。
+  function extractContourPath(imgEl, x, y, w, h) {
+    if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0) return "";
+    const scale = Math.min(1, CONTOUR_SAMPLE_LIMIT / Math.max(w, h));
+    const cw = Math.max(2, Math.round(w * scale));
+    const ch = Math.max(2, Math.round(h * scale));
+    const c = document.createElement("canvas");
+    c.width = cw;
+    c.height = ch;
+    const ctx = c.getContext("2d");
+    ctx.clearRect(0, 0, cw, ch);
+    try {
+      ctx.drawImage(imgEl, 0, 0, cw, ch);
+    } catch (e) { return ""; }
+    let pix;
+    try {
+      pix = ctx.getImageData(0, 0, cw, ch).data;
+    } catch (e) { return ""; }
+
+    const inv = 1 / scale;
+    const T = OBSTACLE_ALPHA_THRESHOLD;
+    const f = n => n.toFixed(1);
+    let d = "";
+    for (let yi = 0; yi < ch - 1; yi++) {
+      for (let xi = 0; xi < cw - 1; xi++) {
+        const i0 = (yi * cw + xi) * 4 + 3;
+        const i1 = (yi * cw + xi + 1) * 4 + 3;
+        const i2 = ((yi + 1) * cw + xi + 1) * 4 + 3;
+        const i3 = ((yi + 1) * cw + xi) * 4 + 3;
+        const code =
+          (pix[i0] >= T ? 1 : 0) |
+          (pix[i1] >= T ? 2 : 0) |
+          (pix[i2] >= T ? 4 : 0) |
+          (pix[i3] >= T ? 8 : 0);
+        if (code === 0 || code === 15) continue;
+        // 单元四条边中点（相对 viewBox 坐标）
+        const tx = (xi + 0.5) * inv + x, ty = yi * inv + y;
+        const rx = (xi + 1) * inv + x,   ry = (yi + 0.5) * inv + y;
+        const bx = (xi + 0.5) * inv + x, by = (yi + 1) * inv + y;
+        const lx = xi * inv + x,         ly = (yi + 0.5) * inv + y;
+        switch (code) {
+          case 1:  case 14: d += `M${f(lx)} ${f(ly)}L${f(tx)} ${f(ty)}`; break;
+          case 2:  case 13: d += `M${f(tx)} ${f(ty)}L${f(rx)} ${f(ry)}`; break;
+          case 3:  case 12: d += `M${f(lx)} ${f(ly)}L${f(rx)} ${f(ry)}`; break;
+          case 4:  case 11: d += `M${f(rx)} ${f(ry)}L${f(bx)} ${f(by)}`; break;
+          case 6:  case 9:  d += `M${f(tx)} ${f(ty)}L${f(bx)} ${f(by)}`; break;
+          case 7:  case 8:  d += `M${f(lx)} ${f(ly)}L${f(bx)} ${f(by)}`; break;
+          case 5:           d += `M${f(lx)} ${f(ly)}L${f(tx)} ${f(ty)}M${f(rx)} ${f(ry)}L${f(bx)} ${f(by)}`; break;
+          case 10:          d += `M${f(lx)} ${f(ly)}L${f(bx)} ${f(by)}M${f(tx)} ${f(ty)}L${f(rx)} ${f(ry)}`; break;
+        }
+      }
+    }
+    return d;
+  }
+
+  // 把场景中的所有 .item 按其屏幕位置/尺寸绘制到 obstacleCanvas。
+  // 等所有 img 加载好后才能拿到 alpha 数据。
+  function rebuildObstacleCanvas() {
+    return new Promise((resolve) => {
+      obstacleCanvasReady = false;
+      obstacleCtx.clearRect(0, 0, 1000, 750);
+      const sceneRect = scene.getBoundingClientRect();
+      const sx = 1000 / sceneRect.width;
+      const sy = 750  / sceneRect.height;
+      const items = Array.from(document.querySelectorAll(".scene .item"));
+      obstacleBoxes = [];
+      const contourFragments = [];
+
+      const tasks = items.map(el => new Promise((done) => {
+        const r = el.getBoundingClientRect();
+        const x = (r.left   - sceneRect.left) * sx;
+        const y = (r.top    - sceneRect.top ) * sy;
+        const w = (r.right  - r.left) * sx;
+        const h = (r.bottom - r.top ) * sy;
+        obstacleBoxes.push({ x1: x, y1: y, x2: x + w, y2: y + h, name: el.dataset.name || el.id });
+
+        const imgEl = el.querySelector("img");
+        if (!imgEl || !imgEl.src) { done(); return; }
+        // 复用已加载的 img 元素：只要它已经 complete 就能直接 drawImage
+        const draw = () => {
+          try {
+            obstacleCtx.drawImage(imgEl, x, y, w, h);
+          } catch (e) { /* CORS 等异常时静默 */ }
+          // 顺便提取精确轮廓
+          const d = extractContourPath(imgEl, x, y, w, h);
+          if (d) contourFragments.push(d);
+          done();
+        };
+        if (imgEl.complete && imgEl.naturalWidth > 0) {
+          draw();
+        } else {
+          imgEl.addEventListener("load", draw, { once: true });
+          imgEl.addEventListener("error", () => done(), { once: true });
+        }
+      }));
+
+      Promise.all(tasks).then(() => {
+        obstacleContourPath = contourFragments.join("");
+        try {
+          const data = obstacleCtx.getImageData(0, 0, 1000, 750).data;
+          // 只保留 alpha 通道，节省内存
+          obstacleAlpha = new Uint8ClampedArray(1000 * 750);
+          for (let i = 0, j = 3; i < obstacleAlpha.length; i++, j += 4) {
+            obstacleAlpha[i] = data[j];
+          }
+          obstacleCanvasReady = true;
+        } catch (e) {
+          // 一般是 CORS 异常，本地 file:// 下也可能遇到 SecurityError
+          console.warn("obstacle canvas getImageData 失败，将退化为矩形碰撞", e);
+          obstacleCanvasReady = false;
+        }
+        resolve();
+      });
+    });
+  }
+
+  // 角色脚下圆形半径（碰撞用）
+  const PERSON_RADIUS = 14;
+  // 角色之间的最小距离（圆-圆碰撞）
+  const PERSON_PERSON_DIST = 32;
+
+  // 检查 (x, y) 处的角色脚点是否压到了任意障碍像素。
+  // 采样脚下半径 PERSON_RADIUS 范围内若干像素，若有 alpha >= 阈值的像素就算碰撞。
+  function hitsObstacle(x, y) {
+    if (!obstacleCanvasReady || !obstacleAlpha) {
+      // 退化方案：矩形碰撞（取家具下半部分）
+      for (const r of obstacleBoxes) {
+        const w = r.x2 - r.x1, h = r.y2 - r.y1;
+        const x1 = r.x1 + w * 0.10, x2 = r.x2 - w * 0.10;
+        const y1 = r.y1 + h * 0.55, y2 = r.y2 - h * 0.05;
+        const cx = Math.max(x1, Math.min(x, x2));
+        const cy = Math.max(y1, Math.min(y, y2));
+        const dx = x - cx, dy = y - cy;
+        if (dx * dx + dy * dy < PERSON_RADIUS * PERSON_RADIUS) return true;
+      }
+      return false;
+    }
+    // 像素级采样：脚点附近的几个采样点，任一 alpha >= 阈值 即视为撞到
+    // 采样点：圆心 + 八方向半径处共 9 个点
+    const samples = [
+      [x, y],
+      [x + PERSON_RADIUS, y], [x - PERSON_RADIUS, y],
+      [x, y + PERSON_RADIUS], [x, y - PERSON_RADIUS],
+      [x + PERSON_RADIUS * 0.7, y + PERSON_RADIUS * 0.7],
+      [x - PERSON_RADIUS * 0.7, y + PERSON_RADIUS * 0.7],
+      [x + PERSON_RADIUS * 0.7, y - PERSON_RADIUS * 0.7],
+      [x - PERSON_RADIUS * 0.7, y - PERSON_RADIUS * 0.7]
+    ];
+    for (const [sx, sy] of samples) {
+      const ix = Math.round(sx), iy = Math.round(sy);
+      if (ix < 0 || ix >= 1000 || iy < 0 || iy >= 750) continue;
+      if (obstacleAlpha[iy * 1000 + ix] >= OBSTACLE_ALPHA_THRESHOLD) return true;
+    }
+    return false;
+  }
+
+  // 检查 (x, y) 是否在地板多边形内
+  function inFloor(x, y) {
+    return pointInPolygon(x, y, WALK_CONFIG.floorPolygon);
+  }
+
+  // 检查 (x, y) 是否会与其他角色重叠
+  // me: 当前角色对象（用于排除自身）
+  function hitsOtherAgent(x, y, me) {
+    for (const other of agents) {
+      if (other === me) continue;
+      const dx = x - other.x, dy = y - other.y;
+      if (dx * dx + dy * dy < PERSON_PERSON_DIST * PERSON_PERSON_DIST) return true;
+    }
+    return false;
+  }
+
+  // 综合判断：(x, y) 是否是合法位置
+  function isValidPosition(x, y, me) {
+    return inFloor(x, y) && !hitsObstacle(x, y) && !hitsOtherAgent(x, y, me);
+  }
+
+  // ─── 创建角色 ───
+  function buildAgent({ name, label, sprite, x, y, speed = 45, scale = 1 }) {
+    const root = svgElement("g", { class: "agent", "data-agent": name, "data-label": label, tabindex: "0", role: "button" });
+
+    const depth = svgElement("g", { class: "agent-depth" });
+    const sp = sprite;
+    const image = svgElement("image", {
+      class: "agent-frame",
+      href: sp.idle,
+      x: -sp.box * sp.midFrac,
+      y: -sp.box * sp.footFrac,
+      width: sp.box,
+      height: sp.box,
+      preserveAspectRatio: "xMidYMid meet"
+    });
+    const hitArea = svgElement("rect", {
+      class: "agent-hit", fill: "transparent",
+      x: -sp.box * sp.midFrac, y: -sp.box * sp.footFrac,
+      width: sp.box, height: sp.box, rx: 14
+    });
+
+    // 选中指示器（默认隐藏）：脚下的虚线圆，比 agent-hit 提示更明显
+    const selectRing = svgElement("ellipse", {
+      class: "agent-select-ring",
+      cx: 0, cy: 0, rx: PERSON_RADIUS + 6, ry: (PERSON_RADIUS + 6) * 0.45,
+      fill: "none", stroke: "#4a90d9", "stroke-width": 2.5,
+      "stroke-dasharray": "6 4", style: "display:none"
+    });
+
+    depth.append(hitArea, image, selectRing);
+
+    // ─── 方向标注（调试用，按 D 键切换显示） ───
+    // 实际方向相对屏幕坐标轴旋转 45°（等距/斜视效果）：
+    //   左(left)  → 屏幕左上(NW)
+    //   前(front) → 屏幕右上(NE)
+    //   后(back)  → 屏幕左下(SW)
+    //   右(right) → 屏幕右下(SE)
+    // 这是把"按 D 显示"的标准方向与角色实际朝向对齐，便于后续按这一标准调整。
+    const dirLabelGroup = svgElement("g", { class: "agent-dir-labels", style: "display:none" });
+    const labelTextStyle = '"Microsoft YaHei", sans-serif';
+    const top = -sp.box * sp.footFrac;       // 角色头顶 y 坐标
+    const bottom = top + sp.box;             // 角色脚下 y 坐标
+    const halfW = sp.box * sp.midFrac;       // 角色中线到左/右边的距离
+    const cornerPad = 6;                     // 标签离角色包围盒的间距
+    const dirPositions = {
+      left:  { x: -halfW - cornerPad, y: top - 4,         text: "左" }, // 左上
+      front: { x:  halfW + cornerPad, y: top - 4,         text: "前" }, // 右上
+      back:  { x: -halfW - cornerPad, y: bottom + 14,     text: "后" }, // 左下
+      right: { x:  halfW + cornerPad, y: bottom + 14,     text: "右" }  // 右下
+    };
+    const dirLabelEls = {};
+    for (const [dir, p] of Object.entries(dirPositions)) {
+      // 文本背景圆（用于高亮）
+      const bg = svgElement("circle", {
+        cx: p.x, cy: p.y - 5, r: 12,
+        fill: "rgba(255,255,255,0.85)", stroke: "#333", "stroke-width": 1.2
+      });
+      const txt = svgElement("text", {
+        x: p.x, y: p.y, "text-anchor": "middle",
+        "font-family": labelTextStyle, "font-size": 14, "font-weight": "bold",
+        fill: "#333"
+      });
+      txt.textContent = p.text;
+      dirLabelGroup.appendChild(bg);
+      dirLabelGroup.appendChild(txt);
+      dirLabelEls[dir] = { bg, txt };
+    }
+    depth.appendChild(dirLabelGroup);
+
+    root.appendChild(depth);
+    charactersLayer.appendChild(root);
+
+    return {
+      el: root, name, label, x, y, speed, scale, sprite: sp,
+      dir: "front", frameIndex: 0, frameClock: 0,
+      target: null, fixedRoute: null, fixedRouteIndex: 0,
+      pauseUntil: performance.now() + Math.random() * 500,
+      image, depthNode: depth,
+      dirLabelGroup, dirLabelEls,
+      selectRing
+    };
+  }
+
+  // ─── 创建两个 AI 巡逻角色 ───
+  const agents = [
+    buildAgent({ name: "person1", label: "客户A", sprite: SPRITE_POOL[0], x: 0, y: 0, speed: 42 }),
+    buildAgent({ name: "person2", label: "客户B", sprite: SPRITE_POOL[1], x: 0, y: 0, speed: 48, scale: 0.889 })
+  ];
+
+  // ─── 固定分配区域和路线（每个角色对应固定区域） ───
+  // person1(walk_1) → 左区, person2(walk_2) → 中区
+  (() => {
+    agents.forEach((agent, i) => {
+      const zone = WALK_ZONES[i];
+      agent.walkZone = zone;
+      agent.fixedRoute = zone.route;
+      agent.fixedRouteIndex = 0;
+      agent.linear = !!zone.linear;        // 线性路径标志：true 走一次后停在原地
+      agent.atEnd = false;                 // 是否已经走完（仅 linear 路径用）
+      agent.x = zone.route[0][0];
+      agent.y = zone.route[0][1];
+    });
+  })();
+
+  // ─── 角色点击选中 + 滑动条调整大小 ───
+  const sizePanel = document.getElementById("sizePanel");
+  const sizeSlider = document.getElementById("sizeSlider");
+  const sizeVal = document.getElementById("sizeVal");
+  const sizeLabel = document.getElementById("sizeLabel");
+  let selectedAgent = null;
+
+  function selectAgent(agent) {
+    deselectAgent();
+    // 通知物体那边清掉物体的选中状态
+    document.dispatchEvent(new CustomEvent("bank:deselectItem"));
+    selectedAgent = agent;
+    agent.selectRing.style.display = "";
+    sizePanel.classList.add("show");
+    // 角色 scale 范围 0.5~2.5，步长 0.05；用 100 倍后映射到滑动条整数
+    sizeSlider.min = 50;
+    sizeSlider.max = 250;
+    sizeSlider.step = 5;
+    sizeSlider.value = Math.round(agent.scale * 100);
+    sizeVal.textContent = (agent.scale * 100).toFixed(0) + "%";
+    sizeLabel.textContent = `${agent.label}（${agent.name}）`;
+  }
+  function deselectAgent() {
+    if (!selectedAgent) return;
+    selectedAgent.selectRing.style.display = "none";
+    selectedAgent = null;
+    sizePanel.classList.remove("show");
+  }
+  // 滑动条独立监听角色尺寸（与物体的监听互不冲突，因为各自检查自己的 selected*）
+  sizeSlider.addEventListener("input", function () {
+    if (!selectedAgent) return;
+    const v = parseFloat(this.value) / 100;
+    selectedAgent.scale = v;
+    sizeVal.textContent = (v * 100).toFixed(0) + "%";
+  });
+
+  // 给每个角色绑定点击 → 选中
+  agents.forEach(agent => {
+    agent.el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      selectAgent(agent);
+    });
+  });
+  // 点击场景空白处取消角色选中
+  scene.addEventListener("mousedown", (e) => {
+    if (e.target === scene || e.target.classList.contains("bg")) {
+      deselectAgent();
+    }
+  });
+
+  // ─── 帧动画与方向 ───
+  const FRAME_MS = 60;
+  const PAUSE_MS = [400, 1200];
+
+  function pauseDuration() {
+    return PAUSE_MS[0] + Math.random() * (PAUSE_MS[1] - PAUSE_MS[0]);
+  }
+
+  // 根据移动向量(dx,dy)确定四方向
+  // 角标方向系（屏幕坐标轴旋转 45°）：
+  //   左(left)  = NW (dx<0, dy<0)
+  //   前(front) = NE (dx>0, dy<0)
+  //   后(back)  = SW (dx<0, dy>0)
+  //   右(right) = SE (dx>0, dy>0)
+  // 用旋转坐标 u = dx - dy（正向→前/NE）, v = dx + dy（正向→右/SE）做象限判定。
+  function getDirection(dx, dy) {
+    const u = dx - dy;
+    const v = dx + dy;
+    if (Math.abs(u) >= Math.abs(v)) {
+      return u >= 0 ? "front" : "back";
+    }
+    return v >= 0 ? "right" : "left";
+  }
+
+  function setFrame(agent, walking, dtMs) {
+    const sp = agent.sprite;
+    // 通过 dirMap 把引擎方向(agent.dir)映射到精灵文件夹的实际方向
+    // dirMap 的值可以是字符串（直接使用对应方向的帧）
+    // 或 {dir, mirror} 对象（mirror=true 时水平翻转）
+    let mappedDir = agent.dir;
+    let mirror = false;
+    if (sp.dirMap && sp.dirMap[agent.dir] != null) {
+      const m = sp.dirMap[agent.dir];
+      if (typeof m === "string") {
+        mappedDir = m;
+      } else if (typeof m === "object") {
+        mappedDir = m.dir || agent.dir;
+        mirror = !!m.mirror;
+      }
+    }
+    const frames = sp.dirs[mappedDir] || sp.dirs.front;
+
+    // 应用/移除水平镜像
+    if (mirror) {
+      // 在角色 image 元素上叠加 scale(-1,1)；由于 image 的 x 是 -box*midFrac（负值），
+      // 翻转后还需要把 x 偏移调整为 box*midFrac - box，让翻转后帧仍居中显示。
+      // 简化做法：用 transform 围绕 image 的水平中心翻转。
+      const cx = 0; // 角色锚点（图像水平中心）就是原点 0
+      agent.image.setAttribute("transform", `translate(${cx*2},0) scale(-1,1)`);
+    } else {
+      agent.image.removeAttribute("transform");
+    }
+
+    if (!walking) {
+      agent.frameIndex = 0;
+      agent.frameClock = 0;
+      const f = frames[0];
+      if (agent.currentHref !== f) {
+        agent.currentHref = f;
+        agent.image.setAttribute("href", f);
+      }
+      return;
+    }
+    agent.frameClock += dtMs;
+    if (agent.frameClock >= FRAME_MS) {
+      const steps = Math.floor(agent.frameClock / FRAME_MS);
+      agent.frameClock %= FRAME_MS;
+      agent.frameIndex = (agent.frameIndex + steps) % frames.length;
+    }
+    const f = frames[agent.frameIndex];
+    if (agent.currentHref !== f) {
+      agent.currentHref = f;
+      agent.image.setAttribute("href", f);
+    }
+  }
+
+  // ─── 下一个目标点 ───
+  function nextTarget(agent) {
+    if (agent.linear) {
+      if (agent.fixedRouteIndex >= agent.fixedRoute.length - 1) {
+        agent.atEnd = true;
+        return null;
+      }
+      agent.fixedRouteIndex += 1;
+    } else {
+      agent.fixedRouteIndex = (agent.fixedRouteIndex + 1) % agent.fixedRoute.length;
+    }
+    const [x, y] = agent.fixedRoute[agent.fixedRouteIndex];
+    return { x, y };
+  }
+
+  // ─── 调试可视化 ───
+  function refreshFloorDebug() {
+    while (floorDebugLayer.firstChild) floorDebugLayer.removeChild(floorDebugLayer.firstChild);
+    // 蓝色地板
+    floorDebugLayer.appendChild(svgElement("polygon", {
+      class: "floor-poly",
+      points: WALK_CONFIG.floorPolygon.map(p => p.join(",")).join(" ")
+    }));
+    // 调试模式下根据每个 .item 的 alpha 通道画出精确轮廓线（替代之前的矩形边框）
+    if (obstacleContourPath) {
+      floorDebugLayer.appendChild(svgElement("path", {
+        d: obstacleContourPath,
+        fill: "none",
+        stroke: "#cc0000",
+        "stroke-width": 1.4,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        opacity: 0.9
+      }));
+    }
+    // 把障碍 canvas 直接作为半透明图叠加上去，便于直观看到精确碰撞轮廓
+    if (obstacleCanvasReady) {
+      try {
+        const dataURL = obstacleCanvas.toDataURL();
+        floorDebugLayer.appendChild(svgElement("image", {
+          href: dataURL, x: 0, y: 0, width: 1000, height: 750,
+          opacity: 0.25, style: "pointer-events:none"
+        }));
+      } catch (e) { /* 忽略 */ }
+    }
+  }
+
+  refreshFloorDebug();
+  let debugVisible = false;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "d" || e.key === "D") {
+      debugVisible = !debugVisible;
+      if (debugVisible) {
+        // 进入调试模式时刷新障碍画布并重绘调试图
+        rebuildObstacleCanvas().then(() => refreshFloorDebug());
+      }
+      floorDebugLayer.style.display = debugVisible ? "" : "none";
+      // 同步切换每个角色的方向标签
+      agents.forEach(a => {
+        a.dirLabelGroup.style.display = debugVisible ? "" : "none";
+      });
+    }
+  });
+
+  // 高亮某个方向的标签（被标为当前方向）
+  function highlightDirLabel(agent) {
+    if (!agent.dirLabelEls) return;
+    for (const [dir, els] of Object.entries(agent.dirLabelEls)) {
+      const isActive = (dir === agent.dir);
+      els.bg.setAttribute("fill", isActive ? "rgba(255,80,80,0.95)" : "rgba(255,255,255,0.85)");
+      els.bg.setAttribute("stroke", isActive ? "#a00" : "#333");
+      els.txt.setAttribute("fill", isActive ? "#fff" : "#333");
+    }
+  }
+
+  // ─── 主循环（极简：直线移动 + 四方向帧切换）───
+  let previousTime = performance.now();
+  // 异步构建障碍 canvas：等所有 .item 的 img 加载完后会标记 ready
+  rebuildObstacleCanvas();
+  let obstacleRefreshAt = performance.now() + 1500;
+
+  function tick(now) {
+    const dtMs = Math.min(now - previousTime, 50);
+    const dt = dtMs / 1000;
+    previousTime = now;
+
+    // 定期刷新障碍画布（家具被拖动 / 缩放后需要重建）
+    if (now > obstacleRefreshAt) {
+      rebuildObstacleCanvas().then(() => {
+        if (debugVisible) refreshFloorDebug();
+      });
+      obstacleRefreshAt = now + 1500;
+    }
+
+    for (const agent of agents) {
+      let walking = false;
+
+      // AI 巡逻：到达目标后暂停，然后选下一个路径点
+      if (!agent.target && !agent.atEnd && now >= agent.pauseUntil) {
+        const next = nextTarget(agent);
+        if (next) agent.target = next;
+      }
+
+      if (agent.target) {
+        const dx = agent.target.x - agent.x;
+        const dy = agent.target.y - agent.y;
+        const distance = Math.hypot(dx, dy);
+
+        if (distance < 2) {
+          // 到达当前路径点
+          agent.x = agent.target.x;
+          agent.y = agent.target.y;
+          agent.target = null;
+          agent.pauseUntil = now + pauseDuration();
+        } else {
+          walking = true;
+          const step = Math.min(distance, agent.speed * dt);
+          agent.x += (dx / distance) * step;
+          agent.y += (dy / distance) * step;
+          // 确定行走方向
+          agent.dir = getDirection(dx, dy);
+        }
+      }
+
+      // 更新帧动画
+      setFrame(agent, walking, dtMs);
+      // 更新位置（root）+ 缩放（depth）
+      agent.el.setAttribute("transform", `translate(${agent.x.toFixed(2)} ${agent.y.toFixed(2)})`);
+      agent.depthNode.setAttribute("transform", `scale(${agent.scale})`);
+      // 更新方向标签高亮
+      if (debugVisible) highlightDirLabel(agent);
+    }
+
+    // 按 y 排序实现前后遮挡（顺序未变就跳过 DOM 操作）
+    const sorted = agents.slice().sort((a, b) => a.y - b.y);
+    const orderKey = sorted.map(a => a.name).join("|");
+    if (orderKey !== lastAgentOrderKey) {
+      lastAgentOrderKey = orderKey;
+      sorted.forEach(a => charactersLayer.appendChild(a.el));
+    }
+    requestAnimationFrame(tick);
+  }
+  let lastAgentOrderKey = "";
+
+  // 预加载所有方向的全部帧，避免首次切方向时的解码闪烁
+  function preloadSpriteImages() {
+    const urls = new Set();
+    SPRITE_POOL.forEach(sp => {
+      if (sp.idle) urls.add(sp.idle);
+      Object.values(sp.dirs || {}).forEach(arr => arr.forEach(u => urls.add(u)));
+    });
+    return Promise.all([...urls].map(src => new Promise(res => {
+      const img = new Image();
+      img.onload = res; img.onerror = res; img.src = src;
+    })));
+  }
+  preloadSpriteImages().then(() => {
+    requestAnimationFrame(tick);
+  });
+
+  // 将 agents 暴露给路线规划系统
+  window.__bankAgents = agents;
+  document.dispatchEvent(new CustomEvent("bank:agentsReady", { detail: { agents } }));
+})();
+</script>
+
+<!-- ════════ 路线规划系统 ════════ -->
+<script>
+(() => {
+  // ─── 状态 ───
+  let planMode = false;           // 是否在规划模式
+  let planAgent = null;           // 当前规划的目标角色
+  let planPoints = [];            // 已规划的路径点 [x, y]（SVG viewBox 坐标）
+  const svgNS = "http://www.w3.org/2000/svg";
+
+  // ─── DOM 引用 ───
+  const scene      = document.getElementById("scene");
+  const btnPlan    = document.getElementById("btnPlan");
+  const btnAgent1  = document.getElementById("btnAgent1");
+  const btnAgent2  = document.getElementById("btnAgent2");
+  const btnConfirm = document.getElementById("btnPlanConfirm");
+  const btnLoop    = document.getElementById("btnPlanLoop");
+  const btnClear   = document.getElementById("btnPlanClear");
+  const hintEl     = document.getElementById("planHint");
+
+  // ─── 创建路线预览图层（独立 SVG，不干扰人物层） ───
+  const previewLayer = document.getElementById("plan-preview-layer");
+
+  // ─── 工具函数 ───
+  function svgEl(tag, attrs = {}) {
+    const el = document.createElementNS(svgNS, tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+  }
+
+  // 场景 DOM 坐标 → SVG viewBox(1000×750) 坐标
+  function domToSVG(clientX, clientY) {
+    const rect = scene.getBoundingClientRect();
+    const px = (clientX - rect.left) / rect.width  * 1000;
+    const py = (clientY - rect.top)  / rect.height * 750;
+    return [Math.round(px), Math.round(py)];
+  }
+
+  // 取全局 agents 数组（由行走系统暴露）
+  function getAgents() {
+    return window.__bankAgents || [];
+  }
+
+  // ─── 提示文字 ───
+  function showHint(text) {
+    hintEl.textContent = text;
+    hintEl.classList.remove("hidden");
+  }
+  function hideHint() {
+    hintEl.classList.add("hidden");
+  }
+
+  // ─── 绘制预览路线 ───
+  function renderPreview() {
+    while (previewLayer.firstChild) previewLayer.removeChild(previewLayer.firstChild);
+    if (planPoints.length === 0) return;
+
+    // 路段连线（实线段 + 方向箭头）
+    for (let i = 0; i < planPoints.length - 1; i++) {
+      const [x1, y1] = planPoints[i];
+      const [x2, y2] = planPoints[i + 1];
+      previewLayer.appendChild(svgEl("line", {
+        x1, y1, x2, y2,
+        stroke: "#ff6600", "stroke-width": 3,
+        "stroke-dasharray": "8 5",
+        "stroke-linecap": "round",
+        opacity: "0.85"
+      }));
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+      previewLayer.appendChild(svgEl("polygon", {
+        points: "0,-5 10,0 0,5",
+        fill: "#ff6600", opacity: "0.9",
+        transform: `translate(${mx},${my}) rotate(${angle})`
+      }));
+    }
+
+    // 闭环预览虚线：最后一个点 → 第一个点（仅在 ≥2 个点时显示）
+    if (planPoints.length >= 2) {
+      const [lx, ly] = planPoints[planPoints.length - 1];
+      const [fx, fy] = planPoints[0];
+      previewLayer.appendChild(svgEl("line", {
+        x1: lx, y1: ly, x2: fx, y2: fy,
+        stroke: "#8b5cf6", "stroke-width": 2,
+        "stroke-dasharray": "5 6",
+        "stroke-linecap": "round",
+        opacity: "0.55"
+      }));
+      // 箭头
+      const mx = (lx + fx) / 2, my = (ly + fy) / 2;
+      const angle = Math.atan2(fy - ly, fx - lx) * 180 / Math.PI;
+      previewLayer.appendChild(svgEl("polygon", {
+        points: "0,-4 8,0 0,4",
+        fill: "#8b5cf6", opacity: "0.55",
+        transform: `translate(${mx},${my}) rotate(${angle})`
+      }));
+    }
+
+    // 路径点圆圈：第1个=绿色起点，最后一个=红色终点，中间=橙色
+    planPoints.forEach(([px, py], i) => {
+      const isFirst = i === 0;
+      const isLast  = i === planPoints.length - 1;
+      previewLayer.appendChild(svgEl("circle", {
+        cx: px, cy: py, r: 10,
+        fill: isFirst ? "#10b981" : (isLast && planPoints.length > 1 ? "#ef4444" : "#ff6600"),
+        stroke: "#fff", "stroke-width": 2, opacity: "0.95"
+      }));
+      const label = svgEl("text", {
+        x: px, y: py + 4.5,
+        "text-anchor": "middle",
+        "font-size": 11, "font-weight": "bold", fill: "#fff",
+        "pointer-events": "none"
+      });
+      label.textContent = i + 1;
+      previewLayer.appendChild(label);
+    });
+  }
+
+  // ─── 进入 / 退出规划模式 ───
+  window.togglePlanMode = function () {
+    planMode = !planMode;
+    if (planMode) {
+      btnPlan.classList.add("active");
+      btnPlan.textContent = "退出规划";
+      btnAgent1.style.display = "";
+      btnAgent2.style.display = "";
+      btnConfirm.style.display = "";
+      btnLoop.style.display    = "";
+      btnClear.style.display   = "";
+      scene.classList.add("plan-mode");
+      document.getElementById("agents-overlay").style.visibility = "hidden";
+      planAgent  = null;
+      planPoints = [];
+      renderPreview();
+      showHint("选择要规划路线的人物：客户A 或 客户B");
+    } else {
+      exitPlanMode();
+    }
+  };
+
+  // 按钮直接选人物
+  window.planSelectAgent = function (index) {
+    const agents = getAgents();
+    if (!agents[index]) return;
+    planAgent  = agents[index];
+    planPoints = [];
+    renderPreview();
+    // 高亮选中按钮
+    btnAgent1.classList.toggle("selected", index === 0);
+    btnAgent2.classList.toggle("selected", index === 1);
+    showHint(`已选「${planAgent.label}」— 第1次点击设为起点，之后依次添加路径点，右键撤销`);
+  };
+
+  function exitPlanMode() {
+    planMode = false;
+    planAgent  = null;
+    planPoints = [];
+    renderPreview();
+    btnPlan.classList.remove("active");
+    btnPlan.textContent = "规划路线";
+    btnAgent1.style.display = "none";
+    btnAgent2.style.display = "none";
+    btnAgent1.classList.remove("selected");
+    btnAgent2.classList.remove("selected");
+    btnConfirm.style.display = "none";
+    btnLoop.style.display    = "none";
+    btnClear.style.display   = "none";
+    scene.classList.remove("plan-mode");
+    document.getElementById("agents-overlay").style.visibility = "";
+    hideHint();
+  }
+
+  // ─── 确认执行 ───
+  window.confirmPlan = function (loop) {
+    if (!planAgent) { showHint("⚠ 请先选择人物！"); return; }
+    if (planPoints.length < 2) { showHint("⚠ 至少需要起点和一个路径点（共2个点）！"); return; }
+
+    const route = planPoints.map(p => [...p]); // 深拷贝
+    planAgent.x               = route[0][0];   // 直接定位到起点
+    planAgent.y               = route[0][1];
+    planAgent.fixedRoute      = route;
+    planAgent.fixedRouteIndex = 0;
+    planAgent.linear          = !loop;          // 闭环=循环，单次=线性
+    planAgent.atEnd           = false;
+    planAgent.target          = null;
+    planAgent.pauseUntil      = 0;
+
+    const modeText = loop ? "闭环循环" : "单次执行";
+    showHint(`✓「${planAgent.label}」${modeText}，共 ${route.length} 个点`);
+    setTimeout(() => {
+      if (planMode) showHint("选择要规划路线的人物：客户A 或 客户B");
+      else hideHint();
+    }, 2500);
+
+    planAgent  = null;
+    planPoints = [];
+    renderPreview();
+  };
+
+  // ─── 清除路线 ───
+  window.clearPlan = function () {
+    planPoints = [];
+    renderPreview();
+    if (planAgent) {
+      showHint(`已清除路线 — 继续点击地板添加路径点`);
+    } else {
+      showHint("选择要规划路线的人物：客户A 或 客户B");
+    }
+  };
+
+  // ─── 场景点击监听（地板点击添加路径点） ───
+  scene.addEventListener("click", (e) => {
+    if (!planMode) return;
+
+    // 点击地板 → 添加路径点
+    if (!planAgent) {
+      showHint("⚠ 请先点击一个人物！");
+      return;
+    }
+    const [svgX, svgY] = domToSVG(e.clientX, e.clientY);
+    planPoints.push([svgX, svgY]);
+    renderPreview();
+    const isFirst = planPoints.length === 1;
+    showHint(isFirst
+      ? `「${planAgent.label}」起点已设置 — 继续点击添加路径点，右键撤销`
+      : `「${planAgent.label}」路线：共 ${planPoints.length} 个点 | 点"✓ 确认执行"或继续添加`);
+    e.stopPropagation();
+  });
+
+  // 右键撤销最后一个点
+  scene.addEventListener("contextmenu", (e) => {
+    if (!planMode) return;
+    e.preventDefault();
+    if (planPoints.length > 0) {
+      planPoints.pop();
+      renderPreview();
+      if (planPoints.length === 0) {
+        showHint(`已全部撤销 — 重新点击设置起点`);
+      } else if (planPoints.length === 1) {
+        showHint(`已撤销，当前只有起点 — 继续点击添加路径点`);
+      } else {
+        showHint(`已撤销最后一个点，剩余 ${planPoints.length} 个点`);
+      }
+    }
+  });
+
+  // ─── 让行走系统能被外部访问 ───
+  // 行走系统在同一作用域，我们通过自定义事件桥接
+  document.addEventListener("bank:agentsReady", (e) => {
+    window.__bankAgents = e.detail.agents;
+  });
+})();
+</script>
+</body>
+</html>

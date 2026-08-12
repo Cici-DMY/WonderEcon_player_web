@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supermarket Scene</title>
+<script src="/config.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #111827; }
+body { display: flex; justify-content: center; align-items: center; }
+
+.scene {
+  position: relative;
+  width: min(95vw, calc(95vh * (1448 / 1086)));
+  aspect-ratio: 1448 / 1086;
+  background: #111827;
+}
+.scene .bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.item {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+}
+.item.selected { outline: 2px dashed #4a90d9; outline-offset: 2px; }
+.item:active { cursor: grabbing; }
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.size-panel {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: rgba(255,255,255,0.95);
+  border-radius: 10px;
+  padding: 12px 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: none;
+  align-items: center;
+  gap: 12px;
+  font-family: "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+}
+.size-panel.show { display: flex; }
+.size-panel label { color: #333; white-space: nowrap; }
+.size-panel input[type="range"] {
+  width: 200px;
+  accent-color: #4a90d9;
+}
+.size-panel .size-val {
+  min-width: 60px;
+  text-align: center;
+  color: #666;
+}
+
+.hint {
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #cbd5e1;
+  font-family: "Microsoft YaHei", sans-serif;
+  z-index: 9998;
+  background: rgba(15,23,42,0.6);
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+/* ====== 人物行走 / 路线规划 系统 ====== */
+.toolbar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  max-width: 60vw;
+  justify-content: flex-end;
+  font-family: "Microsoft YaHei", sans-serif;
+}
+.toolbar button {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  background: #475569;
+  color: #fff;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.toolbar button:hover { background: #334155; }
+.btn-plan { background: #f59e0b; color: #fff; }
+.btn-plan.active { background: #d97706; box-shadow: 0 0 0 3px rgba(245,158,11,0.4); }
+.btn-agent-select { background: #6366f1; color: #fff; }
+.btn-agent-select.selected { background: #4338ca; box-shadow: 0 0 0 3px rgba(99,102,241,0.4); }
+.btn-plan-confirm { background: #10b981; color: #fff; }
+.btn-plan-loop    { background: #8b5cf6; color: #fff; }
+.btn-plan-clear   { background: #6b7280; color: #fff; }
+
+.agents-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 500;
+}
+.agents-overlay .agent { pointer-events: auto; cursor: pointer; }
+.agents-overlay .agent.selected { filter: drop-shadow(0 0 6px #4a90d9); }
+.agents-overlay .agent.player-highlight {
+  filter: drop-shadow(0 0 6px rgba(255,69,0,0.8)) drop-shadow(0 0 12px rgba(255,69,0,0.5));
+  animation: playerGlow 2s ease-in-out infinite;
+}
+@keyframes playerGlow {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(255,69,0,0.7)) drop-shadow(0 0 10px rgba(255,69,0,0.4)); }
+  50% { filter: drop-shadow(0 0 9px rgba(255,69,0,1)) drop-shadow(0 0 18px rgba(255,69,0,0.6)); }
+}
+.agent-frame { image-rendering: auto; }
+.route-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+.scene.plan-mode { cursor: crosshair !important; }
+.scene.plan-mode .item { cursor: crosshair !important; }
+
+.plan-hint {
+  position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.72); color: #fff; padding: 8px 18px;
+  border-radius: 20px; font-size: 13px; pointer-events: none;
+  z-index: 9999; white-space: nowrap; transition: opacity 0.2s;
+  font-family: "Microsoft YaHei", sans-serif;
+}
+.plan-hint.hidden { opacity: 0; }
+
+/* ====== 右侧对话框 ====== */
+.dialogue-panel {
+  position: fixed;
+  top: 50%;
+  right: -420px;
+  transform: translateY(-50%);
+  width: 380px;
+  max-height: 85vh;
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 16px 0 0 16px;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  font-family: "Microsoft YaHei", sans-serif;
+  transition: right 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.dialogue-panel.show { right: 0; }
+
+.dialogue-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+.dialogue-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: #6366f1;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 18px; font-weight: bold;
+  flex-shrink: 0;
+}
+.dialogue-name {
+  font-size: 15px; font-weight: 600; color: #1f2937;
+}
+.dialogue-close {
+  margin-left: auto;
+  width: 28px; height: 28px;
+  border: none; background: #e5e7eb; border-radius: 50%;
+  cursor: pointer; font-size: 16px; color: #6b7280;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.dialogue-close:hover { background: #d1d5db; }
+
+.dialogue-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dialogue-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  animation: bubbleFadeIn 0.3s ease;
+}
+@keyframes bubbleFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.dialogue-bubble.npc {
+  align-self: flex-start;
+  background: #f3f4f6;
+  color: #1f2937;
+  border-bottom-left-radius: 4px;
+}
+.dialogue-bubble.player {
+  align-self: flex-end;
+  background: #6366f1;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.dialogue-choices {
+  padding: 8px 20px 12px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dialogue-choice-btn {
+  width: 100%;
+  padding: 6px 12px;
+  border: 1px solid #6366f1;
+  border-radius: 6px;
+  background: #fff;
+  color: #4338ca;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.dialogue-choice-btn:hover {
+  background: #6366f1;
+  color: #fff;
+}
+/* 隐藏 demo 调试 UI */
+.size-panel, .hint, .plan-hint,
+.toolbar .btn-plan, .toolbar .btn-agent-select,
+.toolbar .btn-plan-confirm, .toolbar .btn-plan-loop,
+.toolbar .btn-plan-clear,
+.toolbar button[onclick="savePositions()"],
+.toolbar button[onclick="copySnapshotJSON()"] { display: none !important; }
+.item { pointer-events: none !important; cursor: default !important; }
+.agent { pointer-events: none !important; }
+.size-panel, .toolbar { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="size-panel" id="sizePanel">
+  <label id="sizeLabel">Selected element</label>
+  <input type="range" id="sizeSlider" min="0.2" max="2" step="0.01" value="1">
+  <span class="size-val" id="sizeVal">scale 1.00</span>
+</div>
+
+<div class="toolbar">
+  <button class="btn-plan" id="btnPlan" onclick="togglePlanMode()">Plan Route</button>
+  <button class="btn-agent-select" id="btnAgent1" onclick="planSelectAgent(0)" style="display:none">Shopper A</button>
+  <button class="btn-agent-select" id="btnAgent2" onclick="planSelectAgent(1)" style="display:none">Shopper B</button>
+  <button class="btn-agent-select" id="btnAgent3" onclick="planSelectAgent(2)" style="display:none">Player</button>
+  <button class="btn-plan-confirm" id="btnPlanConfirm" onclick="confirmPlan(false)" style="display:none">✓ One-time</button>
+  <button class="btn-plan-loop"    id="btnPlanLoop"    onclick="confirmPlan(true)"  style="display:none">↺ Loop Walk</button>
+  <button class="btn-plan-clear"   id="btnPlanClear"   onclick="clearPlan()"        style="display:none">✕ Clear Route</button>
+  <button onclick="savePositions()">Save Positions</button>
+  <button onclick="copySnapshotJSON()" style="background:#0ea5e9;color:#fff;">📋 Copy Snapshot JSON</button>
+  <button onclick="resetPositions()">Reset</button>
+</div>
+
+<div class="plan-hint hidden" id="planHint"></div>
+
+<!-- 右侧柜员对话框 -->
+<div class="dialogue-panel" id="dialoguePanel">
+  <div class="dialogue-header">
+    <div class="dialogue-avatar">C</div>
+    <div class="dialogue-name">Clerk</div>
+    <button class="dialogue-close" id="dialogueClose">&times;</button>
+  </div>
+  <div class="dialogue-body" id="dialogueBody"></div>
+  <div class="dialogue-choices" id="dialogueChoices"></div>
+</div>
+
+<div class="hint">Click to select layer, use bottom slider to resize, drag to reposition.</div>
+
+<div class="scene" id="scene">
+  <img class="bg" src="assets/cutout.png" alt="supermarket cutout">
+
+  <!-- MARKET_INTERIOR_LAYERS（来自 PixelCity.tsx）。
+       data-x / data-y / data-w / data-h 是 1448x1086 viewBox 下的像素坐标。 -->
+  <div class="item" data-id="labor-02"
+       data-x="205" data-y="390" data-w="360" data-h="313" data-scale="1">
+    <img src="assets/labor-02.png">
+  </div>
+  <div class="item" data-id="labor-03"
+       data-x="555" data-y="380" data-w="350" data-h="322" data-scale="1">
+    <img src="assets/labor-03.png">
+  </div>
+  <div class="item" data-id="labor-04"
+       data-x="965" data-y="430" data-w="180" data-h="140" data-scale="1">
+    <img src="assets/labor-04.png">
+  </div>
+  <div class="item" data-id="labor-16"
+       data-x="125" data-y="510" data-w="200" data-h="251" data-scale="1">
+    <img src="assets/labor-16.png">
+  </div>
+  <div class="item" data-id="labor-17"
+       data-x="335" data-y="505" data-w="195" data-h="254" data-scale="1">
+    <img src="assets/labor-17.png">
+  </div>
+  <div class="item" data-id="labor-01"
+       data-x="145" data-y="610" data-w="250" data-h="221" data-scale="1">
+    <img src="assets/labor-01.png">
+  </div>
+  <div class="item" data-id="labor-08"
+       data-x="430" data-y="620" data-w="240" data-h="240" data-scale="1">
+    <img src="assets/labor-08.png">
+  </div>
+  <div class="item" data-id="labor-10"
+       data-x="875" data-y="625" data-w="280" data-h="216" data-scale="1">
+    <img src="assets/labor-10.png">
+  </div>
+  <div class="item" data-id="labor-15"
+       data-x="1045" data-y="535" data-w="240" data-h="240" data-scale="1">
+    <img src="assets/labor-15.png">
+  </div>
+  <div class="item" data-id="labor-05"
+       data-x="905" data-y="665" data-w="300" data-h="243" data-scale="1">
+    <img src="assets/labor-05.png">
+  </div>
+  <div class="item" data-id="labor-06"
+       data-x="135" data-y="735" data-w="300" data-h="240" data-scale="1">
+    <img src="assets/labor-06.png">
+  </div>
+  <div class="item" data-id="labor-07"
+       data-x="615" data-y="770" data-w="140" data-h="125" data-scale="1">
+    <img src="assets/labor-07.png">
+  </div>
+  <div class="item" data-id="labor-12"
+       data-x="305" data-y="805" data-w="250" data-h="223" data-scale="1">
+    <img src="assets/labor-12.png">
+  </div>
+  <div class="item" data-id="labor-11"
+       data-x="55"  data-y="805" data-w="240" data-h="259" data-scale="1">
+    <img src="assets/labor-11.png">
+  </div>
+  <div class="item" data-id="labor-13"
+       data-x="540" data-y="780" data-w="280" data-h="233" data-scale="1">
+    <img src="assets/labor-13.png">
+  </div>
+  <div class="item" data-id="labor-14"
+       data-x="835" data-y="805" data-w="270" data-h="245" data-scale="1">
+    <img src="assets/labor-14.png">
+  </div>
+
+  <!-- 人物行走图层 -->
+  <svg class="agents-overlay" id="agents-overlay"
+       viewBox="0 0 1448 1086" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg">
+    <g id="market-characters"></g>
+  </svg>
+  <!-- 路线规划预览层：独立 SVG，不干扰人物层 -->
+  <svg class="agents-overlay" id="plan-overlay"
+       viewBox="0 0 1448 1086" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg"
+       style="pointer-events:none; z-index:501;">
+    <g id="plan-preview-layer"></g>
+  </svg>
+</div>
+
+<script>
+const VIEW_W = 1448;
+const VIEW_H = 1086;
+const STORAGE_KEY = "supermarket_scene_layout_v1";
+
+// === 嵌入式快照（点"📋 复制快照 JSON"把数据粘到这里两个 null 位置；保留 sentinel 注释） ===
+const EMBEDDED_LAYOUT = {
+  "labor-02": {
+    "x": 575.0575443135269,
+    "y": 500.35374693795933,
+    "w": 360,
+    "h": 313,
+    "scale": 0.69
+  },
+  "labor-03": {
+    "x": 493.40284768894765,
+    "y": 415.22411638254266,
+    "w": 350,
+    "h": 322,
+    "scale": 0.69
+  },
+  "labor-04": {
+    "x": 869.5356523532334,
+    "y": 376.13397990301456,
+    "w": 180,
+    "h": 140,
+    "scale": 1.53
+  },
+  "labor-16": {
+    "x": 156.36005736621578,
+    "y": 489.9297105434185,
+    "w": 200,
+    "h": 251,
+    "scale": 0.8
+  },
+  "labor-17": {
+    "x": 300.5587769372815,
+    "y": 400.45673149027647,
+    "w": 195,
+    "h": 254,
+    "scale": 0.8
+  },
+  "labor-01": {
+    "x": 711.4382610162819,
+    "y": 609.8061290806379,
+    "w": 250,
+    "h": 221,
+    "scale": 0.7
+  },
+  "labor-08": {
+    "x": 675.8229146161993,
+    "y": 287.5296705494176,
+    "w": 240,
+    "h": 240,
+    "scale": 0.8
+  },
+  "labor-10": {
+    "x": 252.78209274204886,
+    "y": 628.9168624706294,
+    "w": 280,
+    "h": 216,
+    "scale": 0.75
+  },
+  "labor-15": {
+    "x": 1074.5410609000496,
+    "y": 463.00094985752133,
+    "w": 240,
+    "h": 240,
+    "scale": 1
+  },
+  "labor-05": {
+    "x": 985.0683614071596,
+    "y": 625.4421836724491,
+    "w": 300,
+    "h": 243,
+    "scale": 0.7
+  },
+  "labor-06": {
+    "x": 821.7589681580008,
+    "y": 740.9752537119432,
+    "w": 300,
+    "h": 240,
+    "scale": 0.71
+  },
+  "labor-07": {
+    "x": 676.6915816015672,
+    "y": 806.1254811778233,
+    "w": 140,
+    "h": 125,
+    "scale": 1
+  },
+  "labor-12": {
+    "x": 457.78750128886514,
+    "y": 738.369244613308,
+    "w": 250,
+    "h": 223,
+    "scale": 0.78
+  },
+  "labor-11": {
+    "x": 586.3502151233092,
+    "y": 787.0147477878319,
+    "w": 240,
+    "h": 259,
+    "scale": 0.81
+  },
+  "labor-13": {
+    "x": 450.8381654059222,
+    "y": 323.1451282307654,
+    "w": 280,
+    "h": 233,
+    "scale": 0.83
+  },
+  "labor-14": {
+    "x": 873.8789872800728,
+    "y": 466.47562865570166,
+    "w": 270,
+    "h": 245,
+    "scale": 0.53
+  }
+}  //__EMBEDDED_LAYOUT_END
+const EMBEDDED_ROUTES = [
+  {
+    "name": "Shopper A",
+    "x": 486.0887035311304,
+    "y": 656.225599705114,
+    "fixedRoute": [
+      [
+        729,
+        809
+      ],
+      [
+        411,
+        609
+      ]
+    ],
+    "fixedRouteIndex": 0,
+    "linear": false,
+    "atEnd": false
+  },
+  {
+    "name": "Shopper B",
+    "x": 1011.5026268444859,
+    "y": 630.2400829347127,
+    "fixedRoute": [
+      [
+        1041,
+        608
+      ],
+      [
+        909,
+        705
+      ],
+      [
+        1051,
+        793
+      ],
+      [
+        915,
+        703
+      ]
+    ],
+    "fixedRouteIndex": 1,
+    "linear": false,
+    "atEnd": false
+  },
+  {
+    "name": "Player",
+    "x": 896,
+    "y": 873,
+    "fixedRoute": [
+      [
+        784,
+        962
+      ],
+      [
+        896,
+        873
+      ]
+    ],
+    "fixedRouteIndex": 2,
+    "linear": true,
+    "atEnd": true
+  }
+];  //__EMBEDDED_ROUTES_END
+
+function applyLayer(el, x, y, w, h, scale) {
+  const finalW = w * scale;
+  const finalH = h * scale;
+  el.style.left   = (x / VIEW_W * 100).toFixed(4) + "%";
+  el.style.top    = (y / VIEW_H * 100).toFixed(4) + "%";
+  el.style.width  = (finalW / VIEW_W * 100).toFixed(4) + "%";
+  el.style.height = (finalH / VIEW_H * 100).toFixed(4) + "%";
+  el.dataset.x = x;
+  el.dataset.y = y;
+  el.dataset.w = w;
+  el.dataset.h = h;
+  el.dataset.scale = scale;
+}
+
+function initLayers() {
+  document.querySelectorAll(".item").forEach((el) => {
+    applyLayer(el,
+      parseFloat(el.dataset.x),
+      parseFloat(el.dataset.y),
+      parseFloat(el.dataset.w),
+      parseFloat(el.dataset.h),
+      parseFloat(el.dataset.scale));
+  });
+  loadPositions();
+}
+
+(function () {
+  const scene = document.getElementById("scene");
+  const sizePanel = document.getElementById("sizePanel");
+  const sizeSlider = document.getElementById("sizeSlider");
+  const sizeVal = document.getElementById("sizeVal");
+  const sizeLabel = document.getElementById("sizeLabel");
+  let active = null, dragged = false, selected = null;
+  let startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+  document.querySelectorAll(".item").forEach((el) => {
+    el.addEventListener("mousedown", begin);
+    el.addEventListener("touchstart", begin, { passive: false });
+  });
+
+  function begin(e) {
+    e.preventDefault();
+    active = this;
+    dragged = false;
+    active.style.zIndex = 999;
+    const pt = e.touches ? e.touches[0] : e;
+    startX = pt.clientX;
+    startY = pt.clientY;
+    origLeft = active.offsetLeft;
+    origTop = active.offsetTop;
+  }
+
+  document.addEventListener("mousemove", move);
+  document.addEventListener("touchmove", move, { passive: false });
+  function move(e) {
+    if (!active) return;
+    e.preventDefault();
+    const pt = e.touches ? e.touches[0] : e;
+    const dx = pt.clientX - startX;
+    const dy = pt.clientY - startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragged = true;
+    active.style.left = (origLeft + dx) + "px";
+    active.style.top  = (origTop + dy) + "px";
+  }
+
+  document.addEventListener("mouseup", end);
+  document.addEventListener("touchend", end);
+  function end() {
+    if (!active) return;
+    active.style.zIndex = "";
+    if (dragged) {
+      const rect = scene.getBoundingClientRect();
+      const newX = active.offsetLeft / rect.width * VIEW_W;
+      const newY = active.offsetTop / rect.height * VIEW_H;
+      const w = parseFloat(active.dataset.w);
+      const h = parseFloat(active.dataset.h);
+      const s = parseFloat(active.dataset.scale);
+      applyLayer(active, newX, newY, w, h, s);
+    } else {
+      selectItem(active);
+    }
+    active = null;
+  }
+
+  scene.addEventListener("mousedown", function (e) {
+    if (e.target === scene || e.target.classList.contains("bg")) {
+      deselectAll();
+    }
+  });
+
+  function selectItem(el) {
+    deselectAll();
+    selected = el;
+    el.classList.add("selected");
+    sizePanel.classList.add("show");
+    const s = parseFloat(el.dataset.scale);
+    sizeSlider.value = s;
+    sizeVal.textContent = "scale " + s.toFixed(2);
+    sizeLabel.textContent = el.dataset.id;
+  }
+
+  function deselectAll() {
+    if (selected) selected.classList.remove("selected");
+    selected = null;
+    sizePanel.classList.remove("show");
+  }
+
+  sizeSlider.addEventListener("input", function () {
+    if (!selected) return;
+    const s = parseFloat(this.value);
+    const x = parseFloat(selected.dataset.x);
+    const y = parseFloat(selected.dataset.y);
+    const w = parseFloat(selected.dataset.w);
+    const h = parseFloat(selected.dataset.h);
+    applyLayer(selected, x, y, w, h, s);
+    sizeVal.textContent = "scale " + s.toFixed(2);
+  });
+})();
+
+function loadPositions() {
+  // EMBEDDED 优先：嵌入快照非空时一定生效，覆盖 localStorage；为 null 时才回退 localStorage
+  let raw;
+  if (EMBEDDED_LAYOUT && typeof EMBEDDED_LAYOUT === 'object') {
+    raw = JSON.stringify(EMBEDDED_LAYOUT);
+  } else {
+    raw = localStorage.getItem(STORAGE_KEY);
+  }
+  if (raw) {
+    let data;
+    try { data = JSON.parse(raw); } catch (e) { data = null; }
+    if (data) {
+      document.querySelectorAll(".item").forEach((el) => {
+        const d = data[el.dataset.id];
+        if (!d) return;
+        applyLayer(el, d.x, d.y, d.w, d.h, d.scale);
+      });
+    }
+  }
+
+  // 恢复人物路线（EMBEDDED 优先）
+  let savedRoutes;
+  if (Array.isArray(EMBEDDED_ROUTES)) {
+    savedRoutes = JSON.stringify(EMBEDDED_ROUTES);
+  } else {
+    savedRoutes = localStorage.getItem('supermarket_scene_routes');
+  }
+  if (savedRoutes) {
+    try {
+      const routeData = JSON.parse(savedRoutes);
+      function restoreRoutes(agents) {
+        routeData.forEach(r => {
+          try {
+            const ag = agents.find(a => a.name === r.name);
+            if (!ag || !r.fixedRoute || !Array.isArray(r.fixedRoute) || r.fixedRoute.length === 0) return;
+            ag.fixedRoute = r.fixedRoute.map(p => [...p]);
+            ag.linear = !!r.linear;
+            if (ag.linear) {
+              ag.atEnd = false;
+              ag.fixedRouteIndex = 0;
+              ag.x = ag.fixedRoute[0][0];
+              ag.y = ag.fixedRoute[0][1];
+            } else {
+              ag.atEnd = false;
+              const idx = typeof r.fixedRouteIndex === 'number' ? r.fixedRouteIndex : 0;
+              ag.fixedRouteIndex = Math.max(0, Math.min(idx, ag.fixedRoute.length - 1));
+              ag.x = typeof r.x === 'number' ? r.x : ag.fixedRoute[0][0];
+              ag.y = typeof r.y === 'number' ? r.y : ag.fixedRoute[0][1];
+            }
+            ag.target = null;
+            ag.pauseUntil = 0;
+            if (typeof window.__marketPlaceAgent === 'function') {
+              window.__marketPlaceAgent(ag);
+            }
+          } catch (err) {
+            console.warn('Failed to restore single route', r && r.name, err);
+          }
+        });
+      }
+      if (window.__marketAgents) {
+        restoreRoutes(window.__marketAgents);
+      } else {
+        document.addEventListener('market:agentsReady', e => restoreRoutes(e.detail.agents), { once: true });
+      }
+    } catch (e) { console.warn('Failed to restore routes', e); }
+  }
+}
+
+function savePositions() {
+  const data = {};
+  document.querySelectorAll(".item").forEach((el) => {
+    data[el.dataset.id] = {
+      x: parseFloat(el.dataset.x),
+      y: parseFloat(el.dataset.y),
+      w: parseFloat(el.dataset.w),
+      h: parseFloat(el.dataset.h),
+      scale: parseFloat(el.dataset.scale),
+    };
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  const agents = window.__marketAgents || [];
+  const agentRoutes = agents.map(ag => ({
+    name:            ag.name,
+    x:               ag.x,
+    y:               ag.y,
+    fixedRoute:      ag.fixedRoute ? ag.fixedRoute.map(p => [...p]) : null,
+    fixedRouteIndex: ag.fixedRouteIndex ?? 0,
+    linear:          ag.linear,
+    atEnd:           ag.atEnd,
+  }));
+  localStorage.setItem('supermarket_scene_routes', JSON.stringify(agentRoutes));
+
+  flashHint('Positions and routes saved');
+}
+
+function resetPositions() {
+  if (!confirm('Reset all positions and character routes?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem('supermarket_scene_routes');
+  location.reload();
+}
+
+// === 复制快照 JSON — 弹窗显示当前 layout/routes，复制后手动粘到 EMBEDDED_* 位置 ===
+function copySnapshotJSON() {
+  if (typeof savePositions === 'function') savePositions();
+  const layoutRaw = localStorage.getItem(STORAGE_KEY);
+  const routesRaw = localStorage.getItem('supermarket_scene_routes');
+  if (!layoutRaw && !routesRaw) {
+    alert('No snapshot to copy. Please adjust layout or routes first.');
+    return;
+  }
+  const layoutJson = layoutRaw ? JSON.stringify(JSON.parse(layoutRaw), null, 2) : 'null';
+  const routesJson = routesRaw ? JSON.stringify(JSON.parse(routesRaw), null, 2) : 'null';
+  showSnapshotModal(layoutJson, routesJson);
+}
+
+function showSnapshotModal(layoutJson, routesJson) {
+  let modal = document.getElementById('snapshotModal');
+  if (modal) modal.remove();
+  modal = document.createElement('div');
+  modal.id = 'snapshotModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-family:"Microsoft YaHei",sans-serif;';
+  modal.innerHTML =
+    '<div style="background:#fff;border-radius:10px;padding:18px 22px;max-width:780px;width:90vw;max-height:90vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,.3);">' +
+      '<h3 style="margin:0 0 8px;font-size:17px;color:#1f2937;">📋 Copy Snapshot JSON</h3>' +
+      '<p style="margin:0 0 14px;color:#4b5563;font-size:13px;line-height:1.6;">Copy the two sections below and paste them into the <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">EMBEDDED_LAYOUT</code> / <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">EMBEDDED_ROUTES</code> positions in this HTML source (keep the trailing <code>;</code> and <code>//__EMBEDDED_*_END</code> comments). Then zip the scene folder and share it.</p>' +
+      '<div style="margin-bottom:12px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<label style="font-size:13px;color:#374151;font-weight:600;">EMBEDDED_LAYOUT =</label>' +
+          '<button class="snap-copy" data-target="snapLayoutArea" style="padding:4px 14px;font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;">Copy</button>' +
+        '</div>' +
+        '<textarea id="snapLayoutArea" readonly style="width:100%;height:170px;font-family:Consolas,Menlo,monospace;font-size:12px;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>' +
+      '</div>' +
+      '<div style="margin-bottom:14px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<label style="font-size:13px;color:#374151;font-weight:600;">EMBEDDED_ROUTES =</label>' +
+          '<button class="snap-copy" data-target="snapRoutesArea" style="padding:4px 14px;font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;">Copy</button>' +
+        '</div>' +
+        '<textarea id="snapRoutesArea" readonly style="width:100%;height:170px;font-family:Consolas,Menlo,monospace;font-size:12px;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>' +
+      '</div>' +
+      '<div style="text-align:right;">' +
+        '<button id="snapClose" style="padding:8px 22px;font-size:13px;background:#6b7280;color:#fff;border:none;border-radius:6px;cursor:pointer;">Close</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  document.getElementById('snapLayoutArea').value = layoutJson;
+  document.getElementById('snapRoutesArea').value = routesJson;
+  modal.querySelectorAll('.snap-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ta = document.getElementById(btn.dataset.target);
+      ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      const orig = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      btn.style.background = '#10b981';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = '#3b82f6'; }, 1500);
+    });
+  });
+  modal.querySelector('#snapClose').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+
+function flashHint(msg) {
+  const h = document.getElementById('planHint');
+  h.textContent = msg;
+  h.classList.remove('hidden');
+  clearTimeout(window.__hintTimer);
+  window.__hintTimer = setTimeout(() => h.classList.add('hidden'), 1800);
+}
+
+initLayers();
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    savePositions();
+  } else {
+    window.__marketResetClock = true;
+  }
+});
+</script>
+
+<!-- ============================================================
+     人物行走系统：walk_7 / walk_8
+     viewBox = 1448 x 1086（与 cutout.png 等比）
+     ============================================================ -->
+<script>
+(function () {
+  const VIEW_W = 1448, VIEW_H = 1086;
+
+  const WALK_CONFIG = {
+    frameMs: 90,
+    pauseMs: [400, 1200],
+  };
+
+  function makeSprite(folder) {
+    const dirs = {
+      front: Array.from({length:12},(_,i)=>`${folder}/walk_front_${String(i+1).padStart(2,"0")}.png`),
+      back:  Array.from({length:12},(_,i)=>`${folder}/walk_back_${String(i+1).padStart(2,"0")}.png`),
+      left:  Array.from({length:12},(_,i)=>`${folder}/walk_left_${String(i+1).padStart(2,"0")}.png`),
+      right: Array.from({length:12},(_,i)=>`${folder}/walk_right_${String(i+1).padStart(2,"0")}.png`),
+    };
+    return {
+      box: 512,
+      footFrac: 0.795,
+      midFrac: 0.50,
+      dirs,
+      dirMap: { front:"front", back:"back", left:"left", right:"right" },
+      idle: dirs.front[0],
+    };
+  }
+  const WALK_7 = makeSprite("../../person/walk_7");
+  const WALK_8 = makeSprite("../../person/walk_8");
+
+  const _urlParams = new URLSearchParams(window.location.search);
+  const _playerSpriteId = (function() {
+    const fromUrl = _urlParams.get("sprite");
+    if (fromUrl) return fromUrl;
+    try {
+      const st = JSON.parse(sessionStorage.getItem("EWMInitialState") || "null");
+      if (st && st.player && st.player.spriteId) return st.player.spriteId;
+    } catch(e) {}
+    return null;
+  })();
+  const PLAYER_SPRITE = _playerSpriteId ? makeSprite("../../person/" + _playerSpriteId) : WALK_7;
+
+  // ---------- 默认巡逻路线（按超市货架走道安排） ----------
+  const WALK_ZONES = [
+    { name:"Shopper A", sprite:WALK_7,
+      route:[[480, 530],[760, 510],[1000, 580],[820, 720],[520, 700]],
+      color:"#ff6600" },
+    { name:"Shopper B", sprite:WALK_8,
+      route:[[1100, 470],[1180, 640],[980, 780],[760, 760],[900, 590]],
+      color:"#8b5cf6" },
+    { name:"Player", sprite:PLAYER_SPRITE,
+      route:[[300, 550],[450, 820],[700, 550],[500, 850]],
+      color:"#10b981" },
+  ];
+
+  function clampToFloor(x, y) { return [x, y]; }
+
+  function getDirection(dx, dy) {
+    const u = dx - dy, v = dx + dy;
+    if (Math.abs(u) >= Math.abs(v)) return u >= 0 ? "front" : "back";
+    return v >= 0 ? "right" : "left";
+  }
+
+  function buildAgent({ name, sprite, x, y, speed, scale, color }) {
+    const ns = "http://www.w3.org/2000/svg";
+    const g  = document.createElementNS(ns, "g");
+    g.setAttribute("class", "agent");
+    g.dataset.name = name;
+
+    const img = document.createElementNS(ns, "image");
+    img.setAttribute("class", "agent-frame");
+    const W = sprite.box * scale;
+    img.setAttribute("width",  W);
+    img.setAttribute("height", W);
+    img.setAttributeNS("http://www.w3.org/1999/xlink", "href", sprite.idle);
+    g.appendChild(img);
+
+    document.getElementById("market-characters").appendChild(g);
+
+    const ag = {
+      name, sprite, color,
+      x, y, speed, scale,
+      W,
+      dir: "front",
+      frameIdx: 0,
+      lastFrameMs: 0,
+      walking: false,
+
+      fixedRoute: null,
+      fixedRouteIndex: 0,
+      linear: false,
+      atEnd: false,
+
+      target: null,
+      pauseUntil: 0,
+
+      el: g,
+      img: img,
+    };
+
+    g.addEventListener("click", (e) => {
+      e.stopPropagation();
+      selectAgent(ag);
+    });
+
+    return ag;
+  }
+
+  function placeAgent(ag) {
+    const W = ag.sprite.box * ag.scale;
+    ag.W = W;
+    ag.img.setAttribute("width",  W);
+    ag.img.setAttribute("height", W);
+    const left = ag.x - W * ag.sprite.midFrac;
+    const top  = ag.y - W * ag.sprite.footFrac;
+    ag.img.setAttribute("x", left);
+    ag.img.setAttribute("y", top);
+  }
+  window.__marketPlaceAgent = placeAgent;
+
+  function setFrame(ag, walking, dtMs) {
+    ag.lastFrameMs += dtMs;
+    if (walking) {
+      if (ag.lastFrameMs >= WALK_CONFIG.frameMs) {
+        const steps = Math.floor(ag.lastFrameMs / WALK_CONFIG.frameMs);
+        ag.frameIdx = (ag.frameIdx + steps) % 12;
+        ag.lastFrameMs = ag.lastFrameMs % WALK_CONFIG.frameMs;
+      }
+    } else {
+      ag.frameIdx = 0;
+      ag.lastFrameMs = 0;
+    }
+    const mapped = ag.sprite.dirMap[ag.dir];
+    let dirKey = mapped;
+    let mirror = false;
+    if (typeof mapped === "object" && mapped !== null) {
+      dirKey = mapped.dir;
+      mirror = !!mapped.mirror;
+    }
+    const frames = ag.sprite.dirs[dirKey] || ag.sprite.dirs.front;
+    const f = frames[ag.frameIdx];
+    if (ag.currentHref !== f) {
+      ag.currentHref = f;
+      ag.img.setAttributeNS("http://www.w3.org/1999/xlink", "href", f);
+    }
+    const left = ag.x - ag.W * ag.sprite.midFrac;
+    const top  = ag.y - ag.W * ag.sprite.footFrac;
+    if (mirror) {
+      ag.img.setAttribute("transform",
+        `translate(${left + ag.W},${top}) scale(-1,1)`);
+      ag.img.setAttribute("x", 0);
+      ag.img.setAttribute("y", 0);
+    } else {
+      ag.img.removeAttribute("transform");
+      ag.img.setAttribute("x", left);
+      ag.img.setAttribute("y", top);
+    }
+  }
+
+  function nextTarget(ag) {
+    if (!ag.fixedRoute || ag.fixedRoute.length === 0) return null;
+    if (ag.linear && ag.atEnd) return null;
+    const pt = ag.fixedRoute[ag.fixedRouteIndex];
+    ag.fixedRouteIndex++;
+    if (ag.fixedRouteIndex >= ag.fixedRoute.length) {
+      if (ag.linear) {
+        ag.atEnd = true;
+      } else {
+        ag.fixedRouteIndex = 0;
+      }
+    }
+    return { x: pt[0], y: pt[1] };
+  }
+
+  const agents = [];
+  const z1 = WALK_ZONES[0], z2 = WALK_ZONES[1], z3 = WALK_ZONES[2];
+  agents.push(buildAgent({
+    name: z1.name, sprite: z1.sprite,
+    x: z1.route[0][0], y: z1.route[0][1],
+    speed: 90, scale: 0.2625, color: z1.color,
+  }));
+  agents.push(buildAgent({
+    name: z2.name, sprite: z2.sprite,
+    x: z2.route[0][0], y: z2.route[0][1],
+    speed: 85, scale: 0.2625, color: z2.color,
+  }));
+  agents.push(buildAgent({
+    name: z3.name, sprite: z3.sprite,
+    x: z3.route[0][0], y: z3.route[0][1],
+    speed: 160, scale: _playerSpriteId === "walk_1" ? 0.34 : 0.2625, color: z3.color,
+  }));
+
+  agents[0].fixedRoute = z1.route.map(p => [...p]);
+  agents[1].fixedRoute = z2.route.map(p => [...p]);
+  agents[2].fixedRoute = z3.route.map(p => [...p]);
+  agents[2].linear = true;
+  agents.forEach(ag => { ag.fixedRouteIndex = 0; placeAgent(ag); });
+  agents[2].el.classList.add("player-highlight");
+  (function() {
+    const ag = agents[2], ns = "http://www.w3.org/2000/svg";
+    const arrow = document.createElementNS(ns, "polygon");
+    arrow.setAttribute("points", "-7,-14 7,-14 0,0");
+    arrow.setAttribute("fill", "#ff3030");
+    arrow.setAttribute("stroke", "#fff");
+    arrow.setAttribute("stroke-width", "1.2");
+    ag.el.appendChild(arrow);
+    let phase = 0;
+    (function update() {
+      const x = parseFloat(ag.img.getAttribute("x"));
+      const y = parseFloat(ag.img.getAttribute("y"));
+      const w = parseFloat(ag.img.getAttribute("width"));
+      const bounce = Math.sin(phase) * 5;
+      phase += 0.06;
+      arrow.setAttribute("transform", "translate(" + (x + w/2) + "," + (y - 6 + bounce) + ")");
+      requestAnimationFrame(update);
+    })();
+  })();
+
+  window.__marketAgents = agents;
+
+  let selectedAgent = null;
+  function selectAgent(ag) {
+    if (selectedAgent) selectedAgent.el.classList.remove("selected");
+    selectedAgent = ag;
+    ag.el.classList.add("selected");
+    showAgentScalePanel(ag);
+  }
+  function clearAgentSelection() {
+    if (selectedAgent) selectedAgent.el.classList.remove("selected");
+    selectedAgent = null;
+    hideAgentScalePanel();
+  }
+  document.getElementById("scene").addEventListener("mousedown", (e) => {
+    if (e.target.classList.contains("bg") || e.target.id === "scene") {
+      clearAgentSelection();
+    }
+  });
+
+  function showAgentScalePanel(ag) {
+    let panel = document.getElementById("agentScalePanel");
+    if (!panel) {
+      panel = document.createElement("div");
+      panel.id = "agentScalePanel";
+      panel.style.cssText = `
+        position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+        z-index: 9999; background: rgba(255,255,255,.96); border-radius: 10px;
+        padding: 10px 16px; box-shadow: 0 4px 16px rgba(0,0,0,.18);
+        display: flex; align-items: center; gap: 10px;
+        font-family: "Microsoft YaHei", sans-serif; font-size: 13px;`;
+      panel.innerHTML = `
+        <label id="agScaleLabel" style="color:#333"></label>
+        <input type="range" id="agScaleSlider" min="0.15" max="1.2" step="0.01" style="width:200px;accent-color:#4a90d9">
+        <span id="agScaleVal" style="min-width:60px;text-align:center;color:#666"></span>`;
+      document.body.appendChild(panel);
+      panel.querySelector("#agScaleSlider").addEventListener("input", (e) => {
+        if (!selectedAgent) return;
+        selectedAgent.scale = parseFloat(e.target.value);
+        placeAgent(selectedAgent);
+        panel.querySelector("#agScaleVal").textContent = "scale " + selectedAgent.scale.toFixed(2);
+      });
+    }
+    panel.style.display = "flex";
+    panel.querySelector("#agScaleLabel").textContent = ag.name;
+    panel.querySelector("#agScaleSlider").value = ag.scale;
+    panel.querySelector("#agScaleVal").textContent = "scale " + ag.scale.toFixed(2);
+  }
+  function hideAgentScalePanel() {
+    const p = document.getElementById("agentScalePanel");
+    if (p) p.style.display = "none";
+  }
+
+  let lastT = performance.now();
+  let lastAgentOrderKey = "";
+  function tick(now) {
+    if (window.__marketResetClock) { lastT = now; window.__marketResetClock = false; }
+    const dtMs = Math.min(now - lastT, 50);
+    lastT = now;
+    const dt = dtMs / 1000;
+
+    for (const ag of agents) {
+      if (ag.atEnd && ag.linear && !ag.target) {
+        setFrame(ag, false, dtMs);
+        // 玩家路线走完时触发对话
+        if (ag.name === 'Player' && !ag._dialogueTriggered) {
+          ag._dialogueTriggered = true;
+          setTimeout(() => {
+            if (typeof window.__onPlayerRouteEnd === 'function') {
+              window.__onPlayerRouteEnd();
+            }
+          }, 500);
+        }
+        if (ag.name === 'Player' && ag._returning && !ag._fadeTriggered) {
+          ag._fadeTriggered = true;
+          setTimeout(() => {
+            if (typeof window.__onPlayerReturnedToStart === 'function') {
+              window.__onPlayerReturnedToStart();
+            }
+          }, 600);
+        }
+        continue;
+      }
+      if (!ag.target) {
+        if (ag.pauseUntil > now) {
+          setFrame(ag, false, dtMs);
+          continue;
+        }
+        const nt = nextTarget(ag);
+        if (!nt) { setFrame(ag, false, dtMs); continue; }
+        ag.target = nt;
+      }
+      const dx = ag.target.x - ag.x;
+      const dy = ag.target.y - ag.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 4) {
+        ag.x = ag.target.x; ag.y = ag.target.y;
+        ag.target = null;
+        const [lo, hi] = WALK_CONFIG.pauseMs;
+        ag.pauseUntil = now + (lo + Math.random()*(hi-lo));
+        setFrame(ag, false, dtMs);
+        continue;
+      }
+      const step = Math.min(dist, ag.speed * dt);
+      const nx = ag.x + dx/dist * step;
+      const ny = ag.y + dy/dist * step;
+      const [cx, cy] = clampToFloor(nx, ny);
+      ag.x = cx; ag.y = cy;
+      ag.dir = getDirection(dx, dy);
+      placeAgent(ag);
+      setFrame(ag, true, dtMs);
+    }
+
+    const g = document.getElementById("market-characters");
+    const sorted = [...agents].sort((a,b) => a.y - b.y);
+    const orderKey = sorted.map(a => a.name).join("|");
+    if (orderKey !== lastAgentOrderKey) {
+      lastAgentOrderKey = orderKey;
+      sorted.forEach(ag => g.appendChild(ag.el));
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  function preloadSpriteImages() {
+    const urls = new Set();
+    [WALK_7, WALK_8, PLAYER_SPRITE].forEach(sp => {
+      if (sp.idle) urls.add(sp.idle);
+      Object.values(sp.dirs || {}).forEach(arr => arr.forEach(u => urls.add(u)));
+    });
+    return Promise.all([...urls].map(src => new Promise(res => {
+      const img = new Image();
+      img.onload = res; img.onerror = res; img.src = src;
+    })));
+  }
+  preloadSpriteImages().then(() => {
+    requestAnimationFrame((t) => { lastT = t; tick(t); });
+  });
+
+  document.dispatchEvent(new CustomEvent("market:agentsReady", { detail: { agents } }));
+})();
+</script>
+
+<!-- ============================================================
+     路线规划系统
+     ============================================================ -->
+<script>
+(function () {
+  const VIEW_W = 1448, VIEW_H = 1086;
+  let planMode = false;
+  let planAgentIndex = -1;
+  let planPoints = [];
+
+  const scene = document.getElementById("scene");
+
+  function domToSVG(clientX, clientY) {
+    const rect = scene.getBoundingClientRect();
+    return [
+      Math.round((clientX - rect.left) / rect.width  * VIEW_W),
+      Math.round((clientY - rect.top)  / rect.height * VIEW_H),
+    ];
+  }
+
+  function setBtn(id, show, klass) {
+    const b = document.getElementById(id);
+    b.style.display = show ? "" : "none";
+    if (klass !== undefined) {
+      if (klass) b.classList.add(klass); else {
+        ["active","selected"].forEach(c => b.classList.remove(c));
+      }
+    }
+  }
+
+  function hint(msg) {
+    const h = document.getElementById("planHint");
+    h.textContent = msg;
+    h.classList.remove("hidden");
+  }
+  function hideHint() {
+    document.getElementById("planHint").classList.add("hidden");
+  }
+
+  window.togglePlanMode = function () {
+    planMode = !planMode;
+    const btn = document.getElementById("btnPlan");
+    if (planMode) {
+      btn.classList.add("active");
+      scene.classList.add("plan-mode");
+      document.getElementById("agents-overlay").style.visibility = "hidden";
+      setBtn("btnAgent1", true);
+      setBtn("btnAgent2", true);
+      setBtn("btnAgent3", true);
+      hint("Select character to plan: Shopper A / B / Player");
+      planAgentIndex = -1;
+      planPoints = [];
+      renderPreview();
+    } else {
+      btn.classList.remove("active");
+      scene.classList.remove("plan-mode");
+      document.getElementById("agents-overlay").style.visibility = "";
+      ["btnAgent1","btnAgent2","btnAgent3","btnPlanConfirm","btnPlanLoop","btnPlanClear"]
+        .forEach(id => setBtn(id, false));
+      document.getElementById("btnAgent1").classList.remove("selected");
+      document.getElementById("btnAgent2").classList.remove("selected");
+      document.getElementById("btnAgent3").classList.remove("selected");
+      planAgentIndex = -1;
+      planPoints = [];
+      renderPreview();
+      hideHint();
+    }
+  };
+
+  window.planSelectAgent = function (idx) {
+    if (!planMode) return;
+    planAgentIndex = idx;
+    document.getElementById("btnAgent1").classList.toggle("selected", idx === 0);
+    document.getElementById("btnAgent2").classList.toggle("selected", idx === 1);
+    document.getElementById("btnAgent3").classList.toggle("selected", idx === 2);
+    planPoints = [];
+    renderPreview();
+    const names = ["Shopper A","Shopper B","Player"];
+    hint(`Selected ${names[idx]}, click floor to set path points (confirm after ≥2 points)`);
+    setBtn("btnPlanClear", true);
+  };
+
+  window.clearPlan = function () {
+    if (planAgentIndex < 0) return;
+    planPoints = [];
+    renderPreview();
+    setBtn("btnPlanConfirm", false);
+    setBtn("btnPlanLoop", false);
+    hint("Planning points cleared");
+  };
+
+  window.confirmPlan = function (loop) {
+    if (planAgentIndex < 0 || planPoints.length < 2) return;
+    const agents = window.__marketAgents || [];
+    const ag = agents[planAgentIndex];
+    if (!ag) return;
+    const route = planPoints.map(p => [...p]);
+    ag.x = route[0][0];
+    ag.y = route[0][1];
+    ag.fixedRoute = route;
+    ag.fixedRouteIndex = 0;
+    ag.linear = !loop;
+    ag.atEnd = false;
+    ag.target = null;
+    ag.pauseUntil = 0;
+    hint(`${ag.name} Route set (${loop?"Loop":"One-time"}, ${route.length} points)`);
+    setTimeout(() => window.togglePlanMode(), 600);
+  };
+
+  scene.addEventListener("click", (e) => {
+    if (!planMode) return;
+    if (planAgentIndex < 0) return;
+    if (e.target.tagName === "BUTTON") return;
+    const [x, y] = domToSVG(e.clientX, e.clientY);
+    planPoints.push([x, y]);
+    renderPreview();
+    if (planPoints.length >= 2) {
+      setBtn("btnPlanConfirm", true);
+      setBtn("btnPlanLoop", true);
+    }
+  });
+
+  function renderPreview() {
+    const layer = document.getElementById("plan-preview-layer");
+    while (layer.firstChild) layer.removeChild(layer.firstChild);
+    if (planPoints.length === 0) return;
+    const ns = "http://www.w3.org/2000/svg";
+
+    for (let i = 1; i < planPoints.length; i++) {
+      const a = planPoints[i-1], b = planPoints[i];
+      const line = document.createElementNS(ns, "line");
+      line.setAttribute("x1", a[0]); line.setAttribute("y1", a[1]);
+      line.setAttribute("x2", b[0]); line.setAttribute("y2", b[1]);
+      line.setAttribute("stroke", "#ff6600");
+      line.setAttribute("stroke-width", "4");
+      line.setAttribute("stroke-dasharray", "10 6");
+      line.setAttribute("class", "route-line");
+      layer.appendChild(line);
+    }
+
+    if (planPoints.length >= 3) {
+      const a = planPoints[planPoints.length-1], b = planPoints[0];
+      const loopLine = document.createElementNS(ns, "line");
+      loopLine.setAttribute("x1", a[0]); loopLine.setAttribute("y1", a[1]);
+      loopLine.setAttribute("x2", b[0]); loopLine.setAttribute("y2", b[1]);
+      loopLine.setAttribute("stroke", "#8b5cf6");
+      loopLine.setAttribute("stroke-width", "3");
+      loopLine.setAttribute("stroke-dasharray", "6 8");
+      loopLine.setAttribute("class", "route-line");
+      layer.appendChild(loopLine);
+    }
+
+    planPoints.forEach((p, i) => {
+      const c = document.createElementNS(ns, "circle");
+      c.setAttribute("cx", p[0]); c.setAttribute("cy", p[1]);
+      c.setAttribute("r", 10);
+      let color = "#f59e0b";
+      if (i === 0) color = "#10b981";
+      else if (i === planPoints.length-1) color = "#ef4444";
+      c.setAttribute("fill", color);
+      c.setAttribute("stroke", "#fff");
+      c.setAttribute("stroke-width", "2");
+      layer.appendChild(c);
+      const t = document.createElementNS(ns, "text");
+      t.setAttribute("x", p[0]); t.setAttribute("y", p[1]+5);
+      t.setAttribute("fill", "#fff");
+      t.setAttribute("font-size", "14");
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("font-weight", "bold");
+      t.textContent = i + 1;
+      layer.appendChild(t);
+    });
+  }
+})();
+</script>
+
+</script>
+
+<!-- ============================================================
+     柜员对话系统
+     ============================================================ -->
+<script>
+(function () {
+  const panel = document.getElementById('dialoguePanel');
+  const body = document.getElementById('dialogueBody');
+  const choices = document.getElementById('dialogueChoices');
+  const closeBtn = document.getElementById('dialogueClose');
+
+  // 四道选择题（来自 消费决策选择题.md）
+  const QUESTIONS = [
+    {
+      title: '① What do you think necessities should cost now?',
+      options: [
+        { text: '🪙 Think it\'s much cheaper than last time', value: 1 },
+        { text: '🔽 Think it\'s slightly cheaper than last time', value: 2 },
+        { text: '➖ About the same as last time (default)', value: 3 },
+        { text: '🔼 Think it\'s slightly more expensive than last time', value: 4 },
+        { text: '💰 Think it\'s much more expensive than last time', value: 5 },
+      ]
+    },
+    {
+      title: '② What do you think luxury goods should cost now?',
+      options: [
+        { text: '🪙 Think it\'s much cheaper than last time', value: 1 },
+        { text: '🔽 Think it\'s slightly cheaper than last time', value: 2 },
+        { text: '➖ About the same as last time (default)', value: 3 },
+        { text: '🔼 Think it\'s slightly more expensive than last time', value: 4 },
+        { text: '💰 Think it\'s much more expensive than last time', value: 5 },
+      ]
+    },
+    {
+      title: '③ How do you plan to allocate spending this month?',
+      options: [
+        { text: '🤏 Spend frugally, buy less', value: 1 },
+        { text: '🔽 Spend a bit less than usual', value: 2 },
+        { text: '➖ About the same as last month (default)', value: 3 },
+        { text: '🔼 Spend a bit more than usual', value: 4 },
+        { text: '🛍️ Want to enjoy, buy more', value: 5 },
+      ]
+    },
+    {
+      title: '④ Between necessities and luxury goods, which do you prefer?',
+      options: [
+        { text: '🎁 Prefer luxury goods', value: 1 },
+        { text: '🔽 Slightly prefer luxury goods', value: 2 },
+        { text: '➖ About equal (default)', value: 3 },
+        { text: '🔼 Slightly prefer necessities', value: 4 },
+        { text: '🍚 Prefer necessities', value: 5 },
+      ]
+    },
+  ];
+
+  let dialogueActive = false;
+  let playerAnswers = {};
+
+  function showPanel() {
+    panel.classList.add('show');
+    dialogueActive = true;
+  }
+  function hidePanel() {
+    panel.classList.remove('show');
+    dialogueActive = false;
+  }
+
+  closeBtn.addEventListener('click', hidePanel);
+
+  function clearDialogue() {
+    body.innerHTML = '';
+    choices.innerHTML = '';
+    playerAnswers = {};
+  }
+
+  function addBubble(role, text, onDone) {
+    const div = document.createElement('div');
+    div.className = 'dialogue-bubble ' + role;
+    div.style.whiteSpace = 'pre-line';
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+
+    const safe = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const html = safe.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+
+    if (role === 'player') {
+      div.innerHTML = html;
+      if (onDone) onDone();
+      return;
+    }
+
+    let i = 0;
+    const chars = [];
+    const tmp = document.createElement('span');
+    tmp.innerHTML = html;
+    const raw = tmp.innerHTML;
+    let pos = 0;
+    while (pos < raw.length) {
+      if (raw[pos] === '<') {
+        const end = raw.indexOf('>', pos);
+        chars.push(raw.slice(pos, end + 1));
+        pos = end + 1;
+      } else if (raw[pos] === '&') {
+        const end = raw.indexOf(';', pos);
+        chars.push(raw.slice(pos, end + 1));
+        pos = end + 1;
+      } else {
+        chars.push(raw[pos]);
+        pos++;
+      }
+    }
+
+    let displayed = '';
+    const speed = 35;
+    function tick() {
+      if (i >= chars.length) {
+        body.scrollTop = body.scrollHeight;
+        if (onDone) onDone();
+        return;
+      }
+      displayed += chars[i];
+      div.innerHTML = displayed;
+      body.scrollTop = body.scrollHeight;
+      i++;
+      setTimeout(tick, speed);
+    }
+    tick();
+  }
+
+  function showQuestion(qIdx) {
+    if (qIdx >= QUESTIONS.length) {
+      onAllAnswered();
+      return;
+    }
+    const q = QUESTIONS[qIdx];
+    addBubble('npc', q.title, () => {
+      choices.innerHTML = '';
+      q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'dialogue-choice-btn';
+        btn.textContent = opt.text;
+        btn.addEventListener('click', () => {
+          playerAnswers[qIdx] = opt.value;
+          addBubble('player', opt.text);
+          choices.innerHTML = '';
+          setTimeout(() => showQuestion(qIdx + 1), 400);
+        });
+        choices.appendChild(btn);
+      });
+      body.scrollTop = body.scrollHeight;
+    });
+  }
+
+  function onAllAnswered() {
+    const a = playerAnswers;
+    addBubble('npc', 'OK, noted your choices! Let me find the goods for you.', () => {
+      addBubble('npc',
+        `Your decisions:\n` +
+        `· Necessities bid tier: ${a[0]}\n` +
+        `· Luxury bid tier: ${a[1]}\n` +
+        `· Spending ratio tier: ${a[2]}\n` +
+        `· Necessities share tier: ${a[3]}`,
+        () => {
+          window.__playerConsumptionAnswers = {
+            nec_price: a[0],
+            lux_price: a[1],
+            ratio: a[2],
+            nec_share: a[3],
+          };
+
+          setTimeout(() => {
+            addBubble('npc', 'OK, calculating your shopping plan...', () => {
+              fetch(API_BASE + '/api/apply_decision', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  nec_price: a[0],
+                  lux_price: a[1],
+                  ratio: a[2],
+                  nec_share: a[3],
+                }),
+              })
+                .then(r => r.json())
+                .then(data => {
+                  if (data.success) {
+                    const d = data.decision;
+                    const necBudget = (d.total_budget * d.necessity_share).toFixed(0);
+                    const luxBudget = (d.total_budget * (1 - d.necessity_share)).toFixed(0);
+                    addBubble('npc', 'Calculation complete! Your spending plan this month:', () => {
+                      addBubble('npc',
+                        `· Necessities desired price: ${d.desired_goods_price_necessity}\n` +
+                        `· Luxury desired price: ${d.desired_goods_price_luxury}\n` +
+                        `· Spending budget ratio: ${(d.consumption_ratio * 100).toFixed(1)}%\n` +
+                        `· Total budget: ${d.total_budget.toLocaleString()}\n` +
+                        `· Necessities budget: ${Number(necBudget).toLocaleString()} | Luxury budget: ${Number(luxBudget).toLocaleString()}`,
+                        () => {
+                          addBubble('npc', 'Shopping done this month, thanks for visiting!', () => {
+                            setTimeout(() => { runMarketClearing(); }, 800);
+                          });
+                        }
+                      );
+                    });
+                  } else {
+                    addBubble('npc', `Submission failed: ${data.error}`);
+                  }
+                })
+                .catch(err => {
+                  addBubble('npc', `Network error: ${err.message}\nPlease ensure server.py is running.`);
+                });
+            });
+          }, 800);
+        }
+      );
+    });
+  }
+
+  function runMarketClearing() {
+    addBubble('npc', 'Entering goods market matching, please wait...', () => {
+    fetch(API_BASE + '/api/market_clearing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          const lines = data.narrative.split('\n').filter(l => l.trim());
+          if (lines.length === 0) {
+            setTimeout(() => returnPlayer(), 1500);
+            return;
+          }
+          let li = 0;
+          function showLine() {
+            if (li >= lines.length) {
+              setTimeout(() => returnPlayer(), 1500);
+              return;
+            }
+            addBubble('npc', lines[li++], () => {
+              setTimeout(showLine, 100);
+            });
+          }
+          setTimeout(showLine, 133);
+        } else {
+          addBubble('npc', `Matching failed: ${data.error}`);
+        }
+      })
+      .catch(err => {
+        addBubble('npc', `Network error: ${err.message}\nPlease ensure server.py is running.`);
+      });
+    });
+  }
+
+  // 从 briefing_data.json 加载简报（由 generate_briefing.py 生成）
+  function startDialogue() {
+    if (dialogueActive) return;
+    clearDialogue();
+    showPanel();
+
+    fetch(API_BASE + '/api/consumption_briefing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      .then(r => {
+        if (!r.ok) throw new Error('consumption_briefing API call failed');
+        return r.json();
+      })
+      .then(data => {
+        if (!data.success) throw new Error(data.error || 'Unknown error');
+        const bubbles = data.briefing_bubbles || [];
+        let idx = 0;
+        function showNext() {
+          if (idx >= bubbles.length) {
+            setTimeout(() => showQuestion(0), 600);
+            return;
+          }
+          const item = bubbles[idx++];
+          addBubble(item.role, item.text, () => {
+            setTimeout(showNext, 400);
+          });
+        }
+        setTimeout(showNext, 300);
+      })
+      .catch(err => {
+        addBubble('npc', '(System error: ' + err.message + ')');
+        console.error(err);
+      });
+  }
+
+  function returnPlayer() {
+    const agents = window.__marketAgents || [];
+    const player = agents.find(a => a.name === 'Player');
+    if (!player || !player.fixedRoute) return;
+    player.fixedRoute = player.fixedRoute.slice().reverse();
+    player.fixedRouteIndex = 0;
+    player.linear = true;
+    player.atEnd = false;
+    player._dialogueTriggered = true;
+    player._returning = true;
+    player.target = null;
+    player.pauseUntil = 0;
+  }
+
+    window.__onPlayerRouteEnd = startDialogue;
+  window.triggerDialogue = startDialogue;
+})();
+</script>
+
+
+<!-- ============================================================
+     黑屏过渡 + 返回地图接口
+     ============================================================ -->
+<style>
+.fade-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99999;
+  transition: opacity 1.5s ease-in;
+}
+.fade-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+</style>
+
+<div class="fade-overlay" id="fadeOverlay"></div>
+
+<script>
+(function () {
+  const overlay = document.getElementById('fadeOverlay');
+
+  function fadeToBlack(callback) {
+    if (!overlay) {
+      if (callback) callback();
+      return;
+    }
+    let finished = false;
+    function finish() {
+      if (finished) return;
+      finished = true;
+      overlay.removeEventListener('transitionend', handler);
+      if (callback) callback();
+    }
+    function handler() {
+      finish();
+    }
+    overlay.classList.add('active');
+    overlay.addEventListener('transitionend', handler);
+    window.setTimeout(finish, 1800);
+  }
+
+  function readInteriorContext() {
+    try {
+      return JSON.parse(sessionStorage.getItem('EWMCurrentInteriorScene') || '{}') || {};
+    } catch (error) {
+      console.warn('[EWMCurrentInteriorScene] parse failed', error);
+      return {};
+    }
+  }
+
+  window.returnToMap = function returnToMap() {
+    const context = readInteriorContext();
+    sessionStorage.setItem('EWMInteriorResult', JSON.stringify({
+      completed: true,
+      taskId: context.taskId || 'consumption_decision',
+      entityId: context.entityId || 'goods-market',
+      sceneId: context.sceneId || 'supermarket',
+      label: context.label || 'Supermarket',
+      completedAt: new Date().toISOString()
+    }));
+    window.location.href = window.location.origin + '/main_map.html';
+  };
+
+  window.__onPlayerReturnedToStart = function () {
+    fadeToBlack(function () {
+      window.returnToMap();
+    });
+  };
+})();
+</script>
+
+</body>
+</html>

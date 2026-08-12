@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "sceneSize": {
+    "width": 6400,
+    "height": 3600
+  },
+  "coords": "scene-pixel",
+  "loop": false,
+  "points": [
+    {
+      "x": 1840,
+      "y": 1468
+    },
+    {
+      "x": 2057,
+      "y": 1338
+    },
+    {
+      "x": 2703,
+      "y": 1662
+    },
+    {
+      "x": 3538,
+      "y": 1241
+    },
+    {
+      "x": 4102,
+      "y": 1533
+    },
+    {
+      "x": 4151,
+      "y": 1489
+    }
+  ],
+  "exportedAt": "2026-06-28T13:38:43.363Z",
+  "note": "EWM 玩家行走路线 - 直接放入 data/player_routes/ 由前端加载",
+  "nearestBuildingId": "labor_market",
+  "nearestBuildingName": "人才市场"
+}

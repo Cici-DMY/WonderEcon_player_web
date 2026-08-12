@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "sceneSize": {
+    "width": 6400,
+    "height": 3600
+  },
+  "coords": "scene-pixel",
+  "loop": false,
+  "points": [
+   {
+      "x": 4148,
+      "y": 1481
+    },
+    {
+      "x": 4093,
+      "y": 1528
+    },
+    {
+      "x": 3539,
+      "y": 1239
+    },
+    {
+      "x": 3003,
+      "y": 1512
+    },
+    {
+      "x": 2909,
+      "y": 1452
+    }
+  ],
+  "exportedAt": "2026-06-28T13:07:39.506Z",
+  "note": "EWM 玩家行走路线 - 直接放入 data/player_routes/ 由前端加载",
+  "nearestBuildingId": "necessity_04",
+  "nearestBuildingName": "必需品4"
+}

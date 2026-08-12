@@ -1,0 +1,26 @@
+{
+  "matched_agent_id": 42,
+  "matched_risk": "balanced",
+  "briefing_bubbles": [
+    {
+      "role": "npc",
+      "text": "[Commercial Bank - Deposit Window]"
+    },
+    {
+      "role": "npc",
+      "text": "(The teller waves you over with a smile)"
+    },
+    {
+      "role": "npc",
+      "text": "'Last stop! Just deposit your remaining money and you're done.'"
+    },
+    {
+      "role": "npc",
+      "text": "'Your profile -- **wealth: average**, **personality: balanced**. **Last time your deposit rate was 2.25%**. You currently have **16,025 yuan remaining**, which will **all be deposited into the bank** -- no need to worry about how much to deposit. Last time the average rate was 2.25%, **The economy is fully overheated, prices are very high.**'"
+    },
+    {
+      "role": "npc",
+      "text": "'You only need to make one decision: what deposit rate do you hope to get? Don't worry, **deposits always succeed, there is no quota limit**.'"
+    }
+  ]
+}

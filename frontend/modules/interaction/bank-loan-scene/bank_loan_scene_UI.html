@@ -1,0 +1,2277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Scene</title>
+<script src="/config.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #ffffff; }
+body { display: flex; justify-content: center; align-items: center; }
+.scene {
+  position: relative;
+  width: min(95vw, calc(95vh * 1.333));
+  aspect-ratio: 4 / 3;
+}
+.scene .bg {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.item {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+}
+.item.selected { outline: 2px dashed #4a90d9; outline-offset: 2px; }
+.item:active { cursor: grabbing; }
+.item img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(4px 6px 6px rgba(40,30,10,0.18));
+}
+.toolbar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.toolbar button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: "Microsoft YaHei", sans-serif;
+  transition: transform 0.1s;
+}
+.toolbar button:active { transform: scale(0.95); }
+.btn-save { background: #4a90d9; color: #fff; }
+.btn-reset { background: #e06050; color: #fff; }
+.btn-plan { background: #f59e0b; color: #fff; }
+.btn-plan.active { background: #d97706; box-shadow: 0 0 0 3px rgba(245,158,11,0.4); }
+.btn-agent-select { background: #6366f1; color: #fff; }
+.btn-agent-select.selected { background: #4338ca; box-shadow: 0 0 0 3px rgba(99,102,241,0.4); }
+.btn-plan-confirm { background: #10b981; color: #fff; }
+.btn-plan-loop    { background: #8b5cf6; color: #fff; }
+.btn-plan-clear   { background: #6b7280; color: #fff; }
+/* 规划模式：场景光标变十字 */
+.scene.plan-mode { cursor: crosshair !important; }
+.scene.plan-mode .item { cursor: crosshair !important; }
+/* 路线规划浮层提示 */
+.plan-hint {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.72);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: "Microsoft YaHei", sans-serif;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.plan-hint.hidden { opacity: 0; }
+.size-panel {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: rgba(255,255,255,0.95);
+  border-radius: 10px;
+  padding: 12px 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: none;
+  align-items: center;
+  gap: 12px;
+  font-family: "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+}
+.size-panel.show { display: flex; }
+.size-panel label { color: #333; white-space: nowrap; }
+.size-panel input[type="range"] {
+  width: 200px;
+  accent-color: #4a90d9;
+}
+.size-panel .size-val {
+  min-width: 40px;
+  text-align: center;
+  color: #666;
+}
+.toast {
+  position: fixed;
+  top: 50px;
+  right: 12px;
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+.hint {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: #999;
+  font-family: "Microsoft YaHei", sans-serif;
+  z-index: 9998;
+}
+/* ─── 小人行走图层（仿照 family draft）─── */
+.agents-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 500;   /* 高于所有家具(.item z-index 10~48)：人物图层始终盖在物体之上 */
+}
+.agents-overlay .agent { pointer-events: auto; cursor: pointer; }
+.agent-frame { image-rendering: auto; }
+.agents-overlay .agent.player-highlight {
+  filter: drop-shadow(0 0 6px rgba(255,69,0,0.8)) drop-shadow(0 0 12px rgba(255,69,0,0.5));
+  animation: playerGlow 2s ease-in-out infinite;
+}
+@keyframes playerGlow {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(255,69,0,0.7)) drop-shadow(0 0 10px rgba(255,69,0,0.4)); }
+  50% { filter: drop-shadow(0 0 9px rgba(255,69,0,1)) drop-shadow(0 0 18px rgba(255,69,0,0.6)); }
+}
+.floor-poly { fill: rgba(74,144,217,.06); stroke: #4a90d9; stroke-width: 2; stroke-dasharray: 10 8; }
+.route-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+/* ─── 对话面板（右侧滑入） ─── */
+.dialogue-panel {
+  position: fixed;
+  top: 50%; right: -420px;
+  transform: translateY(-50%);
+  width: 380px; max-height: 85vh;
+  background: #fff;
+  border-radius: 16px 0 0 16px;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+  display: flex; flex-direction: column;
+  transition: right 0.4s cubic-bezier(.4,0,.2,1);
+  z-index: 9500;
+  overflow: hidden;
+}
+.dialogue-panel.show { right: 0; }
+.dialogue-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+.dialogue-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: #6366f1;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: bold;
+}
+.dialogue-name { font-size: 15px; font-weight: 600; color: #1f2937; }
+.dialogue-close {
+  margin-left: auto;
+  width: 28px; height: 28px;
+  border: none; border-radius: 50%;
+  background: #e5e7eb; color: #6b7280;
+  font-size: 18px; line-height: 28px; text-align: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dialogue-close:hover { background: #d1d5db; }
+.dialogue-body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.dialogue-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.dialogue-bubble.npc {
+  align-self: flex-start;
+  background: #f3f4f6;
+  color: #1f2937;
+}
+.dialogue-bubble.player {
+  align-self: flex-end;
+  background: #6366f1;
+  color: #fff;
+}
+.dialogue-choices {
+  padding: 8px 20px 14px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.dialogue-choice-btn {
+  padding: 8px 12px;
+  border: 1px solid #6366f1;
+  border-radius: 8px;
+  background: #fff;
+  color: #4338ca;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.dialogue-choice-btn:hover {
+  background: #6366f1;
+  color: #fff;
+}
+/* 隐藏 demo 调试 UI */
+.size-panel, .hint, .plan-hint, .toast,
+.toolbar .btn-save, .toolbar .btn-plan,
+.toolbar .btn-agent-select, .toolbar .btn-plan-confirm,
+.toolbar .btn-plan-loop, .toolbar .btn-plan-clear,
+.toolbar button[onclick="copySnapshotJSON()"] { display: none !important; }
+.item { pointer-events: none !important; cursor: default !important; }
+.agent { pointer-events: none !important; }
+.size-panel, .toolbar { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button class="btn-save" onclick="savePositions()">Save Positions</button>
+  <button onclick="copySnapshotJSON()" style="background:#0ea5e9;color:#fff;">📋 Copy Snapshot JSON</button>
+  <button class="btn-reset" onclick="resetPositions()">Refresh</button>
+  <button class="btn-plan" id="btnPlan" onclick="togglePlanMode()">Plan Route</button>
+  <button class="btn-agent-select" id="btnAgent1" onclick="planSelectAgent(0)" style="display:none">Customer A</button>
+  <button class="btn-agent-select" id="btnAgent2" onclick="planSelectAgent(1)" style="display:none">Customer B</button>
+  <button class="btn-agent-select" id="btnAgent3" onclick="planSelectAgent(2)" style="display:none">Player</button>
+  <button class="btn-plan-confirm" id="btnPlanConfirm" onclick="confirmPlan(false)" style="display:none">✓ Single Run</button>
+  <button class="btn-plan-loop" id="btnPlanLoop" onclick="confirmPlan(true)" style="display:none">↺ Loop Walk</button>
+  <button class="btn-plan-clear" id="btnPlanClear" onclick="clearPlan()" style="display:none">✕ Clear Route</button>
+</div>
+<div class="plan-hint hidden" id="planHint"></div>
+<div class="toast" id="toast"></div>
+
+<div class="size-panel" id="sizePanel">
+  <label id="sizeLabel">Selected Element</label>
+  <input type="range" id="sizeSlider" min="1" max="60" step="0.5" value="10">
+  <span class="size-val" id="sizeVal">10%</span>
+</div>
+<div class="hint">Click an element to select it, then use the bottom slider to resize</div>
+
+<div class="scene" id="scene">
+  <img class="bg" src="images/background.png" alt="Background">
+
+  <!-- 双人柜台1 -->
+  <div class="item" id="el-counter-double1" data-name="Double Counter 1" style="width:15%; left:42.17%; top:28.33%; z-index:20;">
+    <img src="cutouts/1.png">
+  </div>
+
+  <!-- 双人柜台2 -->
+  <div class="item" id="el-counter-double2" data-name="Double Counter 2" style="width:15%; left:57.41%; top:38.96%; z-index:19;">
+    <img src="cutouts/16.png">
+  </div>
+
+  <!-- ATM机 -->
+  <div class="item" id="el-atm" data-name="ATM" style="width:6%; left:39.66%; top:13.64%; z-index:15;">
+    <img src="cutouts/3.png">
+  </div>
+
+  <!-- 单人柜台 -->
+  <div class="item" id="el-counter-single" data-name="Single Counter" style="width:10%; left:38.14%; top:46.08%; z-index:35;">
+    <img src="cutouts/2.png">
+  </div>
+
+  <!-- 左沙发 -->
+  <div class="item" id="el-sofa-left" data-name="Left Sofa" style="width:9.5%; left:51.52%; top:66.52%; z-index:30;">
+    <img src="cutouts/4.png">
+  </div>
+
+  <!-- 右沙发 -->
+  <div class="item" id="el-sofa-right" data-name="Right Sofa" style="width:9.5%; left:17.30%; top:39.78%; z-index:45;">
+    <img src="cutouts/4.png">
+  </div>
+
+  <!-- 左茶几 -->
+  <div class="item" id="el-table-left" data-name="Left Coffee Table" style="width:10%; left:58.23%; top:73.09%; z-index:32;">
+    <img src="cutouts/5.png">
+  </div>
+
+  <!-- 右茶几 -->
+  <div class="item" id="el-table-right" data-name="Right Coffee Table" style="width:10%; left:22.73%; top:45.53%; z-index:48;">
+    <img src="cutouts/6.png">
+  </div>
+
+  <!-- 金色隔离栏 -->
+  <div class="item" id="el-barrier" data-name="Barrier" style="width:16%; left:50.24%; top:49.75%; z-index:36;">
+    <img src="cutouts/7.png">
+  </div>
+
+  <!-- 告示牌 -->
+  <div class="item" id="el-sign" data-name="Notice Board" style="width:3.5%; left:31.05%; top:61.97%; z-index:37;">
+    <img src="cutouts/8.png">
+  </div>
+
+  <!-- 植物 左上 -->
+  <div class="item" id="el-plant-lt" data-name="Plant Upper Left" style="width:5.5%; left:8.20%; top:42.52%; z-index:16;">
+    <img src="cutouts/9.png">
+  </div>
+
+  <!-- 植物 右上 -->
+  <div class="item" id="el-plant-rt" data-name="Plant Upper Right" style="width:4%; left:31.01%; top:26.03%; z-index:22;">
+    <img src="cutouts/10.png">
+  </div>
+
+  <!-- 植物 右下 -->
+  <div class="item" id="el-plant-rb" data-name="Plant Lower Right" style="width:5.5%; left:49.83%; top:77.91%; z-index:44;">
+    <img src="cutouts/11.png">
+  </div>
+
+  <!-- 植物 左前 -->
+  <div class="item" id="el-plant-lf" data-name="Plant Left Front" style="width:5.5%; left:73.88%; top:42.85%; z-index:42;">
+    <img src="cutouts/9.png">
+  </div>
+
+  <!-- 保险柜 -->
+  <div class="item" id="el-safe" data-name="Safe" style="width:9.5%; left:84.55%; top:43.89%; z-index:24;">
+    <img src="cutouts/12.png">
+  </div>
+
+  <!-- 宣传架 -->
+  <div class="item" id="el-rack" data-name="Brochure Rack" style="width:4.5%; left:25.86%; top:57.20%; z-index:34;">
+    <img src="cutouts/13.png">
+  </div>
+
+  <!-- 垃圾桶 -->
+  <div class="item" id="el-bin" data-name="Trash Bin" style="width:2%; left:70.13%; top:52.00%; z-index:43;">
+    <img src="cutouts/14.png">
+  </div>
+
+  <!-- 银行标志 -->
+  <div class="item" id="el-logo" data-name="Bank Logo" style="width:4%; left:63.96%; top:24.66%; z-index:10;">
+    <img src="cutouts/15.png">
+  </div>
+
+  <!-- 小人行走图层：viewBox 1000x750 与 4:3 场景等比，坐标即百分比×10 / ×7.5 -->
+  <svg class="agents-overlay" id="agents-overlay" viewBox="0 0 1000 750" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <g id="floor-debug" style="display:none"></g>
+    <g id="bank-characters"></g>
+  </svg>
+  <!-- 路线规划预览层：独立 SVG，不干扰人物层 -->
+  <svg class="agents-overlay" id="plan-overlay" viewBox="0 0 1000 750" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="pointer-events:none; z-index:501;">
+    <g id="plan-preview-layer"></g>
+  </svg>
+</div>
+
+<script>
+// === 嵌入式快照（点"📋 复制快照 JSON"把数据粘到这里两个 null 位置；保留 sentinel 注释） ===
+const EMBEDDED_LAYOUT = {
+  "el-counter-double1": {
+    "left": "40.92%",
+    "top": "27.01%",
+    "width": "15%"
+  },
+  "el-counter-double2": {
+    "left": "57.37%",
+    "top": "37.61%",
+    "width": "15%"
+  },
+  "el-atm": {
+    "left": "39.72%",
+    "top": "13.55%",
+    "width": "6%"
+  },
+  "el-counter-single": {
+    "left": "39.18%",
+    "top": "47.81%",
+    "width": "10%"
+  },
+  "el-sofa-left": {
+    "left": "50.82%",
+    "top": "70.52%",
+    "width": "9.5%"
+  },
+  "el-sofa-right": {
+    "left": "18.12%",
+    "top": "35.46%",
+    "width": "10%"
+  },
+  "el-table-left": {
+    "left": "56.59%",
+    "top": "76.42%",
+    "width": "10%"
+  },
+  "el-table-right": {
+    "left": "22.32%",
+    "top": "41.28%",
+    "width": "10%"
+  },
+  "el-barrier": {
+    "left": "57.55%",
+    "top": "58.33%",
+    "width": "16%"
+  },
+  "el-sign": {
+    "left": "30.00%",
+    "top": "62.56%",
+    "width": "3.5%"
+  },
+  "el-plant-lt": {
+    "left": "8.22%",
+    "top": "42.55%",
+    "width": "5.5%"
+  },
+  "el-plant-rt": {
+    "left": "30.96%",
+    "top": "25.98%",
+    "width": "4%"
+  },
+  "el-plant-rb": {
+    "left": "49.86%",
+    "top": "78.02%",
+    "width": "5.5%"
+  },
+  "el-plant-lf": {
+    "left": "73.87%",
+    "top": "42.95%",
+    "width": "5.5%"
+  },
+  "el-safe": {
+    "left": "84.55%",
+    "top": "43.99%",
+    "width": "9.5%"
+  },
+  "el-rack": {
+    "left": "25.80%",
+    "top": "57.69%",
+    "width": "4.5%"
+  },
+  "el-bin": {
+    "left": "70.09%",
+    "top": "52.04%",
+    "width": "2%"
+  },
+  "el-logo": {
+    "left": "63.91%",
+    "top": "24.70%",
+    "width": "4%"
+  }
+};  //__EMBEDDED_LAYOUT_END
+const EMBEDDED_ROUTES = [
+  {
+    "name": "person1",
+    "x": 540.4217867826187,
+    "y": 380.95974868139956,
+    "fixedRoute": [
+      [
+        381,
+        578
+      ],
+      [
+        469,
+        514
+      ],
+      [
+        307,
+        409
+      ],
+      [
+        399,
+        323
+      ],
+      [
+        582,
+        398
+      ]
+    ],
+    "linear": false,
+    "atEnd": false
+  },
+  {
+    "name": "person2",
+    "x": 782.8878915935962,
+    "y": 434.6392483154178,
+    "fixedRoute": [
+      [
+        718,
+        485
+      ],
+      [
+        771,
+        520
+      ],
+      [
+        840,
+        485
+      ],
+      [
+        785,
+        433
+      ]
+    ],
+    "linear": false,
+    "atEnd": false
+  },
+  {
+    "name": "Player",
+    "x": 430,
+    "y": 580,
+    "fixedRoute": [
+      [
+        430,
+        580
+      ],
+      [
+        607,
+        420
+      ]
+    ],
+    "linear": true,
+    "atEnd": true
+  }
+];  //__EMBEDDED_ROUTES_END
+
+(function() {
+  const scene = document.getElementById('scene');
+  const sizePanel = document.getElementById('sizePanel');
+  const sizeSlider = document.getElementById('sizeSlider');
+  const sizeVal = document.getElementById('sizeVal');
+  const sizeLabel = document.getElementById('sizeLabel');
+  let active = null, startX = 0, startY = 0, origLeft = 0, origTop = 0;
+  let selected = null;
+  let dragged = false;
+
+  document.querySelectorAll('.item').forEach(el => {
+    el.addEventListener('mousedown', begin);
+    el.addEventListener('touchstart', begin, {passive: false});
+  });
+
+  function begin(e) {
+    e.preventDefault();
+    active = this;
+    dragged = false;
+    active.style.zIndex = 999;
+    const pt = e.touches ? e.touches[0] : e;
+    startX = pt.clientX;
+    startY = pt.clientY;
+    origLeft = active.offsetLeft;
+    origTop = active.offsetTop;
+  }
+
+  document.addEventListener('mousemove', move);
+  document.addEventListener('touchmove', move, {passive: false});
+  function move(e) {
+    if (!active) return;
+    e.preventDefault();
+    const pt = e.touches ? e.touches[0] : e;
+    const dx = pt.clientX - startX;
+    const dy = pt.clientY - startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragged = true;
+    active.style.left = (origLeft + dx) + 'px';
+    active.style.top = (origTop + dy) + 'px';
+  }
+
+  document.addEventListener('mouseup', end);
+  document.addEventListener('touchend', end);
+  function end() {
+    if (active) {
+      active.style.zIndex = '';
+      if (!dragged) selectItem(active);
+      active = null;
+    }
+  }
+
+  scene.addEventListener('mousedown', function(e) {
+    if (e.target === scene || e.target.classList.contains('bg')) {
+      deselectAll();
+    }
+  });
+
+  function selectItem(el) {
+    deselectAll();
+    selected = el;
+    el.classList.add('selected');
+    sizePanel.classList.add('show');
+    const w = parseFloat(el.style.width);
+    sizeSlider.value = w;
+    sizeVal.textContent = w.toFixed(1) + '%';
+    sizeLabel.textContent = el.dataset.name || el.id;
+  }
+
+  function deselectAll() {
+    if (selected) selected.classList.remove('selected');
+    selected = null;
+    sizePanel.classList.remove('show');
+    sizeSlider.min = 1;
+    sizeSlider.max = 60;
+    sizeSlider.step = 0.5;
+  }
+
+  // 跨 IIFE 通信：让人物选中时通知本 IIFE 清掉物体选中
+  document.addEventListener('bank:deselectItem', deselectAll);
+
+  sizeSlider.addEventListener('input', function() {
+    if (!selected) return;
+    const v = parseFloat(this.value);
+    selected.style.width = v + '%';
+    sizeVal.textContent = v.toFixed(1) + '%';
+  });
+
+  loadPositions();
+})();
+
+function savePositions() {
+  const scene = document.getElementById('scene');
+  const rect = scene.getBoundingClientRect();
+  const data = {};
+  document.querySelectorAll('.item').forEach(el => {
+    const leftPct = (el.offsetLeft / rect.width * 100).toFixed(2) + '%';
+    const topPct = (el.offsetTop / rect.height * 100).toFixed(2) + '%';
+    el.style.left = leftPct;
+    el.style.top = topPct;
+    data[el.id] = { left: leftPct, top: topPct, width: el.style.width };
+  });
+  localStorage.setItem('bank_scene_positions', JSON.stringify(data));
+
+  // 同时保存每个人物的规划路线
+  const agents = window.__bankAgents || [];
+  const agentRoutes = agents.map(ag => {
+    const startX = (ag.linear && ag.fixedRoute) ? ag.fixedRoute[0][0] : ag.x;
+    const startY = (ag.linear && ag.fixedRoute) ? ag.fixedRoute[0][1] : ag.y;
+    return {
+      name:       ag.name,
+      x:          startX,
+      y:          startY,
+      fixedRoute: ag.fixedRoute ? ag.fixedRoute.map(p => [...p]) : null,
+      linear:     ag.linear,
+      atEnd:      false
+    };
+  });
+  localStorage.setItem('bank_scene_routes', JSON.stringify(agentRoutes));
+
+  showToast('Positions, sizes, and routes saved');
+}
+
+function resetPositions() {
+  localStorage.removeItem('bank_scene_positions');
+  localStorage.removeItem('bank_scene_routes');
+  location.reload();
+}
+
+function loadPositions() {
+  // EMBEDDED 优先：嵌入快照非空时一定生效，覆盖 localStorage；为 null 时才回退 localStorage
+  let saved;
+  if (EMBEDDED_LAYOUT && typeof EMBEDDED_LAYOUT === 'object') {
+    saved = JSON.stringify(EMBEDDED_LAYOUT);
+  } else {
+    saved = localStorage.getItem('bank_scene_positions');
+  }
+  if (saved) {
+    const data = JSON.parse(saved);
+    Object.keys(data).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.left = data[id].left;
+        el.style.top = data[id].top;
+        if (data[id].width) el.style.width = data[id].width;
+      }
+    });
+  }
+
+  // 路线恢复：在行走系统就绪后注入
+  // 路线恢复（EMBEDDED 优先）
+  let savedRoutes;
+  if (Array.isArray(EMBEDDED_ROUTES)) {
+    savedRoutes = JSON.stringify(EMBEDDED_ROUTES);
+  } else {
+    savedRoutes = localStorage.getItem('bank_scene_routes');
+  }
+  if (savedRoutes) {
+    const routeData = JSON.parse(savedRoutes);
+    // 若 agents 已就绪直接恢复，否则等待事件
+    function restoreRoutes(agents) {
+      routeData.forEach(r => {
+        const ag = agents.find(a => a.name === r.name);
+        if (!ag || !r.fixedRoute) return;
+        ag.x               = r.x;
+        ag.y               = r.y;
+        ag.fixedRoute      = r.fixedRoute.map(p => [...p]);
+        ag.linear          = r.linear;
+        ag.atEnd           = r.atEnd;
+        ag.fixedRouteIndex = 0;
+        ag.target          = null;
+        ag.pauseUntil      = 0;
+      });
+    }
+    if (window.__bankAgents) {
+      restoreRoutes(window.__bankAgents);
+    } else {
+      document.addEventListener('bank:agentsReady', e => restoreRoutes(e.detail.agents), { once: true });
+    }
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+// === 复制快照 JSON — 弹窗显示当前 layout/routes，复制后手动粘到 EMBEDDED_* 位置 ===
+function copySnapshotJSON() {
+  if (typeof savePositions === 'function') savePositions();
+  const layoutRaw = localStorage.getItem('bank_scene_positions');
+  const routesRaw = localStorage.getItem('bank_scene_routes');
+  if (!layoutRaw && !routesRaw) {
+    alert('No snapshot to copy. Please adjust the layout or routes first.');
+    return;
+  }
+  const layoutJson = layoutRaw ? JSON.stringify(JSON.parse(layoutRaw), null, 2) : 'null';
+  const routesJson = routesRaw ? JSON.stringify(JSON.parse(routesRaw), null, 2) : 'null';
+  showSnapshotModal(layoutJson, routesJson);
+}
+
+function showSnapshotModal(layoutJson, routesJson) {
+  let modal = document.getElementById('snapshotModal');
+  if (modal) modal.remove();
+  modal = document.createElement('div');
+  modal.id = 'snapshotModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-family:"Microsoft YaHei",sans-serif;';
+  modal.innerHTML =
+    '<div style="background:#fff;border-radius:10px;padding:18px 22px;max-width:780px;width:90vw;max-height:90vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,.3);">' +
+      '<h3 style="margin:0 0 8px;font-size:17px;color:#1f2937;">📋 Copy Snapshot JSON</h3>' +
+      '<p style="margin:0 0 14px;color:#4b5563;font-size:13px;line-height:1.6;">Copy the two sections below and paste them into the top of this HTML source at the <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">EMBEDDED_LAYOUT</code> / <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">EMBEDDED_ROUTES</code> <code>null</code> positions (keep the trailing <code>;</code> and <code>//__EMBEDDED_*_END</code> comments). Then zip the entire scene folder and share it — the recipient can double-click the html to see the current state.</p>' +
+      '<div style="margin-bottom:12px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<label style="font-size:13px;color:#374151;font-weight:600;">EMBEDDED_LAYOUT =</label>' +
+          '<button class="snap-copy" data-target="snapLayoutArea" style="padding:4px 14px;font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;">Copy</button>' +
+        '</div>' +
+        '<textarea id="snapLayoutArea" readonly style="width:100%;height:170px;font-family:Consolas,Menlo,monospace;font-size:12px;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>' +
+      '</div>' +
+      '<div style="margin-bottom:14px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+          '<label style="font-size:13px;color:#374151;font-weight:600;">EMBEDDED_ROUTES =</label>' +
+          '<button class="snap-copy" data-target="snapRoutesArea" style="padding:4px 14px;font-size:12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;">Copy</button>' +
+        '</div>' +
+        '<textarea id="snapRoutesArea" readonly style="width:100%;height:170px;font-family:Consolas,Menlo,monospace;font-size:12px;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;box-sizing:border-box;"></textarea>' +
+      '</div>' +
+      '<div style="text-align:right;">' +
+        '<button id="snapClose" style="padding:8px 22px;font-size:13px;background:#6b7280;color:#fff;border:none;border-radius:6px;cursor:pointer;">Close</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  document.getElementById('snapLayoutArea').value = layoutJson;
+  document.getElementById('snapRoutesArea').value = routesJson;
+  modal.querySelectorAll('.snap-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ta = document.getElementById(btn.dataset.target);
+      ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      const orig = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      btn.style.background = '#10b981';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = '#3b82f6'; }, 1500);
+    });
+  });
+  modal.querySelector('#snapClose').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+}
+</script>
+
+<!-- ════════ 小人行走系统（简化版：固定路线 + 四方向精灵，无碰撞）════════ -->
+
+<script>
+(() => {
+  const svgNS = "http://www.w3.org/2000/svg";
+  const charactersLayer = document.querySelector("#bank-characters");
+  const floorDebugLayer = document.querySelector("#floor-debug");
+  const scene = document.getElementById("scene");
+
+  // 坐标系：viewBox 1000x750，与 4:3 背景等比拉伸。x = left% × 10，y = top% × 7.5。
+  // 简化行走系统：沿预定义路线直线移动，四方向真精灵，无碰撞检测。
+  const WALK_CONFIG = {
+    floorPolygon: [[470, 158], [924, 428], [524, 698], [52, 353]],
+    frameMs: 60,
+    pauseMs: [400, 1200]
+  };
+
+  // ─── 三个角色的四方向行走精灵 ───
+  // 每个精灵用不同渲染脚本生成，方向约定可能不一致：
+  //   render_isometric.py：相机绕物体旋转，文件名 ↔ 实际方向可能颠倒
+  //   render_walk.py：物体旋转、相机固定，文件名通常正确
+  // 通过 dirMap 把"引擎方向"重映射到"精灵文件夹的实际方向"
+  // dirMap 默认为单位映射（front→front, back→back, left→left, right→right）
+  // 如果某个精灵显示方向不对，调整对应键值即可（比如 front 与 back 互换）
+
+  // walk_1: 12帧×4方向, 文件名 walk_{dir}_{01-12}.png
+  // 帧方向已与新的对角方向系对齐，dirMap 用单位映射即可
+  const WALK_1_SPRITE = {
+    box: 135, footFrac: 0.826, midFrac: 0.499,
+    dirs: {
+      front: Array.from({ length: 12 }, (_, i) => `../../person/walk_1/walk_front_${String(i+1).padStart(2,"0")}.png`),
+      back:  Array.from({ length: 12 }, (_, i) => `../../person/walk_1/walk_back_${String(i+1).padStart(2,"0")}.png`),
+      left:  Array.from({ length: 12 }, (_, i) => `../../person/walk_1/walk_left_${String(i+1).padStart(2,"0")}.png`),
+      right: Array.from({ length: 12 }, (_, i) => `../../person/walk_1/walk_right_${String(i+1).padStart(2,"0")}.png`)
+    },
+    dirMap: { front: "front", back: "back", left: "left", right: "right" }
+  };
+  WALK_1_SPRITE.idle = WALK_1_SPRITE.dirs.front[0];
+
+  // walk_2: 12帧×4方向, 文件名 walk_{dir}_{01-12}.png
+  const WALK_2_SPRITE = {
+    box: 135, footFrac: 0.826, midFrac: 0.499,
+    dirs: {
+      front: Array.from({ length: 12 }, (_, i) => `../../person/walk_2/walk_front_${String(i+1).padStart(2,"0")}.png`),
+      back:  Array.from({ length: 12 }, (_, i) => `../../person/walk_2/walk_back_${String(i+1).padStart(2,"0")}.png`),
+      left:  Array.from({ length: 12 }, (_, i) => `../../person/walk_2/walk_left_${String(i+1).padStart(2,"0")}.png`),
+      right: Array.from({ length: 12 }, (_, i) => `../../person/walk_2/walk_right_${String(i+1).padStart(2,"0")}.png`)
+    },
+    dirMap: { front: "front", back: "back", left: "left", right: "right" }
+  };
+  WALK_2_SPRITE.idle = WALK_2_SPRITE.dirs.front[0];
+
+  // walk_client1: 12帧×4方向, 文件名 walk_{dir}_{0-11}.png（保留供日后扩展，当前未使用）
+
+  // 可用精灵池（分配给 AI 巡逻角色）
+  const SPRITE_POOL = [WALK_1_SPRITE, WALK_2_SPRITE];
+
+  const _urlParams = new URLSearchParams(window.location.search);
+  const _playerSpriteId = (function() {
+    const fromUrl = _urlParams.get("sprite");
+    if (fromUrl) return fromUrl;
+    try {
+      const st = JSON.parse(sessionStorage.getItem("EWMInitialState") || "null");
+      if (st && st.player && st.player.spriteId) return st.player.spriteId;
+    } catch(e) {}
+    return null;
+  })();
+  function _makeBankSprite(folder) {
+    const dirs = {
+      front: Array.from({ length: 12 }, (_, i) => `${folder}/walk_front_${String(i+1).padStart(2,"0")}.png`),
+      back:  Array.from({ length: 12 }, (_, i) => `${folder}/walk_back_${String(i+1).padStart(2,"0")}.png`),
+      left:  Array.from({ length: 12 }, (_, i) => `${folder}/walk_left_${String(i+1).padStart(2,"0")}.png`),
+      right: Array.from({ length: 12 }, (_, i) => `${folder}/walk_right_${String(i+1).padStart(2,"0")}.png`)
+    };
+    return { box: 135, footFrac: 0.826, midFrac: 0.499, dirs, dirMap: { front: "front", back: "back", left: "left", right: "right" }, idle: dirs.front[0] };
+  }
+  const PLAYER_SPRITE = _playerSpriteId ? _makeBankSprite("../../person/" + _playerSpriteId) : SPRITE_POOL[0];
+
+  // ─── 两个绿色方框行走区域（viewBox 1000×750 坐标）───
+  // 路线规则：所有线段必须严格沿 45° 对角线方向，对应新角标方向系：
+  //   东北段(NE) → front   ｜ 东南段(SE) → right
+  //   西北段(NW) → left    ｜ 西南段(SW) → back
+  // 巡逻路线选址原则：
+  //   1. 完全位于地板蓝色多边形内
+  //   2. 路线包络盒不与任何家具的精确轮廓相交（已用 alpha mask 自动验证）
+  //   3. 菱形 r=45：四段长度相等，每段刚好对应一个对角方向
+  const WALK_ZONES = [
+    { name: "Left Zone Path", x: 120, y: 260, w: 660, h: 240,
+      // 沿橙色路线从左下角走到右上角（线性路径，不闭环；走完停在原地）
+      // 4 段大波：NE→SE→NE→SE，整体方向 NE，与图片中橙色线条吻合
+      route: [
+        [180, 420],  // 起点：左下（人物起始位置）
+        [320, 280],  // NE：第一波峰（向右上）
+        [480, 440],  // SE：波谷（向右下）
+        [640, 280],  // NE：第二波峰（向右上）
+        [720, 360]   // SE：终点（停在此处）
+      ],
+      linear: true,
+      color: "#ff6600"
+    },
+    { name: "Right Zone", x: 738, y: 408, w: 100, h: 100,
+      // 菱形巡逻：东(SE)→南(SW)→西(NW)→北(NE)，中心(788,456) 半径 45
+      route: [[833, 456], [788, 501], [743, 456], [788, 411]],
+      color: "#cc00ff"
+    },
+    { name: "Player Route", x: 150, y: 380, w: 350, h: 280,
+      route: [[200, 620], [350, 520], [460, 420]],
+      linear: true,
+      color: "#10b981"
+    }
+  ];
+
+  // ─── SVG 工具 ───
+  function svgElement(tag, attrs = {}) {
+    const el = document.createElementNS(svgNS, tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+  }
+
+  // ─── 几何判断：点是否在多边形内（射线法） ───
+  function pointInPolygon(x, y, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const xi = poly[i][0], yi = poly[i][1];
+      const xj = poly[j][0], yj = poly[j][1];
+      const intersect = ((yi > y) !== (yj > y)) &&
+        (x < (xj - xi) * (y - yi) / (yj - yi + 1e-9) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  // ─── 碰撞画布：把场景里的 .item 抠图素材按场景比例画到一张离屏 canvas，
+  //     角色脚点用 alpha 通道采样判断是否压到了非透明像素，得到精确轮廓碰撞。
+  const obstacleCanvas = document.createElement("canvas");
+  obstacleCanvas.width = 1000;
+  obstacleCanvas.height = 750;
+  const obstacleCtx = obstacleCanvas.getContext("2d", { willReadFrequently: true });
+  let obstacleAlpha = null;          // Uint8ClampedArray 长度 = 1000 * 750
+  let obstacleCanvasReady = false;
+  let obstacleBoxes = [];            // 碰撞退化方案使用的物体外框（粗略矩形）
+  let obstacleContourPath = "";      // 每个 .item 的精确轮廓拼接成一条 SVG path d
+  // alpha 阈值：>= 这个值视为障碍像素（PNG 抠图边缘有羽化，调高一点避免误判）
+  const OBSTACLE_ALPHA_THRESHOLD = 80;
+  // 单个 item 的轮廓采样最大边长（viewBox 单位）。越大越精细，但 SVG path 会越长。
+  const CONTOUR_SAMPLE_LIMIT = 160;
+
+  // ─── 从 imgEl 的 alpha 通道用 marching squares 提取精确轮廓，返回 SVG path d 片段。
+  // (x, y, w, h) 是该 item 在 viewBox(1000×750) 坐标系中的位置和尺寸。
+  function extractContourPath(imgEl, x, y, w, h) {
+    if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0) return "";
+    const scale = Math.min(1, CONTOUR_SAMPLE_LIMIT / Math.max(w, h));
+    const cw = Math.max(2, Math.round(w * scale));
+    const ch = Math.max(2, Math.round(h * scale));
+    const c = document.createElement("canvas");
+    c.width = cw;
+    c.height = ch;
+    const ctx = c.getContext("2d");
+    ctx.clearRect(0, 0, cw, ch);
+    try {
+      ctx.drawImage(imgEl, 0, 0, cw, ch);
+    } catch (e) { return ""; }
+    let pix;
+    try {
+      pix = ctx.getImageData(0, 0, cw, ch).data;
+    } catch (e) { return ""; }
+
+    const inv = 1 / scale;
+    const T = OBSTACLE_ALPHA_THRESHOLD;
+    const f = n => n.toFixed(1);
+    let d = "";
+    for (let yi = 0; yi < ch - 1; yi++) {
+      for (let xi = 0; xi < cw - 1; xi++) {
+        const i0 = (yi * cw + xi) * 4 + 3;
+        const i1 = (yi * cw + xi + 1) * 4 + 3;
+        const i2 = ((yi + 1) * cw + xi + 1) * 4 + 3;
+        const i3 = ((yi + 1) * cw + xi) * 4 + 3;
+        const code =
+          (pix[i0] >= T ? 1 : 0) |
+          (pix[i1] >= T ? 2 : 0) |
+          (pix[i2] >= T ? 4 : 0) |
+          (pix[i3] >= T ? 8 : 0);
+        if (code === 0 || code === 15) continue;
+        // 单元四条边中点（相对 viewBox 坐标）
+        const tx = (xi + 0.5) * inv + x, ty = yi * inv + y;
+        const rx = (xi + 1) * inv + x,   ry = (yi + 0.5) * inv + y;
+        const bx = (xi + 0.5) * inv + x, by = (yi + 1) * inv + y;
+        const lx = xi * inv + x,         ly = (yi + 0.5) * inv + y;
+        switch (code) {
+          case 1:  case 14: d += `M${f(lx)} ${f(ly)}L${f(tx)} ${f(ty)}`; break;
+          case 2:  case 13: d += `M${f(tx)} ${f(ty)}L${f(rx)} ${f(ry)}`; break;
+          case 3:  case 12: d += `M${f(lx)} ${f(ly)}L${f(rx)} ${f(ry)}`; break;
+          case 4:  case 11: d += `M${f(rx)} ${f(ry)}L${f(bx)} ${f(by)}`; break;
+          case 6:  case 9:  d += `M${f(tx)} ${f(ty)}L${f(bx)} ${f(by)}`; break;
+          case 7:  case 8:  d += `M${f(lx)} ${f(ly)}L${f(bx)} ${f(by)}`; break;
+          case 5:           d += `M${f(lx)} ${f(ly)}L${f(tx)} ${f(ty)}M${f(rx)} ${f(ry)}L${f(bx)} ${f(by)}`; break;
+          case 10:          d += `M${f(lx)} ${f(ly)}L${f(bx)} ${f(by)}M${f(tx)} ${f(ty)}L${f(rx)} ${f(ry)}`; break;
+        }
+      }
+    }
+    return d;
+  }
+
+  // 把场景中的所有 .item 按其屏幕位置/尺寸绘制到 obstacleCanvas。
+  // 等所有 img 加载好后才能拿到 alpha 数据。
+  function rebuildObstacleCanvas() {
+    return new Promise((resolve) => {
+      obstacleCanvasReady = false;
+      obstacleCtx.clearRect(0, 0, 1000, 750);
+      const sceneRect = scene.getBoundingClientRect();
+      const sx = 1000 / sceneRect.width;
+      const sy = 750  / sceneRect.height;
+      const items = Array.from(document.querySelectorAll(".scene .item"));
+      obstacleBoxes = [];
+      const contourFragments = [];
+
+      const tasks = items.map(el => new Promise((done) => {
+        const r = el.getBoundingClientRect();
+        const x = (r.left   - sceneRect.left) * sx;
+        const y = (r.top    - sceneRect.top ) * sy;
+        const w = (r.right  - r.left) * sx;
+        const h = (r.bottom - r.top ) * sy;
+        obstacleBoxes.push({ x1: x, y1: y, x2: x + w, y2: y + h, name: el.dataset.name || el.id });
+
+        const imgEl = el.querySelector("img");
+        if (!imgEl || !imgEl.src) { done(); return; }
+        // 复用已加载的 img 元素：只要它已经 complete 就能直接 drawImage
+        const draw = () => {
+          try {
+            obstacleCtx.drawImage(imgEl, x, y, w, h);
+          } catch (e) { /* CORS 等异常时静默 */ }
+          // 顺便提取精确轮廓
+          const d = extractContourPath(imgEl, x, y, w, h);
+          if (d) contourFragments.push(d);
+          done();
+        };
+        if (imgEl.complete && imgEl.naturalWidth > 0) {
+          draw();
+        } else {
+          imgEl.addEventListener("load", draw, { once: true });
+          imgEl.addEventListener("error", () => done(), { once: true });
+        }
+      }));
+
+      Promise.all(tasks).then(() => {
+        obstacleContourPath = contourFragments.join("");
+        try {
+          const data = obstacleCtx.getImageData(0, 0, 1000, 750).data;
+          // 只保留 alpha 通道，节省内存
+          obstacleAlpha = new Uint8ClampedArray(1000 * 750);
+          for (let i = 0, j = 3; i < obstacleAlpha.length; i++, j += 4) {
+            obstacleAlpha[i] = data[j];
+          }
+          obstacleCanvasReady = true;
+        } catch (e) {
+          // 一般是 CORS 异常，本地 file:// 下也可能遇到 SecurityError
+          console.warn("obstacle canvas getImageData failed, falling back to rectangle collision", e);
+          obstacleCanvasReady = false;
+        }
+        resolve();
+      });
+    });
+  }
+
+  // 角色脚下圆形半径（碰撞用）
+  const PERSON_RADIUS = 14;
+  // 角色之间的最小距离（圆-圆碰撞）
+  const PERSON_PERSON_DIST = 32;
+
+  // 检查 (x, y) 处的角色脚点是否压到了任意障碍像素。
+  // 采样脚下半径 PERSON_RADIUS 范围内若干像素，若有 alpha >= 阈值的像素就算碰撞。
+  function hitsObstacle(x, y) {
+    if (!obstacleCanvasReady || !obstacleAlpha) {
+      // 退化方案：矩形碰撞（取家具下半部分）
+      for (const r of obstacleBoxes) {
+        const w = r.x2 - r.x1, h = r.y2 - r.y1;
+        const x1 = r.x1 + w * 0.10, x2 = r.x2 - w * 0.10;
+        const y1 = r.y1 + h * 0.55, y2 = r.y2 - h * 0.05;
+        const cx = Math.max(x1, Math.min(x, x2));
+        const cy = Math.max(y1, Math.min(y, y2));
+        const dx = x - cx, dy = y - cy;
+        if (dx * dx + dy * dy < PERSON_RADIUS * PERSON_RADIUS) return true;
+      }
+      return false;
+    }
+    // 像素级采样：脚点附近的几个采样点，任一 alpha >= 阈值 即视为撞到
+    // 采样点：圆心 + 八方向半径处共 9 个点
+    const samples = [
+      [x, y],
+      [x + PERSON_RADIUS, y], [x - PERSON_RADIUS, y],
+      [x, y + PERSON_RADIUS], [x, y - PERSON_RADIUS],
+      [x + PERSON_RADIUS * 0.7, y + PERSON_RADIUS * 0.7],
+      [x - PERSON_RADIUS * 0.7, y + PERSON_RADIUS * 0.7],
+      [x + PERSON_RADIUS * 0.7, y - PERSON_RADIUS * 0.7],
+      [x - PERSON_RADIUS * 0.7, y - PERSON_RADIUS * 0.7]
+    ];
+    for (const [sx, sy] of samples) {
+      const ix = Math.round(sx), iy = Math.round(sy);
+      if (ix < 0 || ix >= 1000 || iy < 0 || iy >= 750) continue;
+      if (obstacleAlpha[iy * 1000 + ix] >= OBSTACLE_ALPHA_THRESHOLD) return true;
+    }
+    return false;
+  }
+
+  // 检查 (x, y) 是否在地板多边形内
+  function inFloor(x, y) {
+    return pointInPolygon(x, y, WALK_CONFIG.floorPolygon);
+  }
+
+  // 检查 (x, y) 是否会与其他角色重叠
+  // me: 当前角色对象（用于排除自身）
+  function hitsOtherAgent(x, y, me) {
+    for (const other of agents) {
+      if (other === me) continue;
+      const dx = x - other.x, dy = y - other.y;
+      if (dx * dx + dy * dy < PERSON_PERSON_DIST * PERSON_PERSON_DIST) return true;
+    }
+    return false;
+  }
+
+  // 综合判断：(x, y) 是否是合法位置
+  function isValidPosition(x, y, me) {
+    return inFloor(x, y) && !hitsObstacle(x, y) && !hitsOtherAgent(x, y, me);
+  }
+
+  // ─── 创建角色 ───
+  function buildAgent({ name, label, sprite, x, y, speed = 45, scale = 1 }) {
+    const root = svgElement("g", { class: "agent", "data-agent": name, "data-label": label, tabindex: "0", role: "button" });
+
+    const depth = svgElement("g", { class: "agent-depth" });
+    const sp = sprite;
+    const image = svgElement("image", {
+      class: "agent-frame",
+      href: sp.idle,
+      x: -sp.box * sp.midFrac,
+      y: -sp.box * sp.footFrac,
+      width: sp.box,
+      height: sp.box,
+      preserveAspectRatio: "xMidYMid meet"
+    });
+    const hitArea = svgElement("rect", {
+      class: "agent-hit", fill: "transparent",
+      x: -sp.box * sp.midFrac, y: -sp.box * sp.footFrac,
+      width: sp.box, height: sp.box, rx: 14
+    });
+
+    // 选中指示器（默认隐藏）：脚下的虚线圆，比 agent-hit 提示更明显
+    const selectRing = svgElement("ellipse", {
+      class: "agent-select-ring",
+      cx: 0, cy: 0, rx: PERSON_RADIUS + 6, ry: (PERSON_RADIUS + 6) * 0.45,
+      fill: "none", stroke: "#4a90d9", "stroke-width": 2.5,
+      "stroke-dasharray": "6 4", style: "display:none"
+    });
+
+    depth.append(hitArea, image, selectRing);
+
+    // ─── 方向标注（调试用，按 D 键切换显示） ───
+    // 实际方向相对屏幕坐标轴旋转 45°（等距/斜视效果）：
+    //   左(left)  → 屏幕左上(NW)
+    //   前(front) → 屏幕右上(NE)
+    //   后(back)  → 屏幕左下(SW)
+    //   右(right) → 屏幕右下(SE)
+    // 这是把"按 D 显示"的标准方向与角色实际朝向对齐，便于后续按这一标准调整。
+    const dirLabelGroup = svgElement("g", { class: "agent-dir-labels", style: "display:none" });
+    const labelTextStyle = '"Microsoft YaHei", sans-serif';
+    const top = -sp.box * sp.footFrac;       // 角色头顶 y 坐标
+    const bottom = top + sp.box;             // 角色脚下 y 坐标
+    const halfW = sp.box * sp.midFrac;       // 角色中线到左/右边的距离
+    const cornerPad = 6;                     // 标签离角色包围盒的间距
+    const dirPositions = {
+      left:  { x: -halfW - cornerPad, y: top - 4,         text: "L" }, // 左上
+      front: { x:  halfW + cornerPad, y: top - 4,         text: "F" }, // 右上
+      back:  { x: -halfW - cornerPad, y: bottom + 14,     text: "B" }, // 左下
+      right: { x:  halfW + cornerPad, y: bottom + 14,     text: "R" }  // 右下
+    };
+    const dirLabelEls = {};
+    for (const [dir, p] of Object.entries(dirPositions)) {
+      // 文本背景圆（用于高亮）
+      const bg = svgElement("circle", {
+        cx: p.x, cy: p.y - 5, r: 12,
+        fill: "rgba(255,255,255,0.85)", stroke: "#333", "stroke-width": 1.2
+      });
+      const txt = svgElement("text", {
+        x: p.x, y: p.y, "text-anchor": "middle",
+        "font-family": labelTextStyle, "font-size": 14, "font-weight": "bold",
+        fill: "#333"
+      });
+      txt.textContent = p.text;
+      dirLabelGroup.appendChild(bg);
+      dirLabelGroup.appendChild(txt);
+      dirLabelEls[dir] = { bg, txt };
+    }
+    depth.appendChild(dirLabelGroup);
+
+    root.appendChild(depth);
+    charactersLayer.appendChild(root);
+
+    return {
+      el: root, name, label, x, y, speed, scale, sprite: sp,
+      dir: "front", frameIndex: 0, frameClock: 0,
+      target: null, fixedRoute: null, fixedRouteIndex: 0,
+      pauseUntil: performance.now() + Math.random() * 500,
+      image, depthNode: depth,
+      dirLabelGroup, dirLabelEls,
+      selectRing
+    };
+  }
+
+  // ─── 创建两个 AI 巡逻角色 + 玩家 ───
+  const agents = [
+    buildAgent({ name: "person1", label: "Customer A", sprite: SPRITE_POOL[0], x: 0, y: 0, speed: 42 }),
+    buildAgent({ name: "person2", label: "Customer B", sprite: SPRITE_POOL[1], x: 0, y: 0, speed: 48, scale: 0.889 }),
+    buildAgent({ name: "Player", label: "Player", sprite: PLAYER_SPRITE, x: 0, y: 0, speed: 100, scale: _playerSpriteId === "walk_1" ? 0.92 : 0.82 })
+  ];
+
+  // ─── 固定分配区域和路线（每个角色对应固定区域） ───
+  // person1(walk_1) → 左区, person2(walk_2) → 中区
+  (() => {
+    agents.forEach((agent, i) => {
+      const zone = WALK_ZONES[i];
+      agent.walkZone = zone;
+      agent.fixedRoute = zone.route;
+      agent.fixedRouteIndex = 0;
+      agent.linear = !!zone.linear;        // 线性路径标志：true 走一次后停在原地
+      agent.atEnd = false;                 // 是否已经走完（仅 linear 路径用）
+      agent.x = zone.route[0][0];
+      agent.y = zone.route[0][1];
+    });
+  })();
+
+  agents[2].el.classList.add("player-highlight");
+  (function() {
+    const ag = agents[2], ns = "http://www.w3.org/2000/svg";
+    const arrow = document.createElementNS(ns, "polygon");
+    arrow.setAttribute("points", "-7,-14 7,-14 0,0");
+    arrow.setAttribute("fill", "#ff3030");
+    arrow.setAttribute("stroke", "#fff");
+    arrow.setAttribute("stroke-width", "1.2");
+    ag.el.appendChild(arrow);
+    let phase = 0;
+    (function update() {
+      const x = parseFloat(ag.image.getAttribute("x"));
+      const y = parseFloat(ag.image.getAttribute("y"));
+      const w = parseFloat(ag.image.getAttribute("width"));
+      const bounce = Math.sin(phase) * 5;
+      phase += 0.06;
+      arrow.setAttribute("transform", "translate(" + (x + w/2) + "," + (y - 6 + bounce) + ")");
+      requestAnimationFrame(update);
+    })();
+  })();
+
+  // ─── 角色点击选中 + 滑动条调整大小 ───
+  const sizePanel = document.getElementById("sizePanel");
+  const sizeSlider = document.getElementById("sizeSlider");
+  const sizeVal = document.getElementById("sizeVal");
+  const sizeLabel = document.getElementById("sizeLabel");
+  let selectedAgent = null;
+
+  function selectAgent(agent) {
+    deselectAgent();
+    // 通知物体那边清掉物体的选中状态
+    document.dispatchEvent(new CustomEvent("bank:deselectItem"));
+    selectedAgent = agent;
+    agent.selectRing.style.display = "";
+    sizePanel.classList.add("show");
+    // 角色 scale 范围 0.5~2.5，步长 0.05；用 100 倍后映射到滑动条整数
+    sizeSlider.min = 50;
+    sizeSlider.max = 250;
+    sizeSlider.step = 5;
+    sizeSlider.value = Math.round(agent.scale * 100);
+    sizeVal.textContent = (agent.scale * 100).toFixed(0) + "%";
+    sizeLabel.textContent = `${agent.label}（${agent.name}）`;
+  }
+  function deselectAgent() {
+    if (!selectedAgent) return;
+    selectedAgent.selectRing.style.display = "none";
+    selectedAgent = null;
+    sizePanel.classList.remove("show");
+  }
+  // 滑动条独立监听角色尺寸（与物体的监听互不冲突，因为各自检查自己的 selected*）
+  sizeSlider.addEventListener("input", function () {
+    if (!selectedAgent) return;
+    const v = parseFloat(this.value) / 100;
+    selectedAgent.scale = v;
+    sizeVal.textContent = (v * 100).toFixed(0) + "%";
+  });
+
+  // 给每个角色绑定点击 → 选中
+  agents.forEach(agent => {
+    agent.el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      selectAgent(agent);
+    });
+  });
+  // 点击场景空白处取消角色选中
+  scene.addEventListener("mousedown", (e) => {
+    if (e.target === scene || e.target.classList.contains("bg")) {
+      deselectAgent();
+    }
+  });
+
+  // ─── 帧动画与方向 ───
+  const FRAME_MS = 60;
+  const PAUSE_MS = [400, 1200];
+
+  function pauseDuration() {
+    return PAUSE_MS[0] + Math.random() * (PAUSE_MS[1] - PAUSE_MS[0]);
+  }
+
+  // 根据移动向量(dx,dy)确定四方向
+  // 角标方向系（屏幕坐标轴旋转 45°）：
+  //   左(left)  = NW (dx<0, dy<0)
+  //   前(front) = NE (dx>0, dy<0)
+  //   后(back)  = SW (dx<0, dy>0)
+  //   右(right) = SE (dx>0, dy>0)
+  // 用旋转坐标 u = dx - dy（正向→前/NE）, v = dx + dy（正向→右/SE）做象限判定。
+  function getDirection(dx, dy) {
+    const u = dx - dy;
+    const v = dx + dy;
+    if (Math.abs(u) >= Math.abs(v)) {
+      return u >= 0 ? "front" : "back";
+    }
+    return v >= 0 ? "right" : "left";
+  }
+
+  function setFrame(agent, walking, dtMs) {
+    const sp = agent.sprite;
+    // 通过 dirMap 把引擎方向(agent.dir)映射到精灵文件夹的实际方向
+    // dirMap 的值可以是字符串（直接使用对应方向的帧）
+    // 或 {dir, mirror} 对象（mirror=true 时水平翻转）
+    let mappedDir = agent.dir;
+    let mirror = false;
+    if (sp.dirMap && sp.dirMap[agent.dir] != null) {
+      const m = sp.dirMap[agent.dir];
+      if (typeof m === "string") {
+        mappedDir = m;
+      } else if (typeof m === "object") {
+        mappedDir = m.dir || agent.dir;
+        mirror = !!m.mirror;
+      }
+    }
+    const frames = sp.dirs[mappedDir] || sp.dirs.front;
+
+    // 应用/移除水平镜像
+    if (mirror) {
+      // 在角色 image 元素上叠加 scale(-1,1)；由于 image 的 x 是 -box*midFrac（负值），
+      // 翻转后还需要把 x 偏移调整为 box*midFrac - box，让翻转后帧仍居中显示。
+      // 简化做法：用 transform 围绕 image 的水平中心翻转。
+      const cx = 0; // 角色锚点（图像水平中心）就是原点 0
+      agent.image.setAttribute("transform", `translate(${cx*2},0) scale(-1,1)`);
+    } else {
+      agent.image.removeAttribute("transform");
+    }
+
+    if (!walking) {
+      agent.frameIndex = 0;
+      agent.frameClock = 0;
+      const f = frames[0];
+      if (agent.currentHref !== f) {
+        agent.currentHref = f;
+        agent.image.setAttribute("href", f);
+      }
+      return;
+    }
+    agent.frameClock += dtMs;
+    if (agent.frameClock >= FRAME_MS) {
+      const steps = Math.floor(agent.frameClock / FRAME_MS);
+      agent.frameClock %= FRAME_MS;
+      agent.frameIndex = (agent.frameIndex + steps) % frames.length;
+    }
+    const f = frames[agent.frameIndex];
+    if (agent.currentHref !== f) {
+      agent.currentHref = f;
+      agent.image.setAttribute("href", f);
+    }
+  }
+
+  // ─── 下一个目标点 ───
+  function nextTarget(agent) {
+    if (agent.linear) {
+      if (agent.fixedRouteIndex >= agent.fixedRoute.length - 1) {
+        agent.atEnd = true;
+        if (agent.name === "Player" && !agent._dialogueTriggered) {
+          agent._dialogueTriggered = true;
+          setTimeout(() => {
+            if (window.__onPlayerRouteEnd) window.__onPlayerRouteEnd();
+          }, 300);
+        }
+        if (agent.name === "Player" && agent._returning && !agent._fadeTriggered) {
+          agent._fadeTriggered = true;
+          setTimeout(() => {
+            if (typeof window.__onPlayerReturnedToStart === 'function') {
+              window.__onPlayerReturnedToStart();
+            }
+          }, 600);
+        }
+        return null;
+      }
+      agent.fixedRouteIndex += 1;
+    } else {
+      agent.fixedRouteIndex = (agent.fixedRouteIndex + 1) % agent.fixedRoute.length;
+    }
+    const [x, y] = agent.fixedRoute[agent.fixedRouteIndex];
+    return { x, y };
+  }
+
+  // ─── 调试可视化 ───
+  function refreshFloorDebug() {
+    while (floorDebugLayer.firstChild) floorDebugLayer.removeChild(floorDebugLayer.firstChild);
+    // 蓝色地板
+    floorDebugLayer.appendChild(svgElement("polygon", {
+      class: "floor-poly",
+      points: WALK_CONFIG.floorPolygon.map(p => p.join(",")).join(" ")
+    }));
+    // 调试模式下根据每个 .item 的 alpha 通道画出精确轮廓线（替代之前的矩形边框）
+    if (obstacleContourPath) {
+      floorDebugLayer.appendChild(svgElement("path", {
+        d: obstacleContourPath,
+        fill: "none",
+        stroke: "#cc0000",
+        "stroke-width": 1.4,
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round",
+        opacity: 0.9
+      }));
+    }
+    // 把障碍 canvas 直接作为半透明图叠加上去，便于直观看到精确碰撞轮廓
+    if (obstacleCanvasReady) {
+      try {
+        const dataURL = obstacleCanvas.toDataURL();
+        floorDebugLayer.appendChild(svgElement("image", {
+          href: dataURL, x: 0, y: 0, width: 1000, height: 750,
+          opacity: 0.25, style: "pointer-events:none"
+        }));
+      } catch (e) { /* 忽略 */ }
+    }
+  }
+
+  refreshFloorDebug();
+  let debugVisible = false;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "d" || e.key === "D") {
+      debugVisible = !debugVisible;
+      if (debugVisible) {
+        // 进入调试模式时刷新障碍画布并重绘调试图
+        rebuildObstacleCanvas().then(() => refreshFloorDebug());
+      }
+      floorDebugLayer.style.display = debugVisible ? "" : "none";
+      // 同步切换每个角色的方向标签
+      agents.forEach(a => {
+        a.dirLabelGroup.style.display = debugVisible ? "" : "none";
+      });
+    }
+  });
+
+  // 高亮某个方向的标签（被标为当前方向）
+  function highlightDirLabel(agent) {
+    if (!agent.dirLabelEls) return;
+    for (const [dir, els] of Object.entries(agent.dirLabelEls)) {
+      const isActive = (dir === agent.dir);
+      els.bg.setAttribute("fill", isActive ? "rgba(255,80,80,0.95)" : "rgba(255,255,255,0.85)");
+      els.bg.setAttribute("stroke", isActive ? "#a00" : "#333");
+      els.txt.setAttribute("fill", isActive ? "#fff" : "#333");
+    }
+  }
+
+  // ─── 主循环（极简：直线移动 + 四方向帧切换）───
+  let previousTime = performance.now();
+  // 异步构建障碍 canvas：等所有 .item 的 img 加载完后会标记 ready
+  rebuildObstacleCanvas();
+  let obstacleRefreshAt = performance.now() + 1500;
+
+  function tick(now) {
+    const dtMs = Math.min(now - previousTime, 50);
+    const dt = dtMs / 1000;
+    previousTime = now;
+
+    // 定期刷新障碍画布（家具被拖动 / 缩放后需要重建）
+    if (now > obstacleRefreshAt) {
+      rebuildObstacleCanvas().then(() => {
+        if (debugVisible) refreshFloorDebug();
+      });
+      obstacleRefreshAt = now + 1500;
+    }
+
+    for (const agent of agents) {
+      let walking = false;
+
+      // AI 巡逻：到达目标后暂停，然后选下一个路径点
+      if (!agent.target && !agent.atEnd && now >= agent.pauseUntil) {
+        const next = nextTarget(agent);
+        if (next) agent.target = next;
+      }
+
+      if (agent.target) {
+        const dx = agent.target.x - agent.x;
+        const dy = agent.target.y - agent.y;
+        const distance = Math.hypot(dx, dy);
+
+        if (distance < 2) {
+          // 到达当前路径点
+          agent.x = agent.target.x;
+          agent.y = agent.target.y;
+          agent.target = null;
+          agent.pauseUntil = now + pauseDuration();
+        } else {
+          walking = true;
+          const step = Math.min(distance, agent.speed * dt);
+          agent.x += (dx / distance) * step;
+          agent.y += (dy / distance) * step;
+          // 确定行走方向
+          agent.dir = getDirection(dx, dy);
+        }
+      }
+
+      // 更新帧动画
+      setFrame(agent, walking, dtMs);
+      // 更新位置（root）+ 缩放（depth）
+      agent.el.setAttribute("transform", `translate(${agent.x.toFixed(2)} ${agent.y.toFixed(2)})`);
+      agent.depthNode.setAttribute("transform", `scale(${agent.scale})`);
+      // 更新方向标签高亮
+      if (debugVisible) highlightDirLabel(agent);
+    }
+
+    // 按 y 排序实现前后遮挡（顺序未变就跳过 DOM 操作）
+    const sorted = agents.slice().sort((a, b) => a.y - b.y);
+    const orderKey = sorted.map(a => a.name).join("|");
+    if (orderKey !== lastAgentOrderKey) {
+      lastAgentOrderKey = orderKey;
+      sorted.forEach(a => charactersLayer.appendChild(a.el));
+    }
+    requestAnimationFrame(tick);
+  }
+  let lastAgentOrderKey = "";
+
+  // 预加载所有方向的全部帧，避免首次切方向时的解码闪烁
+  function preloadSpriteImages() {
+    const urls = new Set();
+    SPRITE_POOL.forEach(sp => {
+      if (sp.idle) urls.add(sp.idle);
+      Object.values(sp.dirs || {}).forEach(arr => arr.forEach(u => urls.add(u)));
+    });
+    return Promise.all([...urls].map(src => new Promise(res => {
+      const img = new Image();
+      img.onload = res; img.onerror = res; img.src = src;
+    })));
+  }
+  preloadSpriteImages().then(() => {
+    requestAnimationFrame(tick);
+  });
+
+  // 将 agents 暴露给路线规划系统
+  window.__bankAgents = agents;
+  document.dispatchEvent(new CustomEvent("bank:agentsReady", { detail: { agents } }));
+})();
+</script>
+
+<!-- ════════ 路线规划系统 ════════ -->
+<script>
+(() => {
+  // ─── 状态 ───
+  let planMode = false;           // 是否在规划模式
+  let planAgent = null;           // 当前规划的目标角色
+  let planPoints = [];            // 已规划的路径点 [x, y]（SVG viewBox 坐标）
+  const svgNS = "http://www.w3.org/2000/svg";
+
+  // ─── DOM 引用 ───
+  const scene      = document.getElementById("scene");
+  const btnPlan    = document.getElementById("btnPlan");
+  const btnAgent1  = document.getElementById("btnAgent1");
+  const btnAgent2  = document.getElementById("btnAgent2");
+  const btnAgent3  = document.getElementById("btnAgent3");
+  const btnConfirm = document.getElementById("btnPlanConfirm");
+  const btnLoop    = document.getElementById("btnPlanLoop");
+  const btnClear   = document.getElementById("btnPlanClear");
+  const hintEl     = document.getElementById("planHint");
+
+  // ─── 创建路线预览图层（独立 SVG，不干扰人物层） ───
+  const previewLayer = document.getElementById("plan-preview-layer");
+
+  // ─── 工具函数 ───
+  function svgEl(tag, attrs = {}) {
+    const el = document.createElementNS(svgNS, tag);
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    return el;
+  }
+
+  // 场景 DOM 坐标 → SVG viewBox(1000×750) 坐标
+  function domToSVG(clientX, clientY) {
+    const rect = scene.getBoundingClientRect();
+    const px = (clientX - rect.left) / rect.width  * 1000;
+    const py = (clientY - rect.top)  / rect.height * 750;
+    return [Math.round(px), Math.round(py)];
+  }
+
+  // 取全局 agents 数组（由行走系统暴露）
+  function getAgents() {
+    return window.__bankAgents || [];
+  }
+
+  // ─── 提示文字 ───
+  function showHint(text) {
+    hintEl.textContent = text;
+    hintEl.classList.remove("hidden");
+  }
+  function hideHint() {
+    hintEl.classList.add("hidden");
+  }
+
+  // ─── 绘制预览路线 ───
+  function renderPreview() {
+    while (previewLayer.firstChild) previewLayer.removeChild(previewLayer.firstChild);
+    if (planPoints.length === 0) return;
+
+    // 路段连线（实线段 + 方向箭头）
+    for (let i = 0; i < planPoints.length - 1; i++) {
+      const [x1, y1] = planPoints[i];
+      const [x2, y2] = planPoints[i + 1];
+      previewLayer.appendChild(svgEl("line", {
+        x1, y1, x2, y2,
+        stroke: "#ff6600", "stroke-width": 3,
+        "stroke-dasharray": "8 5",
+        "stroke-linecap": "round",
+        opacity: "0.85"
+      }));
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+      previewLayer.appendChild(svgEl("polygon", {
+        points: "0,-5 10,0 0,5",
+        fill: "#ff6600", opacity: "0.9",
+        transform: `translate(${mx},${my}) rotate(${angle})`
+      }));
+    }
+
+    // 闭环预览虚线：最后一个点 → 第一个点（仅在 ≥2 个点时显示）
+    if (planPoints.length >= 2) {
+      const [lx, ly] = planPoints[planPoints.length - 1];
+      const [fx, fy] = planPoints[0];
+      previewLayer.appendChild(svgEl("line", {
+        x1: lx, y1: ly, x2: fx, y2: fy,
+        stroke: "#8b5cf6", "stroke-width": 2,
+        "stroke-dasharray": "5 6",
+        "stroke-linecap": "round",
+        opacity: "0.55"
+      }));
+      // 箭头
+      const mx = (lx + fx) / 2, my = (ly + fy) / 2;
+      const angle = Math.atan2(fy - ly, fx - lx) * 180 / Math.PI;
+      previewLayer.appendChild(svgEl("polygon", {
+        points: "0,-4 8,0 0,4",
+        fill: "#8b5cf6", opacity: "0.55",
+        transform: `translate(${mx},${my}) rotate(${angle})`
+      }));
+    }
+
+    // 路径点圆圈：第1个=绿色起点，最后一个=红色终点，中间=橙色
+    planPoints.forEach(([px, py], i) => {
+      const isFirst = i === 0;
+      const isLast  = i === planPoints.length - 1;
+      previewLayer.appendChild(svgEl("circle", {
+        cx: px, cy: py, r: 10,
+        fill: isFirst ? "#10b981" : (isLast && planPoints.length > 1 ? "#ef4444" : "#ff6600"),
+        stroke: "#fff", "stroke-width": 2, opacity: "0.95"
+      }));
+      const label = svgEl("text", {
+        x: px, y: py + 4.5,
+        "text-anchor": "middle",
+        "font-size": 11, "font-weight": "bold", fill: "#fff",
+        "pointer-events": "none"
+      });
+      label.textContent = i + 1;
+      previewLayer.appendChild(label);
+    });
+  }
+
+  // ─── 进入 / 退出规划模式 ───
+  window.togglePlanMode = function () {
+    planMode = !planMode;
+    if (planMode) {
+      btnPlan.classList.add("active");
+      btnPlan.textContent = "Exit Planning";
+      btnAgent1.style.display = "";
+      btnAgent2.style.display = "";
+      btnAgent3.style.display = "";
+      btnConfirm.style.display = "";
+      btnLoop.style.display    = "";
+      btnClear.style.display   = "";
+      scene.classList.add("plan-mode");
+      document.getElementById("agents-overlay").style.visibility = "hidden";
+      planAgent  = null;
+      planPoints = [];
+      renderPreview();
+      showHint("Select a character to plan a route for: Customer A or Customer B");
+    } else {
+      exitPlanMode();
+    }
+  };
+
+  // 按钮直接选人物
+  window.planSelectAgent = function (index) {
+    const agents = getAgents();
+    if (!agents[index]) return;
+    planAgent  = agents[index];
+    planPoints = [];
+    renderPreview();
+    // 高亮选中按钮
+    btnAgent1.classList.toggle("selected", index === 0);
+    btnAgent2.classList.toggle("selected", index === 1);
+    btnAgent3.classList.toggle("selected", index === 2);
+    showHint(`Selected "${planAgent.label}" — first click sets start point, then add waypoints, right-click to undo`);
+  };
+
+  function exitPlanMode() {
+    planMode = false;
+    planAgent  = null;
+    planPoints = [];
+    renderPreview();
+    btnPlan.classList.remove("active");
+    btnPlan.textContent = "Plan Route";
+    btnAgent1.style.display = "none";
+    btnAgent2.style.display = "none";
+    btnAgent3.style.display = "none";
+    btnAgent1.classList.remove("selected");
+    btnAgent2.classList.remove("selected");
+    btnAgent3.classList.remove("selected");
+    btnConfirm.style.display = "none";
+    btnLoop.style.display    = "none";
+    btnClear.style.display   = "none";
+    scene.classList.remove("plan-mode");
+    document.getElementById("agents-overlay").style.visibility = "";
+    hideHint();
+  }
+
+  // ─── 确认执行 ───
+  window.confirmPlan = function (loop) {
+    if (!planAgent) { showHint("⚠ Please select a character first!"); return; }
+    if (planPoints.length < 2) { showHint("⚠ Need at least a start point and one waypoint (2 points total)!"); return; }
+
+    const route = planPoints.map(p => [...p]); // 深拷贝
+    planAgent.x               = route[0][0];   // 直接定位到起点
+    planAgent.y               = route[0][1];
+    planAgent.fixedRoute      = route;
+    planAgent.fixedRouteIndex = 0;
+    planAgent.linear          = !loop;          // 闭环=循环，单次=线性
+    planAgent.atEnd           = false;
+    planAgent.target          = null;
+    planAgent.pauseUntil      = 0;
+
+    const modeText = loop ? "loop" : "single run";
+    showHint(`✓ "${planAgent.label}" ${modeText}, ${route.length} points total`);
+    setTimeout(() => {
+      if (planMode) showHint("Select a character to plan a route for: Customer A or Customer B");
+      else hideHint();
+    }, 2500);
+
+    planAgent  = null;
+    planPoints = [];
+    renderPreview();
+    setTimeout(() => exitPlanMode(), 600);
+  };
+
+  // ─── 清除路线 ───
+  window.clearPlan = function () {
+    planPoints = [];
+    renderPreview();
+    if (planAgent) {
+      showHint(`Route cleared — continue clicking the floor to add waypoints`);
+    } else {
+      showHint("Select a character to plan a route for: Customer A or Customer B");
+    }
+  };
+
+  // ─── 场景点击监听（地板点击添加路径点） ───
+  scene.addEventListener("click", (e) => {
+    if (!planMode) return;
+
+    // 点击地板 → 添加路径点
+    if (!planAgent) {
+      showHint("⚠ Please select a character first!");
+      return;
+    }
+    const [svgX, svgY] = domToSVG(e.clientX, e.clientY);
+    planPoints.push([svgX, svgY]);
+    renderPreview();
+    const isFirst = planPoints.length === 1;
+    showHint(isFirst
+      ? `"${planAgent.label}" start point set — continue clicking to add waypoints, right-click to undo`
+      : `"${planAgent.label}" route: ${planPoints.length} points total | click "✓ Execute" or keep adding`);
+    e.stopPropagation();
+  });
+
+  // 右键撤销最后一个点
+  scene.addEventListener("contextmenu", (e) => {
+    if (!planMode) return;
+    e.preventDefault();
+    if (planPoints.length > 0) {
+      planPoints.pop();
+      renderPreview();
+      if (planPoints.length === 0) {
+        showHint(`All points undone — click again to set start point`);
+      } else if (planPoints.length === 1) {
+        showHint(`Undone, only start point remains — continue clicking to add waypoints`);
+      } else {
+        showHint(`Last point undone, ${planPoints.length} points remaining`);
+      }
+    }
+  });
+
+  // ─── 让行走系统能被外部访问 ───
+  // 行走系统在同一作用域，我们通过自定义事件桥接
+  document.addEventListener("bank:agentsReady", (e) => {
+    window.__bankAgents = e.detail.agents;
+  });
+})();
+</script>
+
+<!-- ════════ 对话面板 ════════ -->
+<div class="dialogue-panel" id="dialoguePanel">
+  <div class="dialogue-header">
+    <div class="dialogue-avatar">T</div>
+    <div class="dialogue-name">Teller</div>
+    <button class="dialogue-close" id="dialogueClose">&times;</button>
+  </div>
+  <div class="dialogue-body" id="dialogueBody"></div>
+  <div class="dialogue-choices" id="dialogueChoices"></div>
+</div>
+
+<!-- ════════ 对话交互系统 ════════ -->
+<script>
+(() => {
+  const panel = document.getElementById("dialoguePanel");
+  const body = document.getElementById("dialogueBody");
+  const choices = document.getElementById("dialogueChoices");
+  const closeBtn = document.getElementById("dialogueClose");
+
+  const QUESTIONS_PHASE1 = [
+    {
+      title: 'What do you think will happen to loan interest rates?',
+      options: [
+        { text: '📉 Definitely going down, will be much cheaper', value: 1 },
+        { text: '🔽 Should drop a little', value: 2 },
+        { text: '➖ Probably about the same as now (default)', value: 3 },
+        { text: '🔼 Feels like it will rise a bit', value: 4 },
+        { text: '📈 Definitely rising, will only get more expensive', value: 5 },
+      ]
+    },
+    {
+      title: 'Have you decided — are you borrowing or not?',
+      options: [
+        { text: '✅ Borrow!', value: true },
+        { text: '❌ Never mind, not borrowing.', value: false },
+      ]
+    }
+  ];
+
+  const QUESTIONS_PHASE2 = [
+    {
+      title: 'How much do you plan to borrow? (as a ratio of last month\'s salary)',
+      options: [
+        { text: '🪙 Just a little, enough to get by', value: 1 },
+        { text: '💵 Borrow less, play it safe', value: 2 },
+        { text: '💰 Borrow a moderate amount (default)', value: 3 },
+        { text: '💸 Borrow more', value: 4 },
+        { text: '🏦 Borrow as much as possible, max it out!', value: 5 },
+      ]
+    }
+  ];
+
+  let dialogueActive = false;
+  let playerAnswers = {};
+
+  function showPanel() {
+    panel.classList.add('show');
+    dialogueActive = true;
+  }
+  function hidePanel() {
+    panel.classList.remove('show');
+    dialogueActive = false;
+  }
+
+  closeBtn.addEventListener('click', hidePanel);
+
+  function clearDialogue() {
+    body.innerHTML = '';
+    choices.innerHTML = '';
+    playerAnswers = {};
+  }
+
+  function addBubble(role, text, onDone) {
+    const div = document.createElement('div');
+    div.className = 'dialogue-bubble ' + role;
+    div.style.whiteSpace = 'pre-line';
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+
+    const safe = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const html = safe.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+
+    if (role === 'player') {
+      div.innerHTML = html;
+      if (onDone) onDone();
+      return;
+    }
+
+    let i = 0;
+    const chars = [];
+    const tmp = document.createElement('span');
+    tmp.innerHTML = html;
+    const raw = tmp.innerHTML;
+    let pos = 0;
+    while (pos < raw.length) {
+      if (raw[pos] === '<') {
+        const end = raw.indexOf('>', pos);
+        chars.push(raw.slice(pos, end + 1));
+        pos = end + 1;
+      } else if (raw[pos] === '&') {
+        const end = raw.indexOf(';', pos);
+        chars.push(raw.slice(pos, end + 1));
+        pos = end + 1;
+      } else {
+        chars.push(raw[pos]);
+        pos++;
+      }
+    }
+
+    let displayed = '';
+    const speed = 35;
+    function tick() {
+      if (i >= chars.length) {
+        body.scrollTop = body.scrollHeight;
+        if (onDone) onDone();
+        return;
+      }
+      displayed += chars[i];
+      div.innerHTML = displayed;
+      body.scrollTop = body.scrollHeight;
+      i++;
+      setTimeout(tick, speed);
+    }
+    tick();
+  }
+
+  function showQuestion(questions, qIdx, answersObj, onDone) {
+    if (qIdx >= questions.length) {
+      onDone();
+      return;
+    }
+    const q = questions[qIdx];
+    addBubble('npc', q.title, () => {
+      choices.innerHTML = '';
+      q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'dialogue-choice-btn';
+        btn.textContent = opt.text;
+        btn.addEventListener('click', () => {
+          answersObj[qIdx] = opt.value;
+          addBubble('player', opt.text);
+          choices.innerHTML = '';
+          setTimeout(() => showQuestion(questions, qIdx + 1, answersObj, onDone), 400);
+        });
+        choices.appendChild(btn);
+      });
+      body.scrollTop = body.scrollHeight;
+    });
+  }
+
+  function onPhase1Done() {
+    const rateLevel = playerAnswers[0];
+    const decideLoan = playerAnswers[1];
+
+    addBubble('npc', 'OK, let me register that for you...', () => {
+      setTimeout(() => {
+        addBubble('npc', 'Submitting your loan decision...', () => {
+          fetch(API_BASE + '/api/apply_loan_decision', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rate_level: rateLevel, decide_loan: decideLoan }),
+          })
+            .then(r => r.json())
+            .then(data => {
+              if (data.success) {
+                const d = data.decision;
+                addBubble('npc', 'Your loan decision confirmed:', () => {
+                  addBubble('npc', `· Expected loan rate: ${(d.desired_loan_rate * 100).toFixed(2)}%`, () => {
+                    addBubble('npc', `· Loan decision: ${d.decide_loan ? 'Yes' : 'No'}`, () => {
+                      if (decideLoan) {
+                        setTimeout(() => {
+                          addBubble('npc', 'OK, please proceed to the credit window for loan processing.', () => {
+                            choices.innerHTML = '';
+                            const continueBtn = document.createElement('button');
+                            continueBtn.className = 'dialogue-choice-btn';
+                            continueBtn.textContent = '👉 Continue';
+                            continueBtn.addEventListener('click', () => {
+                              choices.innerHTML = '';
+                              hidePanel();
+                              startPlayerWalk();
+                            });
+                            choices.appendChild(continueBtn);
+                          });
+                        }, 800);
+                      } else {
+                        setTimeout(() => {
+                          addBubble('npc', 'OK, no loan this month. Have a nice day!', () => {
+                            setTimeout(() => returnPlayer(), 1500);
+                          });
+                        }, 800);
+                      }
+                    });
+                  });
+                });
+              } else {
+                addBubble('npc', `Error: ${data.error}`);
+              }
+            })
+            .catch(err => {
+              addBubble('npc', `Network error: ${err.message}\nPlease confirm server.py is running.`);
+            });
+        });
+      }, 600);
+    });
+  }
+
+  function startPhase2Dialogue() {
+    if (dialogueActive) return;
+    clearDialogue();
+    showPanel();
+    phase2Answers = {};
+
+    fetch(API_BASE + '/api/loan_amount_dialogue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          const bubbles = data.bubbles || [];
+          if (bubbles.length === 0) {
+            showQuestion(QUESTIONS_PHASE2, 0, phase2Answers, onPhase2Done);
+            return;
+          }
+          let idx = 0;
+          function showNext() {
+            if (idx >= bubbles.length) {
+              setTimeout(() => showQuestion(QUESTIONS_PHASE2, 0, phase2Answers, onPhase2Done), 600);
+              return;
+            }
+            const item = bubbles[idx++];
+            addBubble(item.role, item.text, () => {
+              setTimeout(showNext, 400);
+            });
+          }
+          setTimeout(showNext, 300);
+        } else {
+          addBubble('npc', `Dialog loading error: ${data.error}`);
+        }
+      })
+      .catch(err => {
+        addBubble('npc', `Network error: ${err.message}\nPlease confirm server.py is running.`);
+      });
+  }
+
+  let phase2Answers = {};
+
+  function onPhase2Done() {
+    const level = phase2Answers[0];
+    addBubble('npc', 'OK, let me calculate the loan amount...', () => {
+      setTimeout(() => {
+        fetch(API_BASE + '/api/apply_loan_amount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ level: level }),
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              const d = data.decision;
+              addBubble('npc', `Your loan amount confirmed: ${d.current_loan_amount.toFixed(2)}`, () => {
+                setTimeout(() => runLoanClearing(), 800);
+              });
+            } else {
+              addBubble('npc', `Error: ${data.error}`);
+            }
+          })
+          .catch(err => {
+            addBubble('npc', `Network error: ${err.message}\nPlease confirm server.py is running.`);
+          });
+      }, 800);
+    });
+  }
+
+  function runLoanClearing() {
+    addBubble('npc', 'Processing loan market matching, please wait...', () => {
+    fetch(API_BASE + '/api/loan_market_clearing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          const lines = data.narrative.split('\n').filter(l => l.trim());
+          if (lines.length === 0) {
+            setTimeout(() => returnPlayer(), 1500);
+            return;
+          }
+          let li = 0;
+          function showLine() {
+            if (li >= lines.length) {
+              setTimeout(() => returnPlayer(), 1500);
+              return;
+            }
+            addBubble('npc', lines[li++], () => {
+              setTimeout(showLine, 100);
+            });
+          }
+          setTimeout(showLine, 133);
+        } else {
+          addBubble('npc', `Matching error: ${data.error}`);
+        }
+      })
+      .catch(err => {
+        addBubble('npc', `Network error: ${err.message}\nPlease confirm server.py is running.`);
+      });
+    });
+  }
+
+  function startDialogue() {
+    if (dialogueActive) return;
+    clearDialogue();
+    showPanel();
+
+    fetch(API_BASE + '/api/loan_briefing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      .then(r => {
+        if (!r.ok) throw new Error('loan_briefing API call failed');
+        return r.json();
+      })
+      .then(data => {
+        if (!data.success) throw new Error(data.error || 'Unknown error');
+        const bubbles = data.briefing_bubbles || [];
+        const eligible = data.eligible !== false;
+        let idx = 0;
+        function showNext() {
+          if (idx >= bubbles.length) {
+            if (!eligible) {
+              setTimeout(() => {
+                addBubble('npc', 'You may leave now. Have a nice day!', () => {
+                  setTimeout(() => returnPlayer(), 1500);
+                });
+              }, 600);
+              return;
+            }
+            setTimeout(() => showQuestion(QUESTIONS_PHASE1, 0, playerAnswers, onPhase1Done), 600);
+            return;
+          }
+          const item = bubbles[idx++];
+          addBubble(item.role, item.text, () => {
+            setTimeout(showNext, 400);
+          });
+        }
+        setTimeout(showNext, 300);
+      })
+      .catch(err => {
+        addBubble('npc', '(System error: ' + err.message + ')');
+        console.error(err);
+      });
+  }
+
+  function startPlayerWalk() {
+    const agents = window.__bankAgents || [];
+    const player = agents.find(a => a.name === 'Player');
+    if (!player || !player.fixedRoute) return;
+    player.fixedRouteIndex = 0;
+    player.linear = true;
+    player.atEnd = false;
+    player._dialogueTriggered = false;
+    player.target = null;
+    player.pauseUntil = 0;
+  }
+
+  function returnPlayer() {
+    const agents = window.__bankAgents || [];
+    const player = agents.find(a => a.name === 'Player');
+    if (!player || !player.fixedRoute) return;
+    player.fixedRoute = player.fixedRoute.slice().reverse();
+    player.fixedRouteIndex = 0;
+    player.linear = true;
+    player.atEnd = false;
+    player._dialogueTriggered = true;
+    player._returning = true;
+    player.target = null;
+    player.pauseUntil = 0;
+  }
+
+    window.__onPlayerRouteEnd = startPhase2Dialogue;
+    setTimeout(() => startDialogue(), 1500);
+  window.triggerDialogue = startDialogue;
+})();
+</script>
+
+<!-- ============================================================
+     黑屏过渡 + 返回地图接口
+     ============================================================ -->
+<style>
+.fade-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99999;
+  transition: opacity 1.5s ease-in;
+}
+.fade-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+</style>
+
+<div class="fade-overlay" id="fadeOverlay"></div>
+
+<script>
+(function () {
+  const overlay = document.getElementById('fadeOverlay');
+
+  function fadeToBlack(callback) {
+    if (!overlay) {
+      if (callback) callback();
+      return;
+    }
+    let finished = false;
+    function finish() {
+      if (finished) return;
+      finished = true;
+      overlay.removeEventListener('transitionend', handler);
+      if (callback) callback();
+    }
+    function handler() {
+      finish();
+    }
+    overlay.classList.add('active');
+    overlay.addEventListener('transitionend', handler);
+    window.setTimeout(finish, 1800);
+  }
+
+  function readInteriorContext() {
+    try {
+      return JSON.parse(sessionStorage.getItem('EWMCurrentInteriorScene') || '{}') || {};
+    } catch (error) {
+      console.warn('[EWMCurrentInteriorScene] parse failed', error);
+      return {};
+    }
+  }
+
+  window.returnToMap = function returnToMap() {
+    const context = readInteriorContext();
+    sessionStorage.setItem('EWMInteriorResult', JSON.stringify({
+      completed: true,
+      taskId: context.taskId || 'loan_decision',
+      entityId: context.entityId || 'bank-0',
+      sceneId: context.sceneId || 'bank_loan',
+      label: context.label || 'Commercial Bank',
+      completedAt: new Date().toISOString()
+    }));
+    window.location.href = window.location.origin + '/main_map.html';
+  };
+
+  window.__onPlayerReturnedToStart = function () {
+    fadeToBlack(function () {
+      window.returnToMap();
+    });
+  };
+})();
+</script>
+</body>
+</html>
