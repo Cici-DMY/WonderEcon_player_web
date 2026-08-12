@@ -65,6 +65,6 @@ async def end_animation():
             f.write(html)
 
         rel_path = "modules/interaction/end-animation/game_end_animation_live.html"
-        return {"success": True, "url": f"/{rel_path}"}
+        return {"success": True, "url": rel_path}
     except Exception as e:
         return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
