@@ -940,7 +940,7 @@ loadPositions();
     if (window.parent && window.parent !== window) {
       window.parent.postMessage({ type: 'scene-done', scene: 'company2' }, '*');
     }
-    window.location.href = window.location.origin + '/main_map.html';
+    window.location.href = '../../../main_map.html';
   };
 
   window.__onPlayerReturnedToStart = function () {

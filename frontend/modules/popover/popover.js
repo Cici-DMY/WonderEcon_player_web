@@ -224,7 +224,11 @@
   var sceneLayoutLayers = [];
   var buildingElements = new Map();
   var config = {
-    interactionServerOrigin: '',
+    interactionServerOrigin: (function() {
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') return '';
+      var m = location.pathname.match(/^\/[^/]+/);
+      return m ? m[0] : '';
+    })(),
     onEnterBuilding: null,
     onActivityLog: null,
     onShowToast: null,
