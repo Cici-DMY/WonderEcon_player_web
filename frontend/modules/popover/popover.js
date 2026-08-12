@@ -85,46 +85,46 @@
       page: 'modules/interaction/bank-loan-scene/bank_loan_scene_UI.html',
       browsePage: 'modules/interaction/bank-deposit-scene/bank_deposit_scene_browse.html'
     },
-    'labor-market': { label: 'Labor Market', sceneId: 'labor_market',  page: 'modules/interaction/labor_scene/labor_scene_UI.html', browsePage: 'modules/interaction/labor_scene/labor_scene_browse.html' },
-    'stock-market': { label: 'Stock Exchange', sceneId: 'stock_market', page: 'modules/interaction/stock_scene/stock_scene_UI.html', browsePage: 'modules/interaction/stock_scene/stock_scene_browse.html' },
-    'goods-market': { label: 'supermarket',     sceneId: 'supermarket',  page: 'modules/interaction/market_scene/supermarket_scene_UI.html', browsePage: 'modules/interaction/market_scene/supermarket_scene_browse.html' },
-    'supermarket':  { label: 'supermarket',     sceneId: 'supermarket',  page: 'modules/interaction/market_scene/supermarket_scene_UI.html', browsePage: 'modules/interaction/market_scene/supermarket_scene_browse.html' },
-    'central-bank': { label: 'central_bank',    sceneId: 'central_bank', page: 'modules/interaction/central_bank_scene/central_bank_scene_browse.html', browsePage: 'modules/interaction/central_bank_scene/central_bank_scene_browse.html' },
-    'government':   { label: 'government_building', sceneId: 'government', page: 'modules/interaction/government_scene/government_scene_browse.html', browsePage: 'modules/interaction/government_scene/government_scene_browse.html' },
-    'house':        { label: 'home', sceneId: 'home', page: 'modules/interaction/home_scene/home_scene_browse.html', browsePage: 'modules/interaction/home_scene/home_scene_browse.html' }
+    'labor-market': { label: 'Labor Market', sceneId: 'labor_market',  page: 'modules/interaction/labor-scene/labor_scene_UI.html', browsePage: 'modules/interaction/labor-scene/labor_scene_browse.html' },
+    'stock-market': { label: 'Stock Exchange', sceneId: 'stock_market', page: 'modules/interaction/stock-scene/stock_scene_UI.html', browsePage: 'modules/interaction/stock-scene/stock_scene_browse.html' },
+    'goods-market': { label: 'supermarket',     sceneId: 'supermarket',  page: 'modules/interaction/market-scene/supermarket_scene_UI.html', browsePage: 'modules/interaction/market-scene/supermarket_scene_browse.html' },
+    'supermarket':  { label: 'supermarket',     sceneId: 'supermarket',  page: 'modules/interaction/market-scene/supermarket_scene_UI.html', browsePage: 'modules/interaction/market-scene/supermarket_scene_browse.html' },
+    'central-bank': { label: 'central_bank',    sceneId: 'central_bank', page: 'modules/interaction/central-bank-scene/central_bank_scene_browse.html', browsePage: 'modules/interaction/central-bank-scene/central_bank_scene_browse.html' },
+    'government':   { label: 'government_building', sceneId: 'government', page: 'modules/interaction/government-scene/government_scene_browse.html', browsePage: 'modules/interaction/government-scene/government_scene_browse.html' },
+    'house':        { label: 'home', sceneId: 'home', page: 'modules/interaction/home-scene/home_scene_browse.html', browsePage: 'modules/interaction/home-scene/home_scene_browse.html' }
   };
 
   var ENTERPRISE_SCENE_MAP = {
     luxury: {
       enterpriseType: 'luxury', label: 'Enterprise', sceneId: 'company1_scene',
-      page: 'modules/interaction/company1_scene/company1_scene_UI.html',
-      browsePage: 'modules/interaction/company1_scene/company1_scene_browse.html'
+      page: 'modules/interaction/company1-scene/company1_scene_UI.html',
+      browsePage: 'modules/interaction/company1-scene/company1_scene_browse.html'
     },
     necessity: {
       enterpriseType: 'necessity', label: 'Enterprise', sceneId: 'company2_scene',
-      page: 'modules/interaction/company2_scene/company2_scene_UI.html',
-      browsePage: 'modules/interaction/company2_scene/company2_scene_browse.html'
+      page: 'modules/interaction/company2-scene/company2_scene_UI.html',
+      browsePage: 'modules/interaction/company2-scene/company2_scene_browse.html'
     }
   };
 
   var AVAILABLE_INTERIOR_PAGES = [
     'modules/interaction/bank-loan-scene/bank_loan_scene_UI.html',
     'modules/interaction/bank-deposit-scene/bank_deposit_scene_UI.html',
-    'modules/interaction/labor_scene/labor_scene_UI.html',
-    'modules/interaction/stock_scene/stock_scene_UI.html',
-    'modules/interaction/market_scene/supermarket_scene_UI.html',
-    'modules/interaction/company1_scene/company1_scene_UI.html',
-    'modules/interaction/company2_scene/company2_scene_UI.html',
-    'modules/interaction/labor_scene/labor_scene_browse.html',
-    'modules/interaction/stock_scene/stock_scene_browse.html',
-    'modules/interaction/market_scene/supermarket_scene_browse.html',
+    'modules/interaction/labor-scene/labor_scene_UI.html',
+    'modules/interaction/stock-scene/stock_scene_UI.html',
+    'modules/interaction/market-scene/supermarket_scene_UI.html',
+    'modules/interaction/company1-scene/company1_scene_UI.html',
+    'modules/interaction/company2-scene/company2_scene_UI.html',
+    'modules/interaction/labor-scene/labor_scene_browse.html',
+    'modules/interaction/stock-scene/stock_scene_browse.html',
+    'modules/interaction/market-scene/supermarket_scene_browse.html',
     'modules/interaction/bank-loan-scene/bank_loan_scene_browse.html',
     'modules/interaction/bank-deposit-scene/bank_deposit_scene_browse.html',
-    'modules/interaction/company1_scene/company1_scene_browse.html',
-    'modules/interaction/company2_scene/company2_scene_browse.html',
-    'modules/interaction/central_bank_scene/central_bank_scene_browse.html',
-    'modules/interaction/government_scene/government_scene_browse.html',
-    'modules/interaction/home_scene/home_scene_browse.html'
+    'modules/interaction/company1-scene/company1_scene_browse.html',
+    'modules/interaction/company2-scene/company2_scene_browse.html',
+    'modules/interaction/central-bank-scene/central_bank_scene_browse.html',
+    'modules/interaction/government-scene/government_scene_browse.html',
+    'modules/interaction/home-scene/home_scene_browse.html'
   ];
 
   // 建筑类型标签
