@@ -1,20 +1,20 @@
 """玩家状态查询"""
-import os
-import json
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from config import PLAYER_PATH
+from config import read_body, ensure_player_file, load_player_file, require_player_id
 
 router = APIRouter()
 
 
 @router.post("/api/player_state")
-async def player_state():
+async def player_state(request: Request):
     try:
-        if not os.path.isfile(PLAYER_PATH):
-            return JSONResponse(status_code=404, content={"success": False, "error": "player.json not found"})
-        with open(PLAYER_PATH, "r", encoding="utf-8") as f:
-            player = json.load(f)
+        body = await read_body(request)
+        player_id, err = require_player_id(body)
+        if err:
+            return err
+        player_path = ensure_player_file(player_id)
+        player = load_player_file(player_path)
         return {"success": True, "player": player}
     except Exception as e:
         return JSONResponse(status_code=500, content={"success": False, "error": str(e)})

@@ -15,6 +15,13 @@
 (function (global) {
   'use strict';
 
+  function getPlayerId() {
+    try {
+      var s = global.sessionStorage.getItem('EWMInitialState');
+      return s ? (JSON.parse(s).player_id || '') : '';
+    } catch (e) { return ''; }
+  }
+
   var playerState = {
     name: "Player",
     role: "Player",
@@ -236,7 +243,11 @@
   }
 
   function refreshFromServer() {
-    fetch((typeof API_BASE !== 'undefined' ? API_BASE : '') + '/api/player_state', { method: 'POST' })
+    fetch((typeof API_BASE !== 'undefined' ? API_BASE : '') + '/api/player_state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player_id: getPlayerId() })
+    })
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (!data.success || !data.player) return;

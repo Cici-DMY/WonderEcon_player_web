@@ -9,6 +9,7 @@ from .stock import router as stock_router
 from .deposit import router as deposit_router
 from .player_state import router as player_state_router
 from .end_animation import router as end_animation_router
+from .contact import router as contact_router
 
 api_router = APIRouter()
 api_router.include_router(init_player_router)
@@ -19,3 +20,4 @@ api_router.include_router(stock_router)
 api_router.include_router(deposit_router)
 api_router.include_router(player_state_router)
 api_router.include_router(end_animation_router)
+api_router.include_router(contact_router)

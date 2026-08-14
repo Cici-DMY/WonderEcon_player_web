@@ -6,6 +6,12 @@
 <title>Island City - Scene Viewer</title>
 <script>
     var API_BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? '' : 'https://wonderecon-player-web.onrender.com';
+    function getPlayerId() {
+      try {
+        var s = sessionStorage.getItem('EWMInitialState');
+        return s ? (JSON.parse(s).player_id || '') : '';
+      } catch (e) { return ''; }
+    }
   </script>
 <link rel="stylesheet" href="player_world_city.css">
 <style>
@@ -534,7 +540,11 @@ EWMTaskFlow.init({
     var originalText = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Generating settlement...';
-    fetch(API_BASE + '/api/end_animation', { method: 'POST' })
+    fetch(API_BASE + '/api/end_animation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player_id: getPlayerId() })
+    })
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (!data.success || !data.url) throw new Error(data.error || 'Settlement generation failed');

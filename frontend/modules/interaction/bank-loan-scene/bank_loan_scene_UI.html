@@ -6,6 +6,12 @@
 <title>Bank Scene</title>
 <script>
     var API_BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? '' : 'https://wonderecon-player-web.onrender.com';
+    function getPlayerId() {
+      try {
+        var s = sessionStorage.getItem('EWMInitialState');
+        return s ? (JSON.parse(s).player_id || '') : '';
+      } catch (e) { return ''; }
+    }
   </script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1973,7 +1979,7 @@ function showSnapshotModal(layoutJson, routesJson) {
           fetch(API_BASE + '/api/apply_loan_decision', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rate_level: rateLevel, decide_loan: decideLoan }),
+            body: JSON.stringify({ player_id: getPlayerId(), rate_level: rateLevel, decide_loan: decideLoan }),
           })
             .then(r => r.json())
             .then(data => {
@@ -2028,7 +2034,7 @@ function showSnapshotModal(layoutJson, routesJson) {
     fetch(API_BASE + '/api/loan_amount_dialogue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ player_id: getPlayerId() }),
     })
       .then(r => r.json())
       .then(data => {
@@ -2068,7 +2074,7 @@ function showSnapshotModal(layoutJson, routesJson) {
         fetch(API_BASE + '/api/apply_loan_amount', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ level: level }),
+          body: JSON.stringify({ player_id: getPlayerId(), level: level }),
         })
           .then(r => r.json())
           .then(data => {
@@ -2093,7 +2099,7 @@ function showSnapshotModal(layoutJson, routesJson) {
     fetch(API_BASE + '/api/loan_market_clearing', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ player_id: getPlayerId() }),
     })
       .then(r => r.json())
       .then(data => {
@@ -2132,7 +2138,7 @@ function showSnapshotModal(layoutJson, routesJson) {
     fetch(API_BASE + '/api/loan_briefing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ player_id: getPlayerId() }),
       })
       .then(r => {
         if (!r.ok) throw new Error('loan_briefing API call failed');

@@ -2156,6 +2156,7 @@
           return null;
         }
         const initialState = buildInitialState();
+        initialState.player_id = data.player_id;
         initialState.player = {
           ...initialState.player,
           ...data.player.attributes,

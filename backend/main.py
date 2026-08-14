@@ -22,7 +22,7 @@ ROUTES = [
     "/api/consumption_briefing", "/api/apply_decision", "/api/market_clearing",
     "/api/stock_briefing", "/api/apply_stock_decision", "/api/stock_market_clearing",
     "/api/deposit_briefing", "/api/apply_deposit_decision", "/api/deposit_market_clearing",
-    "/api/player_state", "/api/end_animation",
+    "/api/player_state", "/api/end_animation", "/api/contact",
 ]
 
 
