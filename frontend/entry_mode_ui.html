@@ -3,157 +3,381 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WonderEcon - Informed Consent</title>
+  <title>WonderEcon — Economic World Model</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --blue: #2f80ed;
-      --blue-deep: #1468d4;
-      --green: #18a45b;
-      --ink: #172b3d;
-      --muted: #6d7f91;
-      --line: rgba(105, 137, 166, .24);
-      --panel: rgba(255, 255, 255, .88);
-      --shadow: 0 22px 54px rgba(39, 78, 118, .16);
-      --soft-shadow: 0 10px 26px rgba(39, 78, 118, .10);
+      --bg: #050816;
+      --blue: #4cc9f0;
+      --gold: #f9c74f;
+      --text: #eaf2ff;
+      --muted: #8aa3bd;
+      --line: rgba(76, 201, 240, .16);
+      --card-bg: rgba(13, 22, 42, .72);
+      --card-border: rgba(76, 201, 240, .22);
       --z-bg: 0;
       --z-content: 10;
-      --z-card: 20;
-      --z-toast: 120;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      --z-modal: 60;
+      --z-toast: 80;
     }
 
     * { box-sizing: border-box; }
 
+    html, body { margin: 0; padding: 0; }
+
     body {
-      margin: 0;
       min-height: 100vh;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 20% 12%, rgba(128, 211, 238, .22), transparent 32%),
-        linear-gradient(135deg, #e8f7ff 0%, #f8fbff 42%, #edf8ef 100%);
+      color: var(--text);
+      background: var(--bg);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      overflow-x: hidden;
     }
 
-    body::before {
-      content: "";
+    button { font: inherit; cursor: pointer; }
+
+    /* ——— 粒子背景 ——— */
+    #bg {
       position: fixed;
-      inset: -36px;
-      background: url("player_world_city_map_clean.png") center / cover no-repeat;
-      filter: blur(14px) saturate(.92);
-      opacity: .26;
-      transform: scale(1.05);
-      pointer-events: none;
+      inset: 0;
+      z-index: var(--z-bg);
+      display: block;
     }
 
-    button { font: inherit; }
+    .halo {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-bg);
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(76, 201, 240, .16), transparent 42%),
+        radial-gradient(circle at 82% 18%, rgba(249, 199, 79, .10), transparent 36%),
+        radial-gradient(circle at 10% 88%, rgba(76, 201, 240, .08), transparent 40%);
+    }
 
     .page {
       position: relative;
       z-index: var(--z-content);
       min-height: 100vh;
-      padding: 34px 18px;
+      padding: 56px 20px 72px;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
     .shell {
-      width: min(860px, 100%);
+      width: min(880px, 100%);
       display: grid;
-      gap: 22px;
+      gap: 40px;
+      justify-items: center;
     }
 
-    .hero {
-      padding: 30px;
+    /* ——— 品牌 ——— */
+    .hero { text-align: center; }
+
+    .logo-mark {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 22px;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(76, 201, 240, .35));
+    }
+
+    .brand {
+      margin: 0;
+      font-family: "Space Grotesk", "Inter", sans-serif;
+      font-size: clamp(58px, 11vw, 112px);
+      font-weight: 700;
+      letter-spacing: .1em;
+      line-height: .95;
+    }
+    .brand .wonder { color: var(--text); }
+    .brand .econ {
+      color: var(--blue);
+      text-shadow: 0 0 26px rgba(76, 201, 240, .45);
+    }
+
+    .tagline-en {
+      margin: 20px 0 0;
+      font-family: "Space Grotesk", "Inter", sans-serif;
+      font-size: clamp(16px, 2.6vw, 22px);
+      font-weight: 600;
+      letter-spacing: .04em;
+      color: var(--blue);
+    }
+
+    /* ——— 入口卡片 ——— */
+    .entry { width: 100%; }
+
+    .choose {
+      text-align: center;
+      margin: 0 0 20px;
+      font-family: "Space Grotesk", "Inter", sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .28em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .mode-card {
+      position: relative;
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 34px 30px;
+      border: 1px solid var(--card-border);
+      border-radius: 26px;
+      background:
+        radial-gradient(120% 130% at 50% 0%, rgba(76, 201, 240, .12), transparent 55%),
+        var(--card-bg);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .04);
+      backdrop-filter: blur(14px);
+      text-align: center;
+      transition: transform .28s cubic-bezier(.2, .7, .2, 1), box-shadow .28s ease, border-color .28s ease;
+    }
+
+    .mode-card::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: 26px;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(76, 201, 240, .55), rgba(76, 201, 240, .05) 40%, rgba(249, 199, 79, .45));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: .55;
+      pointer-events: none;
+    }
+
+    .mode-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(76, 201, 240, .45);
+      box-shadow: 0 34px 80px rgba(0, 0, 0, .55), 0 0 42px rgba(76, 201, 240, .18);
+    }
+
+    .mode-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 18px;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(76, 201, 240, .5));
+    }
+
+    .mode-card h2 {
+      margin: 0;
+      font-family: "Space Grotesk", "Inter", sans-serif;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--text);
+    }
+
+    .mode-sub {
+      margin: 10px 0 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gold);
+    }
+
+    .mode-desc {
+      margin: 16px auto 0;
+      max-width: 320px;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.75;
+      color: var(--muted);
+    }
+
+    .enter-btn {
+      width: 100%;
+      margin-top: 26px;
+      padding: 15px 20px;
+      border: 1px solid rgba(76, 201, 240, .5);
+      border-radius: 999px;
+      background: linear-gradient(180deg, #4cc9f0, #2b9fd6);
+      color: #04121f;
+      font-family: "Space Grotesk", "Inter", sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      box-shadow: 0 14px 30px rgba(76, 201, 240, .28);
+      transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+    }
+    .enter-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+      box-shadow: 0 20px 42px rgba(76, 201, 240, .38);
+    }
+
+    /* ——— Contact ——— */
+    .contact-card {
+      width: 100%;
+      max-width: 560px;
+      padding: 26px 28px;
       border: 1px solid var(--line);
-      border-radius: 28px;
-      background: rgba(255, 255, 255, .84);
-      box-shadow: var(--soft-shadow);
-      backdrop-filter: blur(18px);
+      border-radius: 22px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
       text-align: center;
     }
 
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(47, 128, 237, .10);
-      color: var(--blue-deep);
-      font-size: 12px;
-      font-weight: 950;
-    }
-
-    .hero h1 {
-      margin: 0;
-      font-size: clamp(34px, 5vw, 56px);
-      letter-spacing: .2px;
-    }
-
-    .hero p {
-      max-width: 640px;
-      margin: 12px auto 0;
-      color: var(--muted);
-      font-size: 15px;
-      font-weight: 750;
-      line-height: 1.7;
-    }
-
-    .card {
-      position: relative;
-      z-index: var(--z-card);
-      padding: 26px;
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
-
-    .card h2 {
+    .contact-card h3 {
       margin: 0 0 6px;
-      font-size: 20px;
-      font-weight: 950;
-      color: #214a70;
+      font-family: "Space Grotesk", "Inter", sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .contact-card .sub {
+      margin: 0 0 18px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
     }
 
-    .card .sub {
-      margin: 0 0 16px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 850;
+    .contact-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
     }
+
+    .contact-row input {
+      flex: 1 1 260px;
+      min-width: 0;
+      padding: 12px 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(5, 8, 22, .6);
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .contact-row input::placeholder { color: #5c7189; }
+    .contact-row input:focus {
+      border-color: rgba(76, 201, 240, .6);
+      box-shadow: 0 0 0 3px rgba(76, 201, 240, .14);
+    }
+
+    .contact-row button {
+      flex: 0 0 auto;
+      padding: 12px 24px;
+      border: 1px solid rgba(249, 199, 79, .5);
+      border-radius: 999px;
+      background: linear-gradient(180deg, #f9c74f, #e0a828);
+      color: #241a02;
+      font-size: 14px;
+      font-weight: 700;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .contact-row button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(249, 199, 79, .26);
+    }
+    .contact-row button:disabled { opacity: .55; cursor: default; transform: none; box-shadow: none; }
+
+    .footer {
+      margin-top: 6px;
+      color: #5c7189;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: .04em;
+      text-align: center;
+    }
+
+    /* ——— 弹窗 ——— */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-modal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(3, 5, 14, .72);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .24s ease;
+    }
+    .overlay.visible { opacity: 1; pointer-events: auto; }
+
+    .modal {
+      width: min(620px, 100%);
+      max-height: min(86vh, 820px);
+      display: flex;
+      flex-direction: column;
+      padding: 26px 26px 24px;
+      border: 1px solid rgba(76, 201, 240, .25);
+      border-radius: 24px;
+      background: #0b1326;
+      box-shadow: 0 40px 90px rgba(0, 0, 0, .6);
+      transform: translateY(14px) scale(.98);
+      transition: transform .24s cubic-bezier(.2, .7, .2, 1);
+    }
+    .overlay.visible .modal { transform: translateY(0) scale(1); }
+
+    .modal-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .modal-head h2 {
+      margin: 0;
+      font-family: "Space Grotesk", "Inter", sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .modal-head .sub {
+      margin: 4px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .icon-btn {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: transparent;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1;
+      transition: color .18s ease, border-color .18s ease;
+    }
+    .icon-btn:hover { color: var(--text); border-color: var(--blue); }
 
     .consent-box {
-      max-height: 340px;
       overflow-y: auto;
       padding: 4px 18px 4px 4px;
-      color: #536a80;
-      font-size: 14px;
-      font-weight: 760;
+      color: #a9bcd2;
+      font-size: 13.5px;
+      font-weight: 500;
       line-height: 1.75;
       border: 1px solid var(--line);
       border-radius: 16px;
-      background: rgba(255, 255, 255, .6);
+      background: rgba(5, 8, 22, .5);
     }
-
     .consent-box h3 {
       margin: 18px 0 8px;
-      font-size: 14px;
-      font-weight: 950;
-      color: var(--ink);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
     }
-
     .consent-box h3:first-child { margin-top: 12px; }
-
     .consent-box p { margin: 8px 0; }
-
     .consent-box ul { margin: 8px 0; padding-left: 20px; }
-
     .consent-box::-webkit-scrollbar { width: 8px; }
     .consent-box::-webkit-scrollbar-thumb {
-      background: rgba(47, 128, 237, .24);
+      background: rgba(76, 201, 240, .28);
       border-radius: 999px;
     }
 
@@ -161,114 +385,62 @@
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      margin-top: 18px;
-      padding: 14px 16px;
-      border-radius: 16px;
-      background: rgba(47, 128, 237, .06);
-      border: 1px solid rgba(47, 128, 237, .18);
+      margin-top: 16px;
+      padding: 13px 15px;
+      border-radius: 14px;
+      background: rgba(76, 201, 240, .07);
+      border: 1px solid rgba(76, 201, 240, .2);
       cursor: pointer;
     }
-
     .agree-row input {
       margin-top: 3px;
-      width: 18px;
-      height: 18px;
+      width: 17px;
+      height: 17px;
       accent-color: var(--blue);
       flex: 0 0 auto;
       cursor: pointer;
     }
-
     .agree-row span {
-      color: var(--ink);
-      font-size: 14px;
-      font-weight: 800;
+      color: var(--text);
+      font-size: 13.5px;
+      font-weight: 600;
       line-height: 1.6;
       cursor: pointer;
     }
 
+    .modal-actions { display: grid; gap: 10px; margin-top: 16px; }
+
     .start-button {
-      width: 100%;
-      margin-top: 16px;
-      border: 1px solid rgba(47, 128, 237, .30);
+      padding: 14px 18px;
+      border: 1px solid rgba(76, 201, 240, .5);
       border-radius: 999px;
-      padding: 15px 18px;
-      background: linear-gradient(180deg, #2f80ed, #176ed2);
-      color: #fff;
-      box-shadow: 0 12px 24px rgba(47, 128, 237, .22);
+      background: linear-gradient(180deg, #4cc9f0, #2b9fd6);
+      color: #04121f;
+      font-family: "Space Grotesk", "Inter", sans-serif;
       font-size: 15px;
-      font-weight: 950;
-      cursor: pointer;
-      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+      font-weight: 700;
+      box-shadow: 0 14px 30px rgba(76, 201, 240, .24);
+      transition: transform .18s ease, opacity .18s ease, box-shadow .18s ease;
     }
-
     .start-button:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 16px 32px rgba(47, 128, 237, .28);
+      transform: translateY(-2px);
+      box-shadow: 0 20px 42px rgba(76, 201, 240, .36);
     }
+    .start-button:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
 
-    .start-button:disabled {
-      opacity: .45;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .contact {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .contact .contact-label {
-      color: var(--ink);
-      font-size: 14px;
-      font-weight: 900;
-      flex: 0 0 auto;
-    }
-
-    .contact input {
-      flex: 1 1 240px;
-      min-width: 0;
-      padding: 12px 16px;
+    .cancel-button {
+      padding: 12px 18px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: rgba(255, 255, 255, .9);
-      color: var(--ink);
-      font: inherit;
+      background: transparent;
+      color: var(--muted);
       font-size: 14px;
-      outline: none;
-      transition: border-color .18s ease, box-shadow .18s ease;
+      font-weight: 600;
+      transition: color .18s ease, border-color .18s ease;
     }
+    .cancel-button:hover { color: var(--text); border-color: var(--blue); }
 
-    .contact input:focus {
-      border-color: rgba(47, 128, 237, .6);
-      box-shadow: 0 0 0 3px rgba(47, 128, 237, .12);
-    }
-
-    .contact button {
-      flex: 0 0 auto;
-      padding: 12px 22px;
-      border: 1px solid rgba(24, 164, 91, .35);
-      border-radius: 999px;
-      background: linear-gradient(180deg, #1fb36a, #14924f);
-      color: #fff;
-      font-size: 14px;
-      font-weight: 950;
-      cursor: pointer;
-      transition: transform .18s ease, box-shadow .18s ease;
-    }
-
-    .contact button:hover { transform: translateY(-1px); }
-
-    .footer {
-      margin-top: 18px;
-      color: #6e8092;
-      text-align: center;
-      font-size: 12px;
-      font-weight: 850;
-    }
-
+    /* ——— Toast ——— */
     .toast {
       position: fixed;
       left: 50%;
@@ -278,88 +450,158 @@
       opacity: 0;
       pointer-events: none;
       max-width: min(560px, calc(100vw - 32px));
-      padding: 12px 16px;
+      padding: 12px 18px;
       border-radius: 999px;
-      background: rgba(21, 52, 81, .90);
-      color: #fff;
-      box-shadow: 0 16px 32px rgba(21, 52, 81, .24);
+      background: rgba(13, 22, 42, .95);
+      border: 1px solid rgba(76, 201, 240, .3);
+      color: var(--text);
+      box-shadow: 0 16px 34px rgba(0, 0, 0, .5);
       font-size: 13px;
-      font-weight: 850;
+      font-weight: 600;
       transition: opacity .22s ease, transform .22s ease;
     }
+    .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    .toast.visible {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
+    /* ——— 进入动画 ——— */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
     }
+    .anim-1 { opacity: 0; animation: fadeUp .7s ease .05s forwards; }
+    .anim-2 { opacity: 0; animation: fadeUp .7s ease .22s forwards; }
+    .anim-3 { opacity: 0; animation: fadeUp .7s ease .38s forwards; }
 
     @media (max-width: 640px) {
-      .hero { padding: 24px 18px; }
-      .card { padding: 20px; }
-      .contact { flex-direction: column; align-items: stretch; }
+      .page { padding: 40px 16px 56px; }
+      .shell { gap: 32px; }
+      .mode-card { padding: 28px 22px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; }
+      .anim-1, .anim-2, .anim-3, .anim-4 { opacity: 1; }
     }
   </style>
 </head>
 <body>
+  <canvas id="bg" aria-hidden="true"></canvas>
+  <div class="halo" aria-hidden="true"></div>
+
   <main class="page">
     <section class="shell">
-      <header class="hero">
-        <div class="eyebrow">Multi-Agent Economic World</div>
-        <h1>WonderEcon</h1>
-        <p>An interactive economic world where your decisions shape the life of a household. Please review the informed consent below before you begin.</p>
+      <header class="hero anim-1">
+        <svg class="logo-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <circle cx="32" cy="32" r="7" fill="#4CC9F0"/>
+          <circle cx="32" cy="9" r="3.4" fill="#F9C74F"/>
+          <circle cx="53" cy="22" r="3.4" fill="#4CC9F0"/>
+          <circle cx="50" cy="50" r="3.4" fill="#F9C74F"/>
+          <circle cx="14" cy="50" r="3.4" fill="#4CC9F0"/>
+          <circle cx="11" cy="20" r="3.4" fill="#4CC9F0"/>
+          <path d="M32 32L32 9M32 32L53 22M32 32L50 50M32 32L14 50M32 32L11 20"
+                stroke="#4CC9F0" stroke-width="1.2" stroke-opacity=".45"/>
+          <circle cx="32" cy="32" r="13" stroke="#4CC9F0" stroke-opacity=".25" stroke-width="1"/>
+        </svg>
+        <h1 class="brand">
+          <span class="wonder">WONDER</span><span class="econ">ECON</span>
+        </h1>
+        <p class="tagline-en">An Economic World Model Powered by LLM Agents</p>
       </header>
 
-      <section class="card">
-        <h2>Informed Consent</h2>
-        <p class="sub">Please read the following information carefully before deciding whether to participate.</p>
-
-        <div class="consent-box">
-          <h3>1. Purpose of the Study</h3>
-          <p>WonderEcon is a research-oriented economic simulation. The goal is to understand how individuals make economic decisions — across borrowing, employment, consumption, saving, and investment — and how a personal economic profile emerges from these decisions over time.</p>
-
-          <h3>2. What You Will Do</h3>
-          <p>You will create an economic identity (a household character) and complete a series of decision tasks in a virtual city. A typical session lasts about 15–25 minutes.</p>
-
-          <h3>3. Data We Collect</h3>
-          <ul>
-            <li>The economic decisions you make and their simulated outcomes.</li>
-            <li>Computed economic-personality indicators (for example, risk appetite and time preference), derived from your decisions.</li>
-            <li>Your email address — only if you choose to provide it using the Contact us form below.</li>
-          </ul>
-
-          <h3>4. Risks and Benefits</h3>
-          <p>Participation involves no foreseeable risks beyond those of ordinary computer use. There are no direct personal benefits, though you may find the experience engaging and educational.</p>
-
-          <h3>5. Confidentiality</h3>
-          <p>Your decisions are stored anonymously and linked only to a randomly generated participant identifier. Results are reported in aggregate and never identify you personally. If you provide an email address, it is stored separately from your gameplay data and used only to send you your results.</p>
-
-          <h3>6. Voluntary Participation</h3>
-          <p>Participation is entirely voluntary. You may stop at any time without penalty by closing the page. Data collected up to that point may still be used in anonymized form.</p>
-
-          <h3>7. Contact</h3>
-          <p>If you have any questions about the study, please reach out to the research team using the Contact us form at the bottom of this page.</p>
+      <section class="entry anim-2">
+        <p class="choose">Choose Experience</p>
+        <div class="mode-card">
+          <svg class="mode-icon" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <defs>
+              <radialGradient id="iconCore" cx="50%" cy="42%" r="60%">
+                <stop offset="0%" stop-color="#9be7ff"/>
+                <stop offset="45%" stop-color="#4CC9F0"/>
+                <stop offset="100%" stop-color="#1c6fb8"/>
+              </radialGradient>
+              <radialGradient id="iconHalo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#4CC9F0" stop-opacity=".38"/>
+                <stop offset="100%" stop-color="#4CC9F0" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <circle cx="32" cy="32" r="31" fill="url(#iconHalo)"/>
+            <ellipse cx="32" cy="32" rx="25" ry="10" stroke="#4CC9F0" stroke-opacity=".4" stroke-width="1.2" stroke-dasharray="2 3" transform="rotate(-22 32 32)"/>
+            <ellipse cx="32" cy="32" rx="25" ry="10" stroke="#F9C74F" stroke-opacity=".35" stroke-width="1.2" transform="rotate(42 32 32)"/>
+            <circle cx="52" cy="21" r="3.2" fill="#F9C74F"/>
+            <circle cx="13" cy="26" r="3.2" fill="#4CC9F0"/>
+            <circle cx="46" cy="47" r="3.2" fill="#4CC9F0"/>
+            <circle cx="32" cy="32" r="14" fill="url(#iconCore)"/>
+            <circle cx="32" cy="32" r="14" stroke="#8fe0ff" stroke-opacity=".55" stroke-width="1.3"/>
+            <circle cx="32" cy="28" r="4.6" fill="#06212f"/>
+            <path d="M24.5 43c1.5-5.5 4.5-8 7.5-8s6 2.5 7.5 8" stroke="#06212f" stroke-width="2.3" stroke-linecap="round" fill="none"/>
+          </svg>
+          <h2>PLAYER VIEW</h2>
+          <p class="mode-sub">Become an Economic Agent</p>
+          <p class="mode-desc">Make decisions, adapt strategies, and experience the world from inside.</p>
+          <button class="enter-btn" id="enterBtn" type="button">Enter World →</button>
         </div>
-
-        <label class="agree-row" id="agreeRow">
-          <input type="checkbox" id="consentCheckbox">
-          <span>I confirm that I am 18 years of age or older, I have read and understood the information above, and I voluntarily agree to participate in this study.</span>
-        </label>
-
-        <button class="start-button" id="startButton" type="button" disabled>I Agree &amp; Start the Game</button>
       </section>
 
-      <section class="card">
-        <h2>Contact Us</h2>
+      <section class="contact-card anim-3">
+        <h3>Contact Us</h3>
         <p class="sub">Leave your email and the research team will send you your personal results after the study is complete.</p>
-        <div class="contact">
-          <span class="contact-label">Email</span>
+        <div class="contact-row">
           <input type="email" id="emailInput" placeholder="you@example.com" autocomplete="email">
           <button type="button" id="contactButton">Submit</button>
         </div>
       </section>
+
+      <footer class="footer anim-3">Prototype Version · Economic World Model powered by LLM Agents</footer>
     </section>
-    <footer class="footer">Prototype Version · Multi-Agent Economic World</footer>
   </main>
+
+  <!-- 知情同意弹窗 -->
+  <div class="overlay" id="consentOverlay" role="dialog" aria-modal="true" aria-labelledby="consentTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <h2 id="consentTitle">Informed Consent</h2>
+          <p class="sub">Please read the following information carefully before deciding whether to participate.</p>
+        </div>
+        <button class="icon-btn" id="cancelBtn" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div class="consent-box">
+        <h3>1. Purpose of the Study</h3>
+        <p>WonderEcon is a research-oriented economic simulation. The goal is to understand how individuals make economic decisions — across borrowing, employment, consumption, saving, and investment — and how a personal economic profile emerges from these decisions over time.</p>
+
+        <h3>2. What You Will Do</h3>
+        <p>You will create an economic identity (a household character) and complete a series of decision tasks in a virtual city. A typical session lasts about 15–25 minutes.</p>
+
+        <h3>3. Data We Collect</h3>
+        <ul>
+          <li>The economic decisions you make and their simulated outcomes.</li>
+          <li>Computed economic-personality indicators (for example, risk appetite and time preference), derived from your decisions.</li>
+          <li>Your email address — only if you choose to provide it using the Contact us form below.</li>
+        </ul>
+
+        <h3>4. Risks and Benefits</h3>
+        <p>Participation involves no foreseeable risks beyond those of ordinary computer use. There are no direct personal benefits, though you may find the experience engaging and educational.</p>
+
+        <h3>5. Confidentiality</h3>
+        <p>Your decisions are stored anonymously and linked only to a randomly generated participant identifier. Results are reported in aggregate and never identify you personally. If you provide an email address, it is stored separately from your gameplay data and used only to send you your results.</p>
+
+        <h3>6. Voluntary Participation</h3>
+        <p>Participation is entirely voluntary. You may stop at any time without penalty by closing the page. Data collected up to that point may still be used in anonymized form.</p>
+
+        <h3>7. Contact</h3>
+        <p>If you have any questions about the study, please reach out to the research team using the Contact us form at the bottom of this page.</p>
+      </div>
+
+      <label class="agree-row" id="agreeRow">
+        <input type="checkbox" id="consentCheckbox">
+        <span>I confirm that I am 18 years of age or older, I have read and understood the information above, and I voluntarily agree to participate in this study.</span>
+      </label>
+
+      <div class="modal-actions">
+        <button class="start-button" id="startButton" type="button" disabled>I Agree &amp; Start the Game</button>
+        <button class="cancel-button" id="cancelModalBtn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <div class="toast" id="toast"></div>
 
@@ -369,8 +611,12 @@
       : 'https://wonderecon-player-web.onrender.com';
 
     var toast = document.getElementById('toast');
+    var enterBtn = document.getElementById('enterBtn');
+    var overlay = document.getElementById('consentOverlay');
     var consentCheckbox = document.getElementById('consentCheckbox');
     var startButton = document.getElementById('startButton');
+    var cancelBtn = document.getElementById('cancelBtn');
+    var cancelModalBtn = document.getElementById('cancelModalBtn');
     var emailInput = document.getElementById('emailInput');
     var contactButton = document.getElementById('contactButton');
 
@@ -381,11 +627,21 @@
       showToast.timer = window.setTimeout(function () { toast.classList.remove('visible'); }, 3000);
     }
 
+    function openConsent() { overlay.classList.add('visible'); }
+    function closeConsent() { overlay.classList.remove('visible'); }
+
     function updateStartButton() {
       startButton.disabled = !consentCheckbox.checked;
     }
 
+    enterBtn.addEventListener('click', openConsent);
+    cancelBtn.addEventListener('click', closeConsent);
+    cancelModalBtn.addEventListener('click', closeConsent);
     consentCheckbox.addEventListener('change', updateStartButton);
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeConsent();
+    });
 
     startButton.addEventListener('click', function () {
       if (!consentCheckbox.checked) {
@@ -429,6 +685,92 @@
           contactButton.textContent = 'Submit';
         });
     });
+
+    // ——— 粒子网络背景 ———
+    (function () {
+      var canvas = document.getElementById('bg');
+      var ctx = canvas.getContext('2d');
+      var w = 0, h = 0, dpr = 1;
+      var particles = [];
+      var N = 78;
+      var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        w = canvas.width = Math.floor(window.innerWidth * dpr);
+        h = canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+      }
+
+      function spawn() {
+        return {
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.16 * dpr,
+          vy: (Math.random() - 0.5) * 0.16 * dpr,
+          r: (Math.random() * 1.2 + 0.5) * dpr,
+          gold: Math.random() < 0.22
+        };
+      }
+
+      function init() {
+        resize();
+        particles = [];
+        for (var i = 0; i < N; i++) particles.push(spawn());
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        var linkDist = 140 * dpr;
+        var i, j, a, b, dx, dy, d2;
+
+        for (i = 0; i < N; i++) {
+          for (j = i + 1; j < N; j++) {
+            a = particles[i]; b = particles[j];
+            dx = a.x - b.x; dy = a.y - b.y;
+            d2 = dx * dx + dy * dy;
+            if (d2 < linkDist * linkDist) {
+              var alpha = (1 - Math.sqrt(d2) / linkDist) * 0.14;
+              ctx.strokeStyle = 'rgba(76, 201, 240,' + alpha.toFixed(3) + ')';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        for (i = 0; i < N; i++) {
+          var p = particles[i];
+          ctx.fillStyle = p.gold ? 'rgba(249, 199, 79, .6)' : 'rgba(76, 201, 240, .6)';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function tick() {
+        for (var i = 0; i < N; i++) {
+          var p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0 || p.x > w) p.vx *= -1;
+          if (p.y < 0 || p.y > h) p.vy *= -1;
+        }
+        draw();
+        requestAnimationFrame(tick);
+      }
+
+      window.addEventListener('resize', init);
+      init();
+      if (reduced) {
+        draw();
+      } else {
+        tick();
+      }
+    })();
   </script>
 </body>
 </html>
