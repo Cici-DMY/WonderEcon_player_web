@@ -226,7 +226,7 @@
   var config = {
     interactionServerOrigin: (function() {
       if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') return '';
-      var m = location.pathname.match(/^\/[^/]+/);
+      var m = location.pathname.match(/^\/[^/]+(?=\/)/);
       return m ? m[0] : '';
     })(),
     onEnterBuilding: null,
